@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 330" width="100%" height="100%">
+  <defs>
+    <!-- Orange Ring Gradient -->
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="50%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+
+    <!-- Green Oval Gradient -->
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="50%" stop-color="#16a34a" />
+      <stop offset="100%" stop-color="#15803d" />
+    </linearGradient>
+
+    <!-- Drop Shadow for Arrow -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <!-- Emblem Group -->
+  <g transform="translate(150, 130)">
+    <!-- Outer Orange Ring Ellipse -->
+    <ellipse 
+      cx="10" 
+      cy="0" 
+      rx="110" 
+      ry="78" 
+      fill="none" 
+      stroke="url(#orangeGrad)" 
+      stroke-width="24" 
+      transform="rotate(-26)" 
+    />
+
+    <!-- Inner Green Oval -->
+    <ellipse 
+      cx="0" 
+      cy="0" 
+      rx="80" 
+      ry="56" 
+      fill="url(#greenGrad)" 
+      transform="rotate(-26)" 
+    />
+
+    <!-- White Curved Swoosh Arrow -->
+    <g transform="rotate(-26)" filter="url(#shadow)">
+      <!-- Main White Arrow Body -->
+      <path 
+        d="M -75,25 C -55,30 -30,12 -5,-8 C 20,-28 48,-42 70,-45 C 50,-35 48,-25 40,-15 C 38,-35 55,-40 70,-45 C 45,-25 20,2 -20,32 C -45,47 -65,40 -75,25 Z" 
+        fill="#ffffff" 
+      />
+      <!-- Arrow Head Inner Green Accent Lines -->
+      <path 
+        d="M 32,-28 L 56,-40 L 42,-18" 
+        fill="none" 
+        stroke="#15803d" 
+        stroke-width="3" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+      />
+    </g>
+  </g>
+
+  <!-- Sanskrit Tagline Text -->
+  <text 
+    x="150" 
+    y="300" 
+    text-anchor="middle" 
+    fill="#15803d" 
+    font-family="'Mangal', 'Devanagari Sangam MN', 'Nirmala UI', 'Plus Jakarta Sans', sans-serif" 
+    font-size="28" 
+    font-weight="bold"
+  >
+    सर्वे भवन्तु सुखिनः
+  </text>
+</svg>

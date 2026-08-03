@@ -1,0 +1,204 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  * {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  }
+}
+
+/* Global Required Field Asterisk Color */
+.MuiFormLabel-asterisk,
+.MuiInputLabel-asterisk {
+  color: #ef4444 !important;
+}
+
+/* Custom scrollbar for table and containers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.7);
+}
+
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Hide scrollbars utility with high specificity to override dark/light theme scrollbars */
+html .no-scrollbar::-webkit-scrollbar,
+html:not(.dark) .no-scrollbar::-webkit-scrollbar,
+.dark .no-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html .no-scrollbar::-webkit-scrollbar-track,
+html:not(.dark) .no-scrollbar::-webkit-scrollbar-track,
+.dark .no-scrollbar::-webkit-scrollbar-track,
+.no-scrollbar::-webkit-scrollbar-track {
+  background: transparent !important;
+  display: none !important;
+}
+
+html .no-scrollbar::-webkit-scrollbar-thumb,
+html:not(.dark) .no-scrollbar::-webkit-scrollbar-thumb,
+.dark .no-scrollbar::-webkit-scrollbar-thumb,
+.no-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  display: none !important;
+}
+
+html .no-scrollbar,
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* ==========================================================================
+   MUI Global Dark Theme Styles
+   ========================================================================== */
+
+.dark .MuiDialog-paper {
+  background-color: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+  color: #f8fafc !important;
+  background-image: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.12), transparent 70%) !important;
+}
+
+.dark .MuiPopover-paper,
+.dark .MuiMenu-paper {
+  background-color: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6) !important;
+  color: #f8fafc !important;
+  padding: 4px 0 !important;
+}
+
+.dark .MuiMenuItem-root {
+  color: #cbd5e1 !important;
+  background-color: #0f172a !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  padding: 8px 16px !important;
+  transition: all 0.15s ease !important;
+}
+
+.dark .MuiMenuItem-root:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.dark .MuiMenuItem-root.Mui-selected {
+  background-color: rgba(99, 102, 241, 0.25) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.dark .MuiTableCell-root {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .MuiTableCell-head {
+  color: #94a3b8 !important;
+  font-weight: 700 !important;
+  background-color: #0f172a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .MuiTableRow-root:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.dark .MuiTablePagination-root {
+  color: #94a3b8 !important;
+}
+
+/* ==========================================================================
+   MUI Global Light Theme (Monochrome Black & White Aesthetic)
+   ========================================================================== */
+
+html:not(.dark) .MuiDialog-paper {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
+  background-image: none !important;
+}
+
+html:not(.dark) .MuiPopover-paper,
+html:not(.dark) .MuiMenu-paper {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
+  padding: 4px 0 !important;
+}
+
+html:not(.dark) .MuiMenuItem-root {
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  padding: 8px 16px !important;
+  transition: all 0.15s ease !important;
+}
+
+html:not(.dark) .MuiMenuItem-root:hover {
+  background-color: #f1f5f9 !important;
+  color: #000000 !important;
+}
+
+html:not(.dark) .MuiMenuItem-root.Mui-selected {
+  background-color: #e2e8f0 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
+html:not(.dark) .MuiTableCell-root {
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .MuiTableCell-head {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  background-color: #f1f5f9 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+html:not(.dark) .MuiTableRow-root:hover {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .MuiTablePagination-root {
+  color: #334155 !important;
+}
