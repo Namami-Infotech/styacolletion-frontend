@@ -241,7 +241,7 @@ export const AuthProvider = ({ children }) => {
         hasPermission,
         login,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user && !!Cookies.get('accessToken'),
       }}
     >
       {children}

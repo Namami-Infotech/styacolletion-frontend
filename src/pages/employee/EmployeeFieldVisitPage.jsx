@@ -1688,11 +1688,11 @@ export default function EmployeeFieldVisitPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <PhoneIcon sx={{ fontSize: 13 }} className="text-sky-500" />
-                  +919608631687
+                  {passedPhoneNumber}
                 </span>
                 <span className="flex items-center gap-1">
                   <BusinessIcon sx={{ fontSize: 13 }} className="text-amber-500" />
-                  Operations
+                  {passedRole}
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="text-slate-400">Project:</span> Credit Mitra

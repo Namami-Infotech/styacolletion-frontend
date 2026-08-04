@@ -60,9 +60,9 @@ export default function ColumnSettingsDrawer({
       slotProps={{
         paper: {
           sx: {
-            top: "30vh !important",
-            height: "80vh !important",
-            maxHeight: "80vh !important",
+            top: "20vh !important",
+            height: "calc(100vh - 20vh) !important",
+            maxHeight: "calc(100vh - 20vh) !important",
             width: { xs: "100%", sm: 360 },
             backgroundColor: isDark ? "#0f172a" : "#ffffff",
             color: isDark ? "#f8fafc" : "#0f172a",
@@ -75,7 +75,7 @@ export default function ColumnSettingsDrawer({
         },
         backdrop: {
           sx: {
-            top: "30vh !important",
+            top: "20vh !important",
           },
         },
       }}
