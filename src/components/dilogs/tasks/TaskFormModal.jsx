@@ -15,6 +15,16 @@ import { TaskTypeRoute } from "../../../routes/tasks/task-type.js";
 import CreateCustomerModel from "../customer/CreateCustomer.Model";
 import { useAuth } from "../../../contexts/AuthContext.jsx";
 
+const getCurrentDateTimeLocal = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 export default function TaskFormModal({
   open,
   onClose,
@@ -274,6 +284,23 @@ export default function TaskFormModal({
       return;
     }
 
+    const startVal = taskForm.startDateTime || taskForm.startDate;
+    const endVal = taskForm.endDateTime || taskForm.endDate;
+
+    if (startVal) {
+      const startMs = new Date(startVal).getTime();
+      const marginNowMs = Date.now() - 60000;
+      if (addModalOpen && startMs < marginNowMs) {
+        toast.error("Start Date & Time cannot be in the past!");
+        return;
+      }
+    }
+
+    if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
+      toast.error("End Date & Time cannot be less than Start Date & Time!");
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (addModalOpen) {
@@ -351,7 +378,21 @@ export default function TaskFormModal({
                 const value =
                   taskForm[field.name] ?? (field.type === "checkbox" ? false : "");
                 const onChange = (val) =>
-                  setTaskForm((prev) => ({ ...prev, [field.name]: val }));
+                  setTaskForm((prev) => {
+                    const updated = { ...prev, [field.name]: val };
+                    if (
+                      (field.name === "startDateTime" || field.name === "startDate") &&
+                      val
+                    ) {
+                      if (updated.endDateTime && new Date(updated.endDateTime) < new Date(val)) {
+                        updated.endDateTime = "";
+                      }
+                      if (updated.endDate && new Date(updated.endDate) < new Date(val)) {
+                        updated.endDate = "";
+                      }
+                    }
+                    return updated;
+                  });
 
                 const FieldLabel = () => (
                   <label
@@ -1167,6 +1208,18 @@ export default function TaskFormModal({
                 }
 
                 // ── datetime-local | time | date | text | number ──
+                let minVal = undefined;
+                if (field.name === "startDateTime" || field.name === "startDate") {
+                  if (addModalOpen) {
+                    minVal = getCurrentDateTimeLocal();
+                  }
+                } else if (field.name === "endDateTime" || field.name === "endDate") {
+                  minVal =
+                    taskForm.startDateTime ||
+                    taskForm.startDate ||
+                    (addModalOpen ? getCurrentDateTimeLocal() : undefined);
+                }
+
                 return (
                   <div key={fieldKey} className="flex flex-col">
                     <FieldLabel />
@@ -1176,6 +1229,7 @@ export default function TaskFormModal({
                       placeholder={field.placeholder || ""}
                       value={value}
                       required={field.required}
+                      min={minVal}
                       onChange={(e) => onChange(e.target.value)}
                       style={nativeInputStyle}
                       onFocus={(e) =>

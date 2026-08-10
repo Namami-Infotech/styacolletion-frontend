@@ -262,7 +262,9 @@ export default function TaskTypeTable({
 
       <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200 bg-white'}`}>
         <TablePaginationComponent
-          totalCount={totalData}
+          table={table}
+          totalData={totalData}
+          count={totalData}
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={onPageChange}

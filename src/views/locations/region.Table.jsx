@@ -290,6 +290,8 @@ export default function RegionTable({
       {/* Pagination Footer */}
       <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200 bg-white'}`}>
         <TablePaginationComponent
+          table={table}
+          totalData={totalData}
           count={totalData}
           page={page}
           rowsPerPage={rowsPerPage}
