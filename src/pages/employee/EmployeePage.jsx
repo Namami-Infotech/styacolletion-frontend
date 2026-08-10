@@ -26,7 +26,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 // Common Components
 import Navbar from '../../components/common/Navbar';
-import DeleteEmployeeModal from '../../components/common/DeleteEmployeeModal';
+import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
 
 // Views & Table Components
 import EmployeeTable from '../../views/employee/EmployeeTable';
@@ -186,10 +186,17 @@ export default function EmployeePage() {
     showToast(`Employee "${updatedEmp.name}" details updated.`);
   };
 
-  const handleDeleteEmployee = (id) => {
-    const empToDelete = employees.find((e) => e.id === id);
-    setEmployees((prev) => prev.filter((e) => e.id !== id));
-    showToast(`Employee "${empToDelete?.name || 'record'}" removed.`, 'info');
+  const handleDeleteEmployee = async (employeeOrId) => {
+    const slug = typeof employeeOrId === 'object' ? (employeeOrId?.slug || employeeOrId?.id) : employeeOrId;
+    if (!slug) return;
+    try {
+      const res = await EmployeeRoute.deleteEmployee(slug);
+      if (res?.success) {
+        fetchEmployees();
+      }
+    } catch (error) {
+      console.error("Failed to delete employee", error);
+    }
   };
 
   // Status Chip Style Helper
@@ -462,8 +469,7 @@ export default function EmployeePage() {
             setViewModalOpen(true);
           }}
           onEditClick={(emp) => {
-            setActiveEmployee(emp);
-            setEditModalOpen(true);
+            navigate('/create-employee', { state: { employee: emp, isEdit: true } });
           }}
           onDeleteClick={(emp) => {
             setActiveEmployee(emp);
@@ -485,7 +491,7 @@ export default function EmployeePage() {
 
 
 
-      <DeleteEmployeeModal
+      <DeleteConfirmationModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         employee={activeEmployee}

@@ -15,6 +15,8 @@ import CustomerTable from '../../views/customer/customer.Table';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import CreateCustomerModal from '../../components/dilogs/customer/CreateCustomer.Model';
+import EditCustomerModel from '../../components/dilogs/customer/EditCustomer.Model';
+import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
 import CustomerDetailsPage from './customerDetailsPage';
 
 export default function CustomerPage() {
@@ -29,6 +31,15 @@ export default function CustomerPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedCustomerForEdit, setSelectedCustomerForEdit] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedCustomerForDelete, setSelectedCustomerForDelete] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleRefresh = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   return (
     <div
@@ -159,15 +170,55 @@ export default function CustomerPage() {
           <CustomerTable
             searchTerm={searchTerm}
             selectedStatus={selectedStatus}
+            refreshTrigger={refreshTrigger}
+            onEditClick={(customer) => {
+              setSelectedCustomerForEdit(customer);
+              setEditModalOpen(true);
+            }}
+            onDeleteClick={(customer) => {
+              setSelectedCustomerForDelete(customer);
+              setDeleteModalOpen(true);
+            }}
           />
         </div>
       </main>
 
-      {/* Modal Dialog for Customer Creation if needed */}
+      {/* Modal Dialog for Customer Creation */}
       {createModalOpen && (
         <CreateCustomerModal
           open={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
+          onSuccess={handleRefresh}
+          isDark={isDark}
+        />
+      )}
+
+      {/* Modal Dialog for Customer Edit */}
+      {editModalOpen && (
+        <EditCustomerModel
+          open={editModalOpen}
+          customer={selectedCustomerForEdit}
+          onClose={() => {
+            setEditModalOpen(false);
+            setSelectedCustomerForEdit(null);
+          }}
+          onSuccess={handleRefresh}
+          isDark={isDark}
+        />
+      )}
+
+      {/* Modal Dialog for Customer Delete */}
+      {deleteModalOpen && (
+        <DeleteConfirmationModal
+          open={deleteModalOpen}
+          customer={selectedCustomerForDelete}
+          title="Delete Customer"
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setSelectedCustomerForDelete(null);
+          }}
+          onSuccess={handleRefresh}
+          isDark={isDark}
         />
       )}
     </div>

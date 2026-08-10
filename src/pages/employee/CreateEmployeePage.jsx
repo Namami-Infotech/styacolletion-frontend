@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmployeeRoute } from '../../routes/employee/employee.route.js';
@@ -197,6 +197,10 @@ const CountryCodeSelect = ({ value, onChange, options, isDark, labelColor, textP
 
 export default function CreateEmployeePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const editEmployee = location.state?.employee;
+  const isEditMode = Boolean(location.state?.isEdit || editEmployee);
+
   const { user, logout } = useAuth();
   const { isDark } = useThemeMode();
 
@@ -204,52 +208,11 @@ export default function CreateEmployeePage() {
   const [uploadingFields, setUploadingFields] = useState({});
 
   const [formFields, setFormFields] = useState([]);
-  const [formTitle, setFormTitle] = useState('Create Employee');
-
-  useEffect(() => {
-    const fetchFormFields = async () => {
-      try {
-        const res = await EmployeeRoute.getCreateEmployeeFormFields();
-        if (res?.success && res?.data) {
-          const data = res.data;
-          if (data.fields && Array.isArray(data.fields)) {
-            setFormFields(data.fields);
-            setFormData((prev) => {
-              const updated = { ...prev };
-              data.fields.forEach((field) => {
-                if (field.name && updated[field.name] === undefined) {
-                  if (field.type === 'switch') {
-                    updated[field.name] = false;
-                  } else if (field.type === 'multiselect' || field.type === 'multi-select' || field.multiple || (field.name && field.name.endsWith('GeoFence'))) {
-                    updated[field.name] = Array.isArray(prev[field.name]) ? prev[field.name] : [];
-                  } else if (field.name === 'mobileCountryCode') {
-                    updated[field.name] = '+91';
-                  } else if (field.name === 'type') {
-                    const roleOpts = field.options || [];
-                    const defaultRole = roleOpts.find((r) => String(r.label || r.name).toLowerCase() === 'employee') || roleOpts[0];
-                    updated[field.name] = defaultRole ? (defaultRole.value ?? defaultRole.id ?? 1) : 1;
-                  } else {
-                    updated[field.name] = '';
-                  }
-                }
-              });
-              return updated;
-            });
-          }
-          if (data.title) {
-            setFormTitle(typeof data.title === 'object' ? (data.title.name || data.title.title || 'Create Employee') : data.title);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch employee form options', err);
-      }
-    };
-    fetchFormFields();
-  }, []);
+  const [formTitle, setFormTitle] = useState(isEditMode ? 'Edit Employee' : 'Create Employee');
 
   // Switch states
   const [enablePassword, setEnablePassword] = useState(false);
-  const [enableAdvanceSettings, setEnableAdvanceSettings] = useState(false);
+  const [enableAdvanceSettings, setEnableAdvanceSettings] = useState(isEditMode);
   const [showPassword, setShowPassword] = useState(false);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [isMobileFocused, setIsMobileFocused] = useState(false);
@@ -306,6 +269,143 @@ export default function CreateEmployeePage() {
   const [customerFilters, setCustomerFilters] = useState([
     { tag: '', condition: '', tagValue: '' },
   ]);
+
+  const populateEmployeeData = React.useCallback((emp) => {
+    if (!emp) return;
+    setEnableAdvanceSettings(true);
+    setFormTitle('Edit Employee');
+
+    const formattedDob = emp.dateOfBirth
+      ? String(emp.dateOfBirth).split('T')[0]
+      : (emp.date_of_birth ? String(emp.date_of_birth).split('T')[0] : '');
+
+    const formattedDoj = emp.dateOfJoining
+      ? String(emp.dateOfJoining).split('T')[0]
+      : (emp.date_of_joining ? String(emp.date_of_joining).split('T')[0] : (emp.joining_date ? String(emp.joining_date).split('T')[0] : ''));
+
+    const extractArray = (val) => {
+      if (Array.isArray(val)) return val.map((x) => typeof x === 'object' ? (x.value ?? x.id ?? x.name) : x);
+      if (val) return [val];
+      return [];
+    };
+
+    const extractPrimitive = (val, altVal1, altVal2) => {
+      const target = (val !== undefined && val !== null && val !== '') ? val : ((altVal1 !== undefined && altVal1 !== null && altVal1 !== '') ? altVal1 : altVal2);
+      if (target === undefined || target === null) return '';
+      if (typeof target === 'object') return target.value ?? target.id ?? target.name ?? target.title ?? '';
+      return target;
+    };
+
+    const maxTime = emp.maxPunchInTime || emp.max_punch_in_time || emp.maxPunchIn || '09:30';
+
+    setFormData((prev) => ({
+      ...prev,
+      name: emp.name || emp.employee_name || prev.name,
+      identity: emp.identity || emp.employee_id || emp.id || prev.identity,
+      loginId: emp.loginId || emp.login_id || emp.email || prev.loginId,
+      mobileCountryCode: emp.mobileCountryCode || emp.country_code || emp.mobile_country_code || '+91',
+      mobile: emp.mobile || emp.phone || emp.mobile_number || prev.mobile,
+      type: extractPrimitive(emp.type, emp.role_id, emp.role),
+      manager_id: extractPrimitive(emp.manager_id, emp.reportingManager, emp.reporting_manager),
+      license: extractPrimitive(emp.license) || 'Full Access License',
+      state: extractPrimitive(emp.state, emp.state_id, emp.employeeState),
+      region: extractPrimitive(emp.region, emp.region_id, emp.employeeRegion),
+      branchTag: extractPrimitive(emp.branchTag, emp.branch_id, emp.employeeBranch),
+      branch: extractPrimitive(emp.branch, emp.branch_id),
+      gender: extractPrimitive(emp.gender) || 'male',
+      bloodGroup: extractPrimitive(emp.bloodGroup, emp.blood_group) || 'O+',
+      label: emp.label || emp.label_color || prev.label || '#6366f1',
+      dateOfBirth: formattedDob || '1995-01-01',
+      dateOfJoining: formattedDoj || new Date().toISOString().split('T')[0],
+      address: emp.address || emp.locationAddress || emp.location || prev.address,
+      punchInGeoFence: extractArray(emp.punchInGeoFence || emp.punchIn || emp.punch_in),
+      punchOutGeoFence: extractArray(emp.punchOutGeoFence || emp.punchOut || emp.punch_out),
+      entryAlertGeoFence: extractArray(emp.entryAlertGeoFence || emp.entryAlerts || emp.entry_alerts),
+      exitAlertGeoFence: extractArray(emp.exitAlertGeoFence || emp.exitAlerts || emp.exit_alerts),
+      homeLocation: extractPrimitive(emp.homeLocation, emp.work_location, emp.location),
+      workingShift: extractPrimitive(emp.workingShift, emp.work_shift, emp.workingShifts) || 'General Shift (9 AM - 6 PM)',
+      leaveProfile: extractPrimitive(emp.leaveProfile, emp.leave_profile, emp.leaveProfiles) || 'Standard Policy',
+      thumbnail: emp.thumbnail || emp.image || prev.thumbnail,
+      image: emp.image || emp.thumbnail || prev.image,
+      tracker: emp.tracker !== undefined ? Boolean(emp.tracker) : true,
+      trackerWebsite: emp.trackerWebsite !== undefined ? Boolean(emp.trackerWebsite) : true,
+      disableAutoPunchOut: emp.disableAutoPunchOut !== undefined ? Boolean(emp.disableAutoPunchOut) : false,
+      maxPunchInTime: maxTime,
+    }));
+
+    if (Array.isArray(emp.customerFilters) && emp.customerFilters.length > 0) {
+      setCustomerFilters(emp.customerFilters);
+    } else if (Array.isArray(emp.customer_filters) && emp.customer_filters.length > 0) {
+      setCustomerFilters(emp.customer_filters);
+    } else if (Array.isArray(emp.filters) && emp.filters.length > 0) {
+      setCustomerFilters(emp.filters);
+    } else {
+      const regName = extractPrimitive(emp.region, emp.region_id, emp.employeeRegion);
+      setCustomerFilters([
+        { tag: 'Region', condition: 'Equals', tagValue: regName ? String(regName) : 'Region 1' }
+      ]);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchFormFields = async () => {
+      try {
+        const res = await EmployeeRoute.getCreateEmployeeFormFields();
+        if (res?.success && res?.data) {
+          const data = res.data;
+          if (data.fields && Array.isArray(data.fields)) {
+            setFormFields(data.fields);
+            setFormData((prev) => {
+              const updated = { ...prev };
+              data.fields.forEach((field) => {
+                if (field.name && updated[field.name] === undefined) {
+                  if (field.type === 'switch') {
+                    updated[field.name] = false;
+                  } else if (field.type === 'multiselect' || field.type === 'multi-select' || field.multiple || (field.name && field.name.endsWith('GeoFence'))) {
+                    updated[field.name] = Array.isArray(prev[field.name]) ? prev[field.name] : [];
+                  } else if (field.name === 'mobileCountryCode') {
+                    updated[field.name] = '+91';
+                  } else if (field.name === 'type') {
+                    const roleOpts = field.options || [];
+                    const defaultRole = roleOpts.find((r) => String(r.label || r.name).toLowerCase() === 'employee') || roleOpts[0];
+                    updated[field.name] = defaultRole ? (defaultRole.value ?? defaultRole.id ?? 1) : 1;
+                  } else {
+                    updated[field.name] = '';
+                  }
+                }
+              });
+              return updated;
+            });
+          }
+          if (data.title && !isEditMode) {
+            setFormTitle(typeof data.title === 'object' ? (data.title.name || data.title.title || 'Create Employee') : data.title);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch employee form options', err);
+      }
+    };
+    fetchFormFields();
+  }, [isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      setEnableAdvanceSettings(true);
+      if (editEmployee) {
+        populateEmployeeData(editEmployee);
+      }
+      const slug = editEmployee?.slug || editEmployee?.id;
+      if (slug) {
+        EmployeeRoute.getEmployeeBySlug(slug).then((res) => {
+          if (res?.success && res?.data) {
+            populateEmployeeData(res.data);
+          }
+        }).catch((err) => console.error("Error fetching employee details:", err));
+      }
+    }
+  }, [isEditMode, editEmployee, populateEmployeeData]);
+
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -460,15 +560,29 @@ export default function CreateEmployeePage() {
       state_id: 1,
       region_id: 1,
       branch_id: 1,
+      tracker: Boolean(formData.tracker),
+      trackerWebsite: Boolean(formData.trackerWebsite),
+      disableAutoPunchOut: Boolean(formData.disableAutoPunchOut),
+      maxPunchInTime: formData.maxPunchInTime || undefined,
+      customerFilters: customerFilters,
     };
 
     try {
-      const res = await EmployeeRoute.createEmployee(payload);
+      let res;
+      if (isEditMode) {
+        const slug = editEmployee?.slug || editEmployee?.id;
+        res = await EmployeeRoute.updateEmployee({
+          ...payload,
+          slug,
+        });
+      } else {
+        res = await EmployeeRoute.createEmployee(payload);
+      }
       if (res?.success) {
         navigate('/employees');
       }
     } catch (err) {
-      console.error('Failed to create employee', err);
+      console.error(isEditMode ? 'Failed to update employee' : 'Failed to create employee', err);
     } finally {
       setLoading(false);
     }
@@ -511,8 +625,10 @@ export default function CreateEmployeePage() {
     // Visibility condition checks
     if (field.dependsOnSwitch === 'enablePassword' && !enablePassword) return null;
     if (field.dependsOnSwitch === 'enableAdvanceSettings' && !enableAdvanceSettings) return null;
-    if (field.dependsOnField === 'state' && !formData.state) return null;
-    if (field.dependsOnField === 'region' && !formData.region) return null;
+    if (!isEditMode) {
+      if (field.dependsOnField === 'state' && !formData.state) return null;
+      if (field.dependsOnField === 'region' && !formData.region) return null;
+    }
 
     if (field.name === 'mobileCountryCode') {
       const opts = field.options && field.options.length > 0 ? field.options : allCountryCodeOptions;
@@ -860,15 +976,29 @@ export default function CreateEmployeePage() {
     if (field.type === 'select') {
       const fieldLabelText = typeof field.label === 'object' ? (field.label.name || field.label.title || 'Option') : field.label;
       const opts = field.options || [];
-      const rawVal = formData[field.name] !== undefined ? formData[field.name] : '';
+      const rawVal = formData[field.name];
+
+      let targetVal = rawVal;
+      if (rawVal !== null && rawVal !== undefined && typeof rawVal === 'object') {
+        targetVal = rawVal.value ?? rawVal.id ?? rawVal.name ?? rawVal.label;
+      }
+
       const matchingOpt = opts.find((o) => {
-        const val = typeof o === 'object' ? (o.value ?? o.id) : o;
-        const lbl = typeof o === 'object' ? (o.label ?? o.name) : o;
-        return String(val) === String(rawVal) || String(lbl).toLowerCase() === String(rawVal).toLowerCase();
+        const val = typeof o === 'object' ? (o.value ?? o.id ?? o.slug ?? o.name) : o;
+        const lbl = typeof o === 'object' ? (o.label ?? o.name ?? o.title ?? o.slug) : o;
+        if (val === undefined || val === null) return false;
+        if (targetVal === undefined || targetVal === null) return false;
+
+        return (
+          String(val) === String(targetVal) ||
+          String(lbl).toLowerCase() === String(targetVal).toLowerCase() ||
+          (typeof targetVal === 'string' && String(lbl).toLowerCase().includes(targetVal.toLowerCase()))
+        );
       });
+
       const selectedValue = matchingOpt
-        ? (typeof matchingOpt === 'object' ? (matchingOpt.value ?? matchingOpt.id) : matchingOpt)
-        : rawVal;
+        ? (typeof matchingOpt === 'object' ? (matchingOpt.value ?? matchingOpt.id ?? matchingOpt.slug ?? matchingOpt.name) : matchingOpt)
+        : (targetVal !== undefined && targetVal !== null ? targetVal : '');
 
       const isHalfWidth = field.name === 'workingShift' || field.name === 'leaveProfile';
       const gridColSize = isHalfWidth ? { xs: 12, md: 6 } : { xs: 12, md: 4 };
@@ -883,7 +1013,7 @@ export default function CreateEmployeePage() {
             select
             size="small"
             name={field.name}
-            value={selectedValue || ''}
+            value={selectedValue ?? ''}
             onChange={handleChange}
             slotProps={{ select: { displayEmpty: true } }}
             required={field.required}

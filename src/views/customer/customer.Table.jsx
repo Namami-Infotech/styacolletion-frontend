@@ -57,6 +57,7 @@ export default function CustomerTable({
   onDeleteClick,
   maxHeight,
   columnVisibility = {},
+  refreshTrigger = 0,
 }) {
   const [sorting, setSorting] = useState([]);
   const { isDark } = useThemeMode();
@@ -96,7 +97,7 @@ export default function CustomerTable({
 
   useEffect(() => {
     fetchCustomers();
-  }, [page, rowsPerPage, searchTerm, selectedStatus]);
+  }, [page, rowsPerPage, searchTerm, selectedStatus, refreshTrigger]);
 
   const getStatusChipProps = (status) => {
     const st = String(status || '').toLowerCase();
@@ -316,7 +317,7 @@ export default function CustomerTable({
         header: 'ACTIONS',
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1 min-w-[110px]">
-           {hasPermission("customer", "view") && <Tooltip title="View Details">
+           {/* {hasPermission("customer", "view") && <Tooltip title="View Details">
               <IconButton
                 size="small"
                 onClick={() => onViewClick && onViewClick(row.original)}
@@ -327,7 +328,7 @@ export default function CustomerTable({
               >
                 <VisibilityIcon fontSize="small" />
               </IconButton>
-            </Tooltip>}
+            </Tooltip>} */}
 
             {hasPermission("customer", "edit") && <Tooltip title="Edit Customer">
               <IconButton

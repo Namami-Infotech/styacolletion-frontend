@@ -81,6 +81,63 @@ export const EmployeeRoute = {
             return errorData;
         }
     },
+
+    getEmployeeBySlug: async (slug) => {
+        try {
+            const result = await axios.get(`${baseURL}/api/v1/employees/get/${slug}`, {
+                withCredentials: true,
+            });
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response?.data || {
+                statusCode: 500,
+                message: error.message || "Failed to fetch employee details",
+                success: false,
+            };
+            return errorData;
+        }
+    },
+
+    updateEmployee: async (data) => {
+        try {
+            const slug = data.slug || data.id;
+            const result = await axios.put(`${baseURL}/api/v1/employees/update/${slug}`, data, {
+                withCredentials: true,
+            });
+            toast.success(result.data.message || "Employee updated successfully");
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response?.data || {
+                statusCode: 500,
+                message: error.message || "Failed to update employee",
+                success: false,
+            };
+            toast.error(errorData.message || "Failed to update employee");
+            return errorData;
+        }
+    },
+
+    deleteEmployee: async (slug) => {
+        try {
+            const result = await axios.delete(`${baseURL}/api/v1/employees/delete/${slug}`, {
+                withCredentials: true,
+            });
+            toast.success(result.data.message || "Employee deleted successfully");
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response?.data || {
+                statusCode: 500,
+                message: error.message || "Failed to delete employee",
+                success: false,
+            };
+            toast.error(errorData.message || "Failed to delete employee");
+            return errorData;
+        }
+    },
+
     getEmployeeContactWithCustomer: async ({ page, limit, search, status, department }) => {
         try {
             const result = await axios.get(`${baseURL}/api/v1/employees/contact-with-customer`, {

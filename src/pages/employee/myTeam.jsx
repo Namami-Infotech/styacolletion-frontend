@@ -27,7 +27,7 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 
 // Common Components & Views
 import Navbar from '../../components/common/Navbar';
-import DeleteEmployeeModal from '../../components/common/DeleteEmployeeModal';
+import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
 import MyTeamTable, { OrgTreeChart } from '../../views/employee/myteam';
 import ColumnSettingsDrawer from '../../components/dilogs/tasks/ColumnSettingsDrawer';
 import { ALL_EMPLOYEE_COLUMNS } from './EmployeePage';
@@ -404,7 +404,7 @@ export default function MyTeamPage() {
         isDark={isDark}
       />
 
-      <DeleteEmployeeModal
+      <DeleteConfirmationModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         employee={activeEmployee}

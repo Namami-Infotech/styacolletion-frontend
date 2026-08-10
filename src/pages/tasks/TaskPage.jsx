@@ -23,6 +23,8 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
 // Common & View Components
 import Navbar from "../../components/common/Navbar";
@@ -33,7 +35,8 @@ import { TaskTypeRoute } from "../../routes/tasks/task-type.js";
 // Task Dialog Modals
 import ViewTaskModal from "../../components/dilogs/tasks/ViewTaskModal";
 import TaskFormModal from "../../components/dilogs/tasks/TaskFormModal";
-import DeleteTaskModal from "../../components/dilogs/tasks/DeleteTaskModal";
+import TaskImportModal, { exportTasksToExcel } from "../../components/dilogs/tasks/TaskImportModal";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import ColumnSettingsDrawer from "../../components/dilogs/tasks/ColumnSettingsDrawer";
 import TaskDetails from "./TaskDetails";
 
@@ -50,6 +53,8 @@ const ALL_TASK_COLUMNS = [
   { id: "status", label: "Status" },
   { id: "taskType", label: "Type" },
   { id: "createdBy", label: "Creator" },
+  { id: "deletedBy", label: "Deleted By" },
+  { id: "deletedAt", label: "Deleted At" },
   { id: "startedAt", label: "Started" },
   { id: "completedAt", label: "Completed" },
   { id: "startDateTime", label: "Start" },
@@ -82,10 +87,7 @@ export default function TaskPage() {
   const location = useLocation();
   const { user, logout, hasPermission } = useAuth();
   const { isDark } = useThemeMode();
-
-  if (location.pathname.includes("/details")) {
-    return <TaskDetails />;
-  }
+  const isDetailsView = location.pathname.includes("/details");
 
   // Determine view mode from URL path
   const isCustomerView = location.pathname.includes("/task-customer");
@@ -150,6 +152,7 @@ export default function TaskPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
 
   // Column Visibility State
@@ -177,7 +180,17 @@ export default function TaskPage() {
     employeeState: false,
     employeeRegion: false,
     employeeBranch: false,
+    deletedBy: isDeletedView,
+    deletedAt: isDeletedView,
   });
+
+  useEffect(() => {
+    setColumnVisibility((prev) => ({
+      ...prev,
+      deletedBy: isDeletedView,
+      deletedAt: isDeletedView,
+    }));
+  }, [isDeletedView]);
 
   // Snackbar Toast
   const [snackbar, setSnackbar] = useState({
@@ -220,11 +233,39 @@ export default function TaskPage() {
     setEditModalOpen(true);
   };
 
-  const handleDeleteTask = () => {
+  const handleDeleteTask = async () => {
     if (!activeTask) return;
-    setTasks((prev) => prev.filter((t) => t.id !== activeTask.id));
-    setDeleteModalOpen(false);
-    showToast(`Task "${activeTask.task_id}" removed.`, "info");
+    try {
+      const identifier = activeTask.slug || activeTask.task_id || activeTask.id;
+      const res = await TaskRoute.deleteTask(identifier);
+      if (res && res.success !== false) {
+        showToast(res.message || `Task "${activeTask.task_id || activeTask.slug}" soft deleted successfully.`, "success");
+        fetchTasks();
+      } else {
+        showToast(res?.message || "Failed to delete task", "error");
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      showToast("An error occurred while deleting task", "error");
+    } finally {
+      setDeleteModalOpen(false);
+    }
+  };
+
+  const handleRestoreTask = async (task) => {
+    try {
+      const identifier = task.slug || task.task_id || task.id;
+      const res = await TaskRoute.restoreTask(identifier);
+      if (res && res.success !== false) {
+        showToast(res.message || `Task "${task.task_id || task.slug}" restored successfully.`, "success");
+        fetchTasks();
+      } else {
+        showToast(res?.message || "Failed to restore task", "error");
+      }
+    } catch (error) {
+      console.error("Error restoring task:", error);
+      showToast("An error occurred while restoring task", "error");
+    }
   };
 
   const fetchTasks = async () => {
@@ -246,6 +287,8 @@ export default function TaskPage() {
         res = await TaskRoute.getAllCustomerTasks(params);
       } else if (isTeamView) {
         res = await TaskRoute.getTeamTask(params);
+      } else if (isDeletedView) {
+        res = await TaskRoute.getDeletedTask(params);
       } else {
         res = await TaskRoute.getAllTasks(params);
       }
@@ -296,6 +339,10 @@ export default function TaskPage() {
     selectedTaskType,
     location.pathname,
   ]);
+
+  if (isDetailsView) {
+    return <TaskDetails />;
+  }
 
   return (
     <div
@@ -551,6 +598,54 @@ export default function TaskPage() {
                 </IconButton>
               </Tooltip>
 
+              {/* Export Excel Button */}
+              <Tooltip title="Export current tasks to Excel">
+                <Button
+                  onClick={() => exportTasksToExcel(tasks, `Tasks_Export_${new Date().toISOString().slice(0, 10)}.xlsx`)}
+                  variant="outlined"
+                  size="small"
+                  startIcon={<FileDownloadIcon />}
+                  sx={{
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderColor: isDark ? "#10b981" : "#059669",
+                    color: isDark ? "#34d399" : "#059669",
+                    backgroundColor: isDark ? "rgba(16, 185, 129, 0.1)" : "#ecfdf5",
+                    "&:hover": {
+                      borderColor: isDark ? "#34d399" : "#047857",
+                      backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : "#d1fae5",
+                    },
+                  }}
+                >
+                  Export Excel
+                </Button>
+              </Tooltip>
+
+              {/* Import Excel Button */}
+              {hasPermission("task", "add", currentSubModule) && (
+                <Button
+                  onClick={() => setImportModalOpen(true)}
+                  variant="outlined"
+                  size="small"
+                  startIcon={<UploadFileIcon />}
+                  sx={{
+                    borderRadius: "12px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderColor: isDark ? "#6366f1" : "#4f46e5",
+                    color: isDark ? "#818cf8" : "#4f46e5",
+                    backgroundColor: isDark ? "rgba(99, 102, 241, 0.1)" : "#eef2ff",
+                    "&:hover": {
+                      borderColor: isDark ? "#818cf8" : "#3730a3",
+                      backgroundColor: isDark ? "rgba(99, 102, 241, 0.2)" : "#e0e7ff",
+                    },
+                  }}
+                >
+                  Import Excel
+                </Button>
+              )}
+
               {/* Desktop Create Task Button (Shown when screen >= xl) */}
               {hasPermission("task", "add", currentSubModule) && (
                 <div className="hidden xl:block flex-shrink-0">
@@ -608,6 +703,8 @@ export default function TaskPage() {
             setActiveTask(task);
             setDeleteModalOpen(true);
           }}
+          onRestoreClick={handleRestoreTask}
+          isDeletedView={isDeletedView}
         />
       </main>
 
@@ -633,8 +730,17 @@ export default function TaskPage() {
         onSuccess={fetchTasks}
       />
 
+      {/* Import Task Excel Modal */}
+      <TaskImportModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        formFields={formFields}
+        isDark={isDark}
+        onSuccess={fetchTasks}
+      />
+
       {/* Delete Task Confirmation Modal */}
-      <DeleteTaskModal
+      <DeleteConfirmationModal
         open={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         activeTask={activeTask}

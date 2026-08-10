@@ -128,9 +128,9 @@ export const TaskRoute = {
             return errorData;
         }
     },
-    deleteTask: async (taskId) => {
+    deleteTask: async (slug) => {
         try {
-            const result = await axios.delete(`${baseURL}/api/v1/tasks/delete/${taskId}`, {
+            const result = await axios.delete(`${baseURL}/api/v1/tasks/delete/${slug}`, {
                 withCredentials: true,
             });
             return result.data;
@@ -142,6 +142,41 @@ export const TaskRoute = {
                 success: false,
             };
             toast.error(errorData.message || "Failed to delete task");
+            return errorData;
+        }
+    },
+    getDeletedTask: async (params = {}) => {
+        try {
+            const result = await axios.get(`${baseURL}/api/v1/tasks/get-deleted`, {
+                params,
+                withCredentials: true,
+            });
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response?.data || {
+                statusCode: 500,
+                message: error.message || "Failed to fetch deleted tasks",
+                success: false,
+            };
+            toast.error(errorData.message || "Failed to fetch deleted tasks");
+            return errorData;
+        }
+    },
+    restoreTask: async (slug) => {
+        try {
+            const result = await axios.put(`${baseURL}/api/v1/tasks/restore/${slug}`, {}, {
+                withCredentials: true,
+            });
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response?.data || {
+                statusCode: 500,
+                message: error.message || "Failed to restore task",
+                success: false,
+            };
+            toast.error(errorData.message || "Failed to restore task");
             return errorData;
         }
     },
@@ -216,6 +251,26 @@ export const TaskRoute = {
                 success: false,
             };
             toast.error(errorData.message || "Failed to fetch tasks");
+            return errorData;
+        }
+    },
+    uploadExcelTasks: async (formData) => {
+        try {
+            const result = await axios.post(`${baseURL}/api/v1/tasks/upload-excel-task`, formData, {
+                withCredentials: true,
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response?.data || {
+                statusCode: 500,
+                message: error.message || "Failed to upload excel tasks",
+                success: false,
+            };
+            toast.error(errorData.message || "Failed to upload excel tasks");
             return errorData;
         }
     }

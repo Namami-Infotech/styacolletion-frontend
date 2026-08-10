@@ -34,6 +34,7 @@ import LazyAvatar from '../../components/common/LazyAvatar';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -56,6 +57,8 @@ export default function TaskTable({
   onViewClick,
   onEditClick,
   onDeleteClick,
+  onRestoreClick,
+  isDeletedView = false,
   getStatusChipProps,
   getPriorityChipProps,
   maxHeight,
@@ -401,7 +404,7 @@ export default function TaskTable({
         header: "Manager",
         cell: ({ row }) => (
           <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.manager?.name ?? (typeof row.original.manager === "string" ? row.original.manager : null) ?? "null"}
+            {row.original.assigneeToEmployeeId?.manager?.name ?? (typeof row.original.manager === "string" ? row.original.manager : null) ?? "null"}
           </span>
         ),
       }),
@@ -409,7 +412,7 @@ export default function TaskTable({
         id: "designations",
         header: "Designations",
         cell: ({ row }) => {
-          const desig = row.original.designation ?? row.original.designations;
+          const desig = row.original?.assigneeToEmployeeId.designation ?? row.original?.assigneeToEmployeeId.designations;
           const desigVal = typeof desig === "object" ? desig?.name : (desig ?? "null");
           return (
             <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
@@ -422,7 +425,7 @@ export default function TaskTable({
         id: "department",
         header: "Department",
         cell: ({ row }) => {
-          const dept = row.original.department;
+          const dept = row.original?.assigneeToEmployeeId?.department;
           const deptVal = typeof dept === "object" ? dept?.name : (dept ?? "null");
           return (
             <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
@@ -451,31 +454,6 @@ export default function TaskTable({
           />
         ),
       }),
-      columnHelper.accessor("taskType", {
-        id: "taskType",
-        header: "Type",
-        cell: ({ row }) => {
-          const typeVal =
-            typeof row.original.taskType === "object"
-              ? row.original.taskType?.name
-              : row.original.taskType;
-
-          return (
-            <span
-              className={`text-xs font-bold px-2 py-0.5 rounded border whitespace-nowrap ${typeVal === "Custom"
-                  ? isDark
-                    ? "text-purple-300 bg-purple-500/15 border-purple-500/30"
-                    : "text-purple-900 bg-purple-100 border-purple-300"
-                  : isDark
-                    ? "text-slate-300 bg-slate-800/60 border-slate-700/50"
-                    : "text-slate-900 bg-slate-100 border-slate-300"
-                }`}
-            >
-              {typeVal ?? "null"}
-            </span>
-          );
-        },
-      }),
       columnHelper.accessor("createdBy", {
         id: "createdBy",
         header: "Creator",
@@ -489,6 +467,29 @@ export default function TaskTable({
           );
         },
       }),
+      columnHelper.accessor("deletedBy", {
+        id: "deletedBy",
+        header: "Deleted By",
+        cell: ({ row }) => {
+          const deleter = row.original.deletedBy;
+          const deleterName =
+            typeof deleter === "object" ? deleter?.name : (deleter ?? "null");
+          return (
+            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
+              {deleterName ?? "null"}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor("deletedAt", {
+        id: "deletedAt",
+        header: "Deleted At",
+        cell: ({ row }) => (
+          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
+            {row.original.deletedAt ? new Date(row.original.deletedAt).toLocaleString() : "null"}
+          </span>
+        ),
+      }),
       columnHelper.accessor("startedAt", {
         id: "startedAt",
         header: "Started",
@@ -500,7 +501,7 @@ export default function TaskTable({
       }),
       columnHelper.accessor("completedAt", {
         id: "completedAt",
-        header: "Completed",
+        header: "Completed At",
         cell: ({ row }) => (
           <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
             {row.original.completedAt ? new Date(row.original.completedAt).toLocaleString() : "null"}
@@ -762,42 +763,70 @@ export default function TaskTable({
               </Tooltip>
             )}
 
-            {hasPermission("task", "edit", subModuleName) && (
-              <Tooltip title="Edit Task">
-                <IconButton
-                  size="small"
-                  onClick={() => onEditClick && onEditClick(row.original)}
-                  sx={{
-                    color: isDark ? "#fbbf24" : "#d97706",
-                    "&:hover": {
-                      backgroundColor: isDark
-                        ? "rgba(245, 158, 11, 0.15)"
-                        : "rgba(217, 119, 6, 0.1)",
-                    },
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
+            {isDeletedView ? (
+              (hasPermission("task", "delete", subModuleName) ||
+                hasPermission("task", "edit", subModuleName) ||
+                hasPermission("task", "delete", "taskAll") ||
+                hasPermission("task", "edit", "taskAll") ||
+                hasPermission("task", "delete") ||
+                hasPermission("task", "edit")) && (
+                <Tooltip title="Restore Task">
+                  <IconButton
+                    size="small"
+                    onClick={() => onRestoreClick && onRestoreClick(row.original)}
+                    sx={{
+                      color: isDark ? "#34d399" : "#059669",
+                      "&:hover": {
+                        backgroundColor: isDark
+                          ? "rgba(52, 211, 153, 0.15)"
+                          : "rgba(5, 150, 105, 0.1)",
+                      },
+                    }}
+                  >
+                    <RestoreFromTrashIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )
+            ) : (
+              <>
+                {hasPermission("task", "edit", subModuleName) && (
+                  <Tooltip title="Edit Task">
+                    <IconButton
+                      size="small"
+                      onClick={() => onEditClick && onEditClick(row.original)}
+                      sx={{
+                        color: isDark ? "#fbbf24" : "#d97706",
+                        "&:hover": {
+                          backgroundColor: isDark
+                            ? "rgba(245, 158, 11, 0.15)"
+                            : "rgba(217, 119, 6, 0.1)",
+                        },
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
 
-            {hasPermission("task", "delete", subModuleName) && (
-              <Tooltip title="Delete Task">
-                <IconButton
-                  size="small"
-                  onClick={() => onDeleteClick && onDeleteClick(row.original)}
-                  sx={{
-                    color: isDark ? "#f87171" : "#dc2626",
-                    "&:hover": {
-                      backgroundColor: isDark
-                        ? "rgba(239, 68, 68, 0.15)"
-                        : "rgba(220, 38, 38, 0.1)",
-                    },
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+                {hasPermission("task", "delete", subModuleName) && (
+                  <Tooltip title="Delete Task">
+                    <IconButton
+                      size="small"
+                      onClick={() => onDeleteClick && onDeleteClick(row.original)}
+                      sx={{
+                        color: isDark ? "#f87171" : "#dc2626",
+                        "&:hover": {
+                          backgroundColor: isDark
+                            ? "rgba(239, 68, 68, 0.15)"
+                            : "rgba(220, 38, 38, 0.1)",
+                        },
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </>
             )}
           </div>
         ),
@@ -808,6 +837,8 @@ export default function TaskTable({
       onViewClick,
       onEditClick,
       onDeleteClick,
+      onRestoreClick,
+      isDeletedView,
       getStatusChipProps,
       getPriorityChipProps,
       hasPermission,

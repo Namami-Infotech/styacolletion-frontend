@@ -32,10 +32,29 @@ export default function TaskFormModal({
   const [createCustomerModalOpen, setCreateCustomerModalOpen] = useState(false);
   const {hasPermission} =useAuth()
 
-  const activeFormFields =
-    propFormFields && propFormFields.length > 0
-      ? propFormFields
-      : internalFormFields;
+  const activeFormFields = useMemo(() => {
+    const rawFields =
+      propFormFields && propFormFields.length > 0
+        ? propFormFields
+        : internalFormFields;
+
+    const seenNames = new Set();
+    const seenLabels = new Set();
+
+    return rawFields.filter((f) => {
+      if (!f || (!f.name && !f.label)) return false;
+      const nameKey = (f.name || "").toLowerCase();
+      const labelKey = (f.label || "").toLowerCase();
+
+      if (nameKey && seenNames.has(nameKey)) return false;
+      if (labelKey && seenLabels.has(labelKey)) return false;
+
+      if (nameKey) seenNames.add(nameKey);
+      if (labelKey) seenLabels.add(labelKey);
+
+      return true;
+    });
+  }, [propFormFields, internalFormFields]);
 
   // Customer dropdown state & backend search
   const [customersList, setCustomersList] = useState([]);

@@ -2,11 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/common/Navbar';
 import EmployeeTable from '../../views/employee/EmployeeTable';
-import DeleteEmployeeModal from '../../components/common/DeleteEmployeeModal';
+import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
 import { MOCK_EMPLOYEES } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { DashboardRoute } from '../../routes/dashboard/dashboard.route';
+import { EmployeeRoute } from '../../routes/employee/employee.route';
 
 // MUI Icons
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -147,9 +148,19 @@ export default function DashboardPage() {
     setEditModalOpen(false);
   };
 
-  const handleDeleteEmployee = (empId) => {
-    setEmployees((prev) => prev.filter((e) => e.id !== empId));
-    setDeleteModalOpen(false);
+  const handleDeleteEmployee = async (employeeOrId) => {
+    const slug = typeof employeeOrId === 'object' ? (employeeOrId?.slug || employeeOrId?.id) : employeeOrId;
+    if (!slug) return;
+    try {
+      const res = await EmployeeRoute.deleteEmployee(slug);
+      if (res?.success) {
+        setEmployees((prev) => prev.filter((e) => (e.slug || e.id) !== slug));
+      }
+    } catch (error) {
+      console.error("Failed to delete employee", error);
+    } finally {
+      setDeleteModalOpen(false);
+    }
   };
 
   return (
@@ -479,8 +490,7 @@ export default function DashboardPage() {
                 setViewModalOpen(true);
               }}
               onEditClick={(emp) => {
-                setActiveEmployee(emp);
-                setEditModalOpen(true);
+                navigate('/create-employee', { state: { employee: emp, isEdit: true } });
               }}
               onDeleteClick={(emp) => {
                 setActiveEmployee(emp);
@@ -505,7 +515,7 @@ export default function DashboardPage() {
 
       {/* Delete Employee Modal */}
       {deleteModalOpen && activeEmployee && (
-        <DeleteEmployeeModal
+        <DeleteConfirmationModal
           open={deleteModalOpen}
           onClose={() => setDeleteModalOpen(false)}
           employee={activeEmployee}

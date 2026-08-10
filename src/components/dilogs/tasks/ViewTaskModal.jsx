@@ -95,6 +95,24 @@ export default function ViewTaskModal({ open, onClose, activeTask, isDark }) {
             <p className="text-xs font-semibold text-slate-400">Updated By</p>
             <p className="text-sm font-semibold">{activeTask?.updatedBy?.name ?? "null"}</p>
           </div>
+          {activeTask?.deletedAt && (
+            <>
+              <div>
+                <p className="text-xs font-semibold text-slate-400">Deleted By</p>
+                <p className="text-sm font-semibold">
+                  {typeof activeTask.deletedBy === "object"
+                    ? activeTask.deletedBy?.name
+                    : (activeTask.deletedBy ?? "null")}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-400">Deleted At</p>
+                <p className="text-sm font-semibold">
+                  {new Date(activeTask.deletedAt).toLocaleString()}
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>

@@ -205,13 +205,13 @@ export default function OfficeTable({
             header: 'Actions',
             cell: ({ row }) => (
               <div className="flex items-center justify-end gap-1">
-                {onViewClick && (
+                {/* {onViewClick && (
                   <Tooltip title="View Details">
                     <IconButton size="small" onClick={() => onViewClick(row.original)} color="info">
                       <VisibilityIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                )}
+                )} */}
                 {onEditClick && (
                   <Tooltip title="Edit Office">
                     <IconButton size="small" onClick={() => onEditClick(row.original)} color="primary">

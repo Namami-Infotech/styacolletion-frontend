@@ -3,6 +3,8 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import Navbar from "../../components/common/Navbar";
+import EditCustomerModel from "../../components/dilogs/customer/EditCustomer.Model";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 
 // MUI Icons
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -21,8 +23,11 @@ export default function CustomerDetailsPage() {
   const { customerId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const { isDark } = useThemeMode();
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const passedCustomer = location.state?.customer;
   const passedTask = location.state?.task;
@@ -138,20 +143,26 @@ export default function CustomerDetailsPage() {
 
                   {/* Edit & Delete Action Buttons */}
                   <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <EditIcon sx={{ fontSize: 14 }} />
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                      title="Delete Customer"
-                    >
-                      <DeleteIcon sx={{ fontSize: 16 }} />
-                    </button>
+                    {hasPermission("customer", "edit") && (
+                      <button
+                        type="button"
+                        onClick={() => setEditModalOpen(true)}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <EditIcon sx={{ fontSize: 14 }} />
+                        Edit
+                      </button>
+                    )}
+                    {hasPermission("customer", "delete") && (
+                      <button
+                        type="button"
+                        onClick={() => setDeleteModalOpen(true)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                        title="Delete Customer"
+                      >
+                        <DeleteIcon sx={{ fontSize: 16 }} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -497,6 +508,39 @@ export default function CustomerDetailsPage() {
           </div>
         </div>
       </main>
+
+      {/* Edit Customer Modal */}
+      {editModalOpen && (
+        <EditCustomerModel
+          open={editModalOpen}
+          customer={passedCustomer || customerData}
+          onClose={() => setEditModalOpen(false)}
+          onSuccess={(updated) => {
+            if (updated) {
+              setCustomerData((prev) => ({
+                ...prev,
+                name: getStringVal(updated.name, prev.name),
+                phone: getStringVal(updated.mobile || updated.phone, prev.phone),
+                owner: getStringVal(updated.owner, prev.owner),
+                loanStatus: getStringVal(updated.loanStatus, prev.loanStatus),
+              }));
+            }
+          }}
+          isDark={isDark}
+        />
+      )}
+
+      {/* Delete Customer Modal */}
+      {deleteModalOpen && (
+        <DeleteConfirmationModal
+          open={deleteModalOpen}
+          customer={passedCustomer || customerData}
+          title="Delete Customer"
+          onClose={() => setDeleteModalOpen(false)}
+          onSuccess={() => navigate(-1)}
+          isDark={isDark}
+        />
+      )}
     </div>
   );
 }

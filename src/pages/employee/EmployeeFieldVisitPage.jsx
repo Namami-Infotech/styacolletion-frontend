@@ -1029,11 +1029,8 @@ export default function EmployeeFieldVisitPage() {
   // Retrieve state passed from TaskDetails or navigation
   const passedEmployeeName = location.state?.employeeName || 'KAMAL KUMAR';
   const passedRole = location.state?.role || 'Employee';
-
- // console.log(location, "locationlocationlocation-----------------------------")
-
   const passedEmpId = location.state?.empId || 'CV2060';
-  //console.log(passedEmpId, "passedEmpIdpassedEmpId-----------------------------")
+  const passedPhoneNumber = location.state?.phoneNumber || location.state?.phone || location.state?.mobile || '+91 98765 43210';
 
   const [activeTab, setActiveTab] = useState('Live');
   const [selectedDate, setSelectedDate] = useState('03 Nov 2025');
