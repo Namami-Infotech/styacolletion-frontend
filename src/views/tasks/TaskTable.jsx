@@ -412,7 +412,7 @@ export default function TaskTable({
         id: "designations",
         header: "Designations",
         cell: ({ row }) => {
-          const desig = row.original?.assigneeToEmployeeId.designation ?? row.original?.assigneeToEmployeeId.designations;
+          const desig = row.original?.assigneeToEmployeeId?.designation ?? row.original?.assigneeToEmployeeId?.designations;
           const desigVal = typeof desig === "object" ? desig?.name : (desig ?? "null");
           return (
             <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
