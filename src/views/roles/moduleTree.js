@@ -5,6 +5,7 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import SecurityIcon from '@mui/icons-material/Security';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BusinessIcon from '@mui/icons-material/Business';
+import ContactsIcon from '@mui/icons-material/Contacts';
 import RssFeedIcon from '@mui/icons-material/RssFeed';
 
 export const DEFAULT_ACTIONS = ['add', 'edit', 'delete', 'allView', 'ownView'];
@@ -69,6 +70,15 @@ export const MODULE_TREE = [
     ],
   },
   {
+    key: 'contacts',
+    name: 'Contacts',
+    category: 'Customer & Network',
+    description: 'Contact directory, client relations, and phone numbers',
+    icon: ContactsIcon,
+    accentColor: 'text-amber-500 bg-amber-500/10 border-amber-500/30',
+    actions: ['add', 'edit', 'delete', 'allView', 'ownView'],
+  },
+  {
     key: 'admin',
     name: 'Admin Panel',
     category: 'System',
@@ -81,21 +91,10 @@ export const MODULE_TREE = [
       { key: 'state', name: 'State', description: 'State settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
       { key: 'region', name: 'Region', description: 'Region settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
       { key: 'branch', name: 'Branch', description: 'Branch settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-//{ key: 'department', name: 'Department', description: 'Company departments and business units', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
+      { key: 'office', name: 'Office', description: 'Office locations, punch radius, and office settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
+      { key: 'contacts', name: 'Contacts', description: 'Contact directory settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
+      //{ key: 'department', name: 'Department', description: 'Company departments and business units', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
      // { key: 'designation', name: 'Designation', description: 'Employee job titles and designations', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-     // { key: 'reports', name: 'Reports & Analytics', description: 'System reports and analytics', actions: ['allView', 'ownView'] },
-      // {
-      //   key: 'leavesettings',
-      //   name: 'Leave Settings',
-      //   description: 'Leave configuration & policies',
-      //   subModules: [
-      //     { key: 'leaveType', name: 'Leave Types', description: 'Leave type settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-      //     { key: 'leaveprofile', name: 'Leave Profiles', description: 'Leave profile settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-      //     { key: 'leave', name: 'Leave Settings', description: 'Leave settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-      //     { key: 'nonworking', name: 'Non Working', description: 'Non Working day settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-      //     { key: 'holidays', name: 'Holidays', description: 'Holidays calendar settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-      //   ],
-      // },
     ],
   },
   // {

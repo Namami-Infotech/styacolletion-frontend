@@ -44,6 +44,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import SecurityIcon from '@mui/icons-material/Security';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BusinessIcon from '@mui/icons-material/Business';
+import ContactsIcon from '@mui/icons-material/Contacts';
 import RssFeedIcon from '@mui/icons-material/RssFeed';
 
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -393,6 +394,8 @@ export default function Navbar({
         state: { label: 'State', path: '/admin?tab=state' },
         region: { label: 'Region', path: '/admin?tab=region' },
         branch: { label: 'Branch', path: '/admin?tab=branch' },
+        office: { label: 'Office', path: '/admin?tab=office' },
+        contacts: { label: 'Contacts', path: '/admin?tab=contacts' },
         department: { label: 'Department Settings', path: '/admin?tab=department' },
         designation: { label: 'Designation', path: '/admin?tab=designation' },
         reports: { label: 'Reports', path: '/reports' },
@@ -425,6 +428,8 @@ export default function Navbar({
     settings: { label: 'Settings', path: '/settings', icon: <AdminPanelSettingsIcon fontSize="small" /> },
     tasktype: { label: 'Task Type', path: '/task-types', icon: <AssignmentIcon fontSize="small" /> },
     tasktypesettings: { label: 'Task Type', path: '/task-types', icon: <AssignmentIcon fontSize="small" /> },
+    contacts: { label: 'Contacts', path: '/contacts', icon: <ContactsIcon fontSize="small" /> },
+    contact: { label: 'Contacts', path: '/contacts', icon: <ContactsIcon fontSize="small" /> },
   };
 
   // Dynamically build nav items directly from API permissions

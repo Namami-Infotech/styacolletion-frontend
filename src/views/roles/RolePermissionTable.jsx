@@ -368,19 +368,19 @@ export default function RolePermissionTable({
   }
 
   return (
-    <div className="w-full space-y-4">
-      <TableContainer
-        component={Paper}
-        elevation={0}
-        sx={{
-          borderRadius: '0.75rem',
-          border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
-          backgroundColor: isDark ? '#0f172a' : '#ffffff',
-          overflowX: 'auto',
-        }}
+    <>
+      <Paper
+        className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
+          isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
+        }`}
+        sx={{ width: '100%', margin: 0, maxHeight: 'calc(100vh - 170px)' }}
       >
-        <Table sx={{ minWidth: 700 }} size="small">
-          <TableHead>
+      <TableContainer
+        className="overflow-auto w-full min-h-0 custom-scrollbar"
+        sx={{ maxHeight: 'calc(100vh - 220px)' }}
+      >
+        <Table sx={{ minWidth: 700 }} size="small" stickyHeader>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 30 }}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
@@ -392,6 +392,7 @@ export default function RolePermissionTable({
                     fontWeight: 700,
                     fontSize: '0.75rem',
                     padding: '12px 16px',
+                    backgroundColor: isDark ? '#0f172a !important' : '#f8fafc !important',
                   },
                 }}
               >
@@ -469,8 +470,10 @@ export default function RolePermissionTable({
             )}
           </TableBody>
         </Table>
+      </TableContainer>
 
-        {/* Standard Project Table Pagination Component */}
+      {/* Standard Project Table Pagination Component */}
+      <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200 bg-white'}`}>
         <TablePaginationComponent
           table={table}
           totalData={totalData ?? roles.length}
@@ -480,7 +483,8 @@ export default function RolePermissionTable({
           onRowsPerPageChange={onRowsPerPageChange}
           rowsPerPageOptions={[10, 20, 25, 50]}
         />
-      </TableContainer>
+      </div>
+    </Paper>
 
       {/* JSON Viewer Modal */}
       <Dialog
@@ -518,6 +522,6 @@ export default function RolePermissionTable({
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </>
   );
 }

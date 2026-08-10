@@ -167,17 +167,17 @@ export default function TaskTypeTable({
   return (
     <Paper
       elevation={0}
-      className={`flex flex-col flex-1 min-h-0 rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
+      className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
         isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
       }`}
-      sx={{ width: '100%', margin: 0 }}
+      sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 170px)' }}
     >
       <TableContainer
-        className="flex-1 min-h-0 overflow-y-auto custom-scrollbar"
-        style={{ maxHeight: maxHeight || 'calc(100vh - 250px)' }}
+        className="overflow-auto w-full min-h-0 custom-scrollbar"
+        sx={{ maxHeight: maxHeight ? `calc(${maxHeight} - 45px)` : 'calc(100vh - 220px)' }}
       >
         <Table stickyHeader size="small" sx={{ width: '100%' }}>
-          <TableHead>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 30 }}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -189,7 +189,7 @@ export default function TaskTypeTable({
                       align={isActionCol ? 'right' : 'left'}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                       sx={{
-                        backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                        backgroundColor: isDark ? '#0f172a !important' : '#f8fafc !important',
                         color: isDark ? '#94a3b8' : '#475569',
                         fontWeight: 700,
                         fontSize: '0.75rem',
@@ -260,13 +260,15 @@ export default function TaskTypeTable({
         </Table>
       </TableContainer>
 
-      <TablePaginationComponent
-        totalCount={totalData}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-      />
+      <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200 bg-white'}`}>
+        <TablePaginationComponent
+          totalCount={totalData}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+        />
+      </div>
     </Paper>
   );
 }

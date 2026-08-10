@@ -24,8 +24,44 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import { toast } from 'react-toastify';
 
 export default function OfficePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, permissions } = useAuth();
   const { isDark } = useThemeMode();
+
+  const canAdd = React.useMemo(() => {
+    if (!permissions) return true;
+    let actualPerms = permissions;
+    while (actualPerms && actualPerms.permission && typeof actualPerms.permission === 'object') {
+      actualPerms = actualPerms.permission;
+    }
+    const adminPerms = actualPerms?.admin || actualPerms;
+    const node = adminPerms?.office || actualPerms?.office;
+    if (node && typeof node.add === 'boolean') return node.add;
+    return true;
+  }, [permissions]);
+
+  const canEdit = React.useMemo(() => {
+    if (!permissions) return true;
+    let actualPerms = permissions;
+    while (actualPerms && actualPerms.permission && typeof actualPerms.permission === 'object') {
+      actualPerms = actualPerms.permission;
+    }
+    const adminPerms = actualPerms?.admin || actualPerms;
+    const node = adminPerms?.office || actualPerms?.office;
+    if (node && typeof node.edit === 'boolean') return node.edit;
+    return true;
+  }, [permissions]);
+
+  const canDelete = React.useMemo(() => {
+    if (!permissions) return true;
+    let actualPerms = permissions;
+    while (actualPerms && actualPerms.permission && typeof actualPerms.permission === 'object') {
+      actualPerms = actualPerms.permission;
+    }
+    const adminPerms = actualPerms?.admin || actualPerms;
+    const node = adminPerms?.office || actualPerms?.office;
+    if (node && typeof node.delete === 'boolean') return node.delete;
+    return true;
+  }, [permissions]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
@@ -82,7 +118,12 @@ export default function OfficePage() {
 
   useEffect(() => {
     const handleAdminAdd = (e) => {
-      if (!e.detail?.section || e.detail.section === 'department' || e.detail.section === 'designation') {
+      if (
+        !e.detail?.section ||
+        e.detail.section === 'office' ||
+        e.detail.section === 'department' ||
+        e.detail.section === 'designation'
+      ) {
         setSelectedOffice(null);
         setFormModalOpen(true);
       }
@@ -223,33 +264,35 @@ export default function OfficePage() {
             </TextField>
 
             {/* Create Office Button */}
-            <Button
-              onClick={handleOpenCreateModal}
-              variant="contained"
-              size="small"
-              startIcon={<AddIcon />}
-              sx={{
-                background: isDark
-                  ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
-                  : '#0f172a',
-                color: '#ffffff',
-                borderRadius: '12px',
-                textTransform: 'none',
-                fontWeight: 700,
-                px: 2,
-                py: 0.9,
-                boxShadow: isDark
-                  ? '0 6px 16px -4px rgba(99, 102, 241, 0.5)'
-                  : '0 4px 10px rgba(15, 23, 42, 0.2)',
-                '&:hover': {
+            {canAdd && (
+              <Button
+                onClick={handleOpenCreateModal}
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
+                sx={{
                   background: isDark
-                    ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)'
-                    : '#1e293b',
-                },
-              }}
-            >
-              Create Office
-            </Button>
+                    ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+                    : '#0f172a',
+                  color: '#ffffff',
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  px: 2,
+                  py: 0.9,
+                  boxShadow: isDark
+                    ? '0 6px 16px -4px rgba(99, 102, 241, 0.5)'
+                    : '0 4px 10px rgba(15, 23, 42, 0.2)',
+                  '&:hover': {
+                    background: isDark
+                      ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)'
+                      : '#1e293b',
+                  },
+                }}
+              >
+                Create Office
+              </Button>
+            )}
           </div>
         </div>
 
@@ -266,8 +309,8 @@ export default function OfficePage() {
               setRowsPerPage(parseInt(e.target.value, 10));
               setPage(0);
             }}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleDeleteClick}
+            onEditClick={canEdit ? handleEditClick : undefined}
+            onDeleteClick={canDelete ? handleDeleteClick : undefined}
           />
         </div>
       </main>

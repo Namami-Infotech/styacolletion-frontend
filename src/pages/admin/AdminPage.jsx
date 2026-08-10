@@ -32,6 +32,8 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import MapIcon from '@mui/icons-material/Map';
 import ExploreIcon from '@mui/icons-material/Explore';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import LocationCityIcon from '@mui/icons-material/LocationCity';
+import ContactsIcon from '@mui/icons-material/Contacts';
 import SecurityIcon from '@mui/icons-material/Security';
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import BadgeIcon from '@mui/icons-material/Badge';
@@ -47,6 +49,7 @@ import BranchPage from '../location/branch.Page';
 import RolesPage from '../roles/RolesPage';
 import OfficePage from '../office/OfficePage';
 import TaskTypePage from '../tasks/taskTypePage';
+import ContactsTable from '../../views/contacts/contacts.table';
 
 export default function AdminPage() {
   const { isDark } = useThemeMode();
@@ -69,11 +72,12 @@ export default function AdminPage() {
 
       if (!actualPerms || typeof actualPerms !== 'object') return true;
 
-      if (itemKey === 'organizationDetails') return true; // Always visible as main overview
+      if (itemKey === 'organizationDetails') return true; // Always visible in admin management
 
       const adminPerms = actualPerms.admin || actualPerms;
 
       const hasAccess = (node) => {
+        if (node === undefined) return true;
         if (!node) return false;
         if (typeof node === 'boolean') return node;
         if (typeof node === 'object') {
@@ -102,6 +106,33 @@ export default function AdminPage() {
     [permissions]
   );
 
+  // Helper function to check if user has add permission for a module
+  const canAddModule = useCallback(
+    (itemKey) => {
+      if (!permissions) return true;
+
+      let actualPerms = permissions;
+      while (actualPerms && actualPerms.permission && typeof actualPerms.permission === 'object') {
+        actualPerms = actualPerms.permission;
+      }
+
+      if (!actualPerms || typeof actualPerms !== 'object') return true;
+
+      const adminPerms = actualPerms.admin || actualPerms;
+
+      if (['leaveType', 'leaveprofile', 'leave', 'nonworking', 'holidays'].includes(itemKey)) {
+        const nestedNode = adminPerms.leavesettings?.[itemKey] || adminPerms[itemKey] || actualPerms[itemKey];
+        if (nestedNode && typeof nestedNode.add === 'boolean') return nestedNode.add;
+      }
+
+      const node = adminPerms[itemKey] || actualPerms[itemKey];
+      if (node && typeof node.add === 'boolean') return node.add;
+
+      return true;
+    },
+    [permissions]
+  );
+
   // Sidebar Menu Items Definition
   const ADMIN_SIDEBAR_MENU = useMemo(
     () => [
@@ -110,44 +141,7 @@ export default function AdminPage() {
       { key: 'state', name: 'State', icon: MapIcon, description: 'Manage state regions, status configurations, and coverage details' },
       { key: 'region', name: 'Region', icon: ExploreIcon, description: 'Manage geographical regions and territory boundaries' },
       { key: 'branch', name: 'Branch', icon: LocationOnIcon, description: 'Manage office branches and location details' },
-      { key: 'department', name: 'Department Settings', icon: BusinessCenterIcon, description: 'Manage department settings and organizational structure' },
-      { key: 'designation', name: 'Designation', icon: BadgeIcon, description: 'Manage employee designations and job titles' },
-      {
-        key: 'leavesettings',
-        name: 'Leave Settings',
-        icon: EventBusyIcon,
-        description: 'Manage leave types, profiles, settings, and holiday calendar',
-        subItems: [
-          { key: 'leaveType', name: 'Leave Types', icon: HowToRegIcon, description: 'Manage leave category types and rules' },
-          { key: 'leaveprofile', name: 'Leave Profiles', icon: HowToRegIcon, description: 'Manage leave profiles and allocations' },
-          { key: 'leave', name: 'Leave Settings', icon: HowToRegIcon, description: 'Manage general leave settings and configurations' },
-          { key: 'nonworking', name: 'Non Working', icon: EventBusyIcon, description: 'Manage non-working days and weekend settings' },
-          { key: 'holidays', name: 'Holidays', icon: EventBusyIcon, description: 'Manage company holiday calendar and dates' },
-        ],
-      },
-      {
-        key: 'employeeSetup',
-        name: "Employee's Setup",
-        icon: GroupAddIcon,
-        description: "Manage employee setup, roles, and custom field configurations",
-        subItems: [
-          { key: 'employeeRoles', name: 'Employee Roles', icon: SecurityIcon, description: 'Manage employee roles and permissions' },
-          { key: 'employeeFields', name: 'Custom Fields', icon: DescriptionIcon, description: 'Manage custom employee profile fields' },
-        ],
-      },
-      { key: 'shifts', name: 'Working Shifts', icon: AccessTimeIcon, description: 'Manage working shift schedules and timings' },
-      { key: 'emailTemplates', name: 'Email templates', icon: EmailIcon, description: 'Manage and customize automated email templates' },
-      { key: 'emailAudit', name: 'Email Audit', icon: MarkEmailReadIcon, description: 'Audit and track system email logs' },
-      { key: 'integrations', name: 'Integrations', icon: ExtensionIcon, description: 'Configure third-party application integrations' },
-      { key: 'exports', name: 'Exports', icon: FileUploadIcon, description: 'Manage system data exports and downloads' },
-      { key: 'forms', name: 'Forms', icon: DynamicFormIcon, description: 'Configure dynamic forms and survey templates' },
-      { key: 'tags', name: 'Tags', icon: LocalOfferIcon, description: 'Manage system tags and category labels' },
-      { key: 'process', name: 'Process', icon: AccountTreeIcon, description: 'Configure business processes and operational flows' },
-      { key: 'workflows', name: 'Workflows', icon: AltRouteIcon, description: 'Manage automated system workflows' },
-      { key: 'notifications', name: 'Notifications', icon: NotificationsIcon, description: 'Configure notification alerts and settings' },
-      { key: 'attendancePolicies', name: 'Attendance Policies', icon: AssignmentTurnedInIcon, description: 'Manage attendance rules and policy settings' },
-      { key: 'communication', name: 'Communication Channel', icon: ChatIcon, description: 'Configure communication channels and notifications' },
-      { key: 'documents', name: 'Document Types', icon: DescriptionIcon, description: 'Manage document categories and guidelines' },
+      { key: 'office', name: 'Office Settings', icon: LocationCityIcon, description: 'Manage office locations, punch-in radius, and office details' },
     ],
     []
   );
@@ -248,6 +242,10 @@ export default function AdminPage() {
         return 'Add Region';
       case 'branch':
         return 'Add Branch';
+      case 'office':
+        return 'Add Office';
+      case 'contacts':
+        return 'Add Contact';
       case 'role':
         return 'Add Role';
       case 'department':
@@ -274,14 +272,14 @@ export default function AdminPage() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+    <div className={`h-screen max-h-screen overflow-hidden flex flex-col ${isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
       <Navbar />
 
       {/* Admin Outer Container */}
-      <div className="flex-1 px-4 md:px-6 py-4 md:py-5 flex flex-col w-full">
+      <div className="flex-1 min-h-0 px-3 md:px-5 py-2.5 md:py-3 flex flex-col w-full overflow-hidden">
         {/* Top Header Card */}
         <div
-          className={`p-4 rounded-xl border shadow-xs mb-4 flex items-center justify-between transition-colors ${
+          className={`p-3 rounded-xl border shadow-xs mb-2.5 flex items-center justify-between transition-colors ${
             isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           }`}
         >
@@ -300,13 +298,15 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleAdminAddClick}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer shadow-sm transition-all duration-150 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95"
-            >
-              <AddIcon sx={{ fontSize: 16 }} />
-              <span>{getAddButtonLabel(activeSectionKey, activeItem)}</span>
-            </button>
+            {canAddModule(activeSectionKey) && (
+              <button
+                onClick={handleAdminAddClick}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer shadow-sm transition-all duration-150 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95"
+              >
+                <AddIcon sx={{ fontSize: 16 }} />
+                <span>{getAddButtonLabel(activeSectionKey, activeItem)}</span>
+              </button>
+            )}
 
             <button
               onClick={() => navigate(-1)}
@@ -348,94 +348,80 @@ export default function AdminPage() {
                 placeholder="Search here..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border transition-colors outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full pl-9 pr-3 py-2 rounded-lg text-xs font-medium border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   isDark
-                    ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-400'
-                    : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
+                    ? 'bg-slate-800 border-slate-700 text-slate-200 placeholder-slate-500'
+                    : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
                 }`}
               />
-              <SearchIcon
-                className="absolute left-2.5 top-2 text-slate-400"
-                sx={{ fontSize: 16 }}
-              />
+              <SearchIcon className="absolute left-2.5 top-2.5 text-slate-400" sx={{ fontSize: 16 }} />
             </div>
 
-            {/* Sidebar Navigation Items List */}
-            <div className="flex-1 overflow-y-auto max-h-[70vh] space-y-0.5 pr-1">
+            {/* Menu List */}
+            <div className="flex flex-col gap-1 overflow-y-auto max-h-[calc(100vh-210px)] custom-scrollbar pr-1">
               {filteredSidebarMenu.map((item) => {
-                const IconComponent = item.icon;
-                const hasSub = item.subItems && item.subItems.length > 0;
-                const isGroupExpanded = expandedGroups[item.key] ?? false;
-                const isItemActive = activeSectionKey === item.key;
+                const isGroup = Boolean(item.subItems && item.subItems.length > 0);
+                const isGroupExpanded = Boolean(expandedGroups[item.key]);
+                const isGroupChildActive = isGroup && item.subItems.some((sub) => sub.key === activeSectionKey);
+                const isSelfActive = !isGroup && item.key === activeSectionKey;
 
                 return (
                   <div key={item.key} className="flex flex-col">
+                    {/* Single Item or Group Parent Accordion Header */}
                     <button
                       onClick={() => {
-                        if (hasSub) {
+                        if (isGroup) {
                           toggleGroup(item.key);
                         } else {
                           handleSelectSection(item.key);
                         }
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg transition-all cursor-pointer font-medium relative ${
-                        isItemActive
-                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold border-r-4 border-blue-600'
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        isSelfActive || isGroupChildActive
+                          ? isDark
+                            ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                            : 'bg-blue-50 text-blue-700 border border-blue-200'
                           : isDark
-                          ? 'text-slate-300 hover:bg-slate-800/60'
-                          : 'text-slate-700 hover:bg-slate-50'
+                          ? 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        {IconComponent && (
-                          <IconComponent
-                            className={
-                              isItemActive
-                                ? 'text-blue-600 dark:text-blue-400'
-                                : 'text-slate-400 dark:text-slate-500'
-                            }
-                            sx={{ fontSize: 16 }}
-                          />
-                        )}
+                        {React.createElement(item.icon, {
+                          sx: {
+                            fontSize: 18,
+                            color: isSelfActive || isGroupChildActive ? '#2563eb' : isDark ? '#94a3b8' : '#64748b',
+                          },
+                        })}
                         <span className="truncate">{item.name}</span>
                       </div>
 
-                      {hasSub && (
+                      {isGroup && (
                         <div className="text-slate-400">
-                          {isGroupExpanded ? (
-                            <KeyboardArrowDownIcon sx={{ fontSize: 16 }} />
-                          ) : (
-                            <KeyboardArrowRightIcon sx={{ fontSize: 16 }} />
-                          )}
+                          {isGroupExpanded ? <KeyboardArrowDownIcon sx={{ fontSize: 16 }} /> : <KeyboardArrowRightIcon sx={{ fontSize: 16 }} />}
                         </div>
                       )}
                     </button>
 
-                    {/* Sub Items */}
-                    {hasSub && isGroupExpanded && (
-                      <div className="pl-6 space-y-0.5 mt-0.5">
+                    {/* Group Sub-Items Accordion Body */}
+                    {isGroup && isGroupExpanded && (
+                      <div className="flex flex-col ml-4 mt-1 pl-2 border-l border-slate-200 dark:border-slate-800 gap-1">
                         {item.subItems.map((sub) => {
-                          const SubIcon = sub.icon;
-                          const isSubActive = activeSectionKey === sub.key;
-
+                          const isSubActive = sub.key === activeSectionKey;
                           return (
                             <button
                               key={sub.key}
                               onClick={() => handleSelectSection(sub.key)}
-                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md transition-all cursor-pointer ${
+                              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                                 isSubActive
-                                  ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold'
+                                  ? isDark
+                                    ? 'bg-blue-600/30 text-blue-300 font-bold'
+                                    : 'bg-blue-100 text-blue-800 font-bold'
                                   : isDark
-                                  ? 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
-                                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                  ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                               }`}
                             >
-                              {SubIcon && (
-                                <SubIcon
-                                  className={isSubActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}
-                                  sx={{ fontSize: 14 }}
-                                />
-                              )}
                               <span className="truncate">{sub.name}</span>
                             </button>
                           );
@@ -449,24 +435,23 @@ export default function AdminPage() {
           </div>
 
           {/* Right Main Content Area */}
-          <div className="flex-1 min-w-0 w-full [&_header]:!hidden [&_nav]:!hidden [&_main>div:first-child]:!hidden">
+          <div className="flex-1 min-w-0 h-full min-h-0 flex flex-col w-full [&_header]:!hidden [&_nav]:!hidden [&_main>div:first-child]:!hidden">
             {activeSectionKey === 'organizationDetails' && <OrganizationDetailsView />}
-            {activeSectionKey === 'tasktype' && (
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
-                <TaskTypePage />
-              </div>
-            )}
+            {activeSectionKey === 'tasktype' && <TaskTypePage />}
             {activeSectionKey === 'state' && <StatePage />}
             {activeSectionKey === 'region' && <RegionPage />}
             {activeSectionKey === 'branch' && <BranchPage />}
             {activeSectionKey === 'role' && <RolesPage />}
-            {(activeSectionKey === 'department' || activeSectionKey === 'designation') && <OfficePage />}
+            {(activeSectionKey === 'office' || activeSectionKey === 'department' || activeSectionKey === 'designation') && <OfficePage />}
+            {activeSectionKey === 'contacts' && <ContactsTable searchTerm={searchTerm} />}
             {activeSectionKey !== 'organizationDetails' &&
               activeSectionKey !== 'tasktype' &&
               activeSectionKey !== 'state' &&
               activeSectionKey !== 'region' &&
               activeSectionKey !== 'branch' &&
               activeSectionKey !== 'role' &&
+              activeSectionKey !== 'office' &&
+              activeSectionKey !== 'contacts' &&
               activeSectionKey !== 'department' &&
               activeSectionKey !== 'designation' && (
                 <GenericAdminSectionView

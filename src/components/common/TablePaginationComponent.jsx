@@ -102,7 +102,7 @@ export default function TablePaginationComponent({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t text-xs font-medium transition-colors duration-200 ${
+      className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-3.5 py-1.5 border-t text-xs font-medium transition-colors duration-200 ${
         isDark
           ? 'border-slate-800/80 bg-slate-900/90 text-slate-300'
           : 'border-slate-200 bg-white text-slate-700'

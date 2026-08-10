@@ -193,12 +193,15 @@ export default function StateTable({
 
   return (
     <Paper
-      className={`flex flex-col flex-1 min-h-0 rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
+      className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
         isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
       }`}
-      sx={{ width: '100%', margin: 0 }}
+      sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 170px)' }}
     >
-      <TableContainer className="overflow-auto w-full flex-1 min-h-0" sx={{ maxHeight: maxHeight || 'none' }}>
+      <TableContainer
+        className="overflow-auto w-full min-h-0 custom-scrollbar"
+        sx={{ maxHeight: maxHeight ? `calc(${maxHeight} - 45px)` : 'calc(100vh - 220px)' }}
+      >
         <Table sx={{ minWidth: 600 }} aria-label="state table" stickyHeader>
           <TableHead sx={{ position: 'sticky', top: 0, zIndex: 30 }}>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -271,13 +274,15 @@ export default function StateTable({
       </TableContainer>
 
       {/* Pagination Footer */}
-      <TablePaginationComponent
-        count={totalData}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-      />
+      <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200 bg-white'}`}>
+        <TablePaginationComponent
+          count={totalData}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+        />
+      </div>
     </Paper>
   );
 }
