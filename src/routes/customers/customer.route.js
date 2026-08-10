@@ -21,11 +21,17 @@ export const CustomerRoute = {
       return errorData;
     }
   },
-  getCustomers: async ({search= '', page = 1, limit = 10, status = 'All'} = {}) => {
+  getCustomers: async ({search= '', page = 1, limit = 10, status = 'All', loanStatus} = {}) => {
     try {
+      const activeStatus = loanStatus || status;
+      const params = { search: search || undefined, page, limit };
+      if (activeStatus && activeStatus !== 'All' && activeStatus !== 'all') {
+        params.status = activeStatus;
+        params.loanStatus = activeStatus;
+      }
       const result = await axios.get(`${baseURL}/api/v1/customers/get-all`, {
         withCredentials: true,
-        params: {search, page, limit, status},
+        params,
       });
       return result.data;
     } catch (error) {

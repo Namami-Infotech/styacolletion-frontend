@@ -76,7 +76,7 @@ export default function CustomerTable({
         page: page + 1,
         limit: rowsPerPage,
         search: searchTerm || undefined,
-        status: selectedStatus !== 'All' ? selectedStatus : undefined,
+        loanStatus: selectedStatus !== 'All' ? selectedStatus : undefined,
       });
 
       if (res?.success && res?.data?.customers) {
@@ -94,6 +94,10 @@ export default function CustomerTable({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, selectedStatus]);
 
   useEffect(() => {
     fetchCustomers();
