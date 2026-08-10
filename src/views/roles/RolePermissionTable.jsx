@@ -103,6 +103,7 @@ export default function RolePermissionTable({
   onEditClick,
   onDeleteClick,
   loading = false,
+  maxHeight,
 }) {
   const [sorting, setSorting] = useState([]);
   const { isDark } = useThemeMode();
@@ -373,11 +374,11 @@ export default function RolePermissionTable({
         className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
           isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
         }`}
-        sx={{ width: '100%', margin: 0, maxHeight: 'calc(100vh - 170px)' }}
+        sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 310px)' }}
       >
       <TableContainer
-        className="overflow-auto w-full min-h-0 custom-scrollbar"
-        sx={{ maxHeight: 'calc(100vh - 220px)' }}
+        className="overflow-auto overflow-y-auto w-full flex-1 min-h-0 custom-scrollbar"
+        sx={{ maxHeight: maxHeight ? `calc(${maxHeight} - 45px)` : 'calc(100vh - 360px)' }}
       >
         <Table sx={{ minWidth: 700 }} size="small" stickyHeader>
           <TableHead sx={{ position: 'sticky', top: 0, zIndex: 30 }}>

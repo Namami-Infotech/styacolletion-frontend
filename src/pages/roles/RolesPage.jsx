@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   TextField,
   InputAdornment,
@@ -313,6 +313,24 @@ export default function RolesPage() {
     }
   };
 
+  // Filtered roles based on search and status filter
+  const filteredRoles = useMemo(() => {
+    return roles.filter((role) => {
+      const matchSearch =
+        !searchTerm ||
+        role.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        role.role_custom_id?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchStatus =
+        selectedStatus === 'All' ||
+        (selectedStatus === 'Active' && role.status === 'active') ||
+        (selectedStatus === 'Inactive' && role.status !== 'active');
+
+      return matchSearch && matchStatus;
+    });
+  }, [roles, searchTerm, selectedStatus]);
+
   // Stats calculation
   const totalRoles = roles.length;
   const activeRolesCount = roles.filter((r) => r.status === 'active').length;
@@ -537,7 +555,7 @@ export default function RolesPage() {
         {/* Tab 1: Roles List Table */}
         {activeTab === 'rolesList' && (
           <RolePermissionTable
-            roles={roles}
+            roles={filteredRoles}
             loading={loading}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
