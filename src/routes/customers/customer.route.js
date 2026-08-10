@@ -96,4 +96,23 @@ export const CustomerRoute = {
       return errorData;
     }
   },
+  uploadExcelCustomers: async (formData) => {
+    try {
+      const result = await axios.post(`${baseURL}/api/v1/customers/upload-excel`, formData, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return result.data;
+    } catch (error) {
+      console.log(error);
+      const errorData = error.response?.data || {
+        statusCode: 500,
+        message: error.message || "Failed to upload excel customers",
+        success: false,
+      };
+      return errorData;
+    }
+  },
 };

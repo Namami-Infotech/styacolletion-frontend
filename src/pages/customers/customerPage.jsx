@@ -8,6 +8,8 @@ import {
 
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 import { useLocation } from 'react-router-dom';
 import Navbar from '../../components/common/Navbar';
@@ -17,6 +19,7 @@ import { useThemeMode } from '../../contexts/ThemeContext';
 import CreateCustomerModal from '../../components/dilogs/customer/CreateCustomer.Model';
 import EditCustomerModel from '../../components/dilogs/customer/EditCustomer.Model';
 import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
+import CustomerImportModal, { exportCustomersToExcel } from '../../components/dilogs/customer/CustomerImportModal';
 import CustomerDetailsPage from './customerDetailsPage';
 
 export default function CustomerPage() {
@@ -31,6 +34,7 @@ export default function CustomerPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedCustomerForEdit, setSelectedCustomerForEdit] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -76,7 +80,7 @@ export default function CustomerPage() {
             </div>
           </div>
 
-          {/* Controls: Search, Status Filter & Create Action */}
+          {/* Controls: Search, Status Filter & Actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 flex-1 min-w-0">
             {/* Search Input */}
             <TextField
@@ -134,34 +138,89 @@ export default function CustomerPage() {
               <MenuItem value="Pending">Pending</MenuItem>
             </TextField>
 
-            {/* Create Customer Button */}
-            {hasPermission("customer", "add") && <Button
-              onClick={() => setCreateModalOpen(true)}
-              variant="contained"
+            {/* Export Excel Button */}
+            <Button
+              onClick={() => exportCustomersToExcel([], `Customers_Export_${new Date().toISOString().slice(0, 10)}.xlsx`)}
+              variant="outlined"
               size="small"
-              startIcon={<AddIcon />}
+              startIcon={<FileDownloadIcon />}
               sx={{
-                background: isDark
-                  ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
-                  : '#0f172a',
-                color: '#ffffff',
                 borderRadius: '12px',
                 textTransform: 'none',
-                fontWeight: 700,
+                fontWeight: 600,
+                borderColor: isDark ? '#10b981' : '#059669',
+                color: isDark ? '#34d399' : '#059669',
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : '#ecfdf5',
                 px: 2,
                 py: 0.9,
-                boxShadow: isDark
-                  ? '0 6px 16px -4px rgba(99, 102, 241, 0.5)'
-                  : '0 4px 10px rgba(15, 23, 42, 0.2)',
+                whiteSpace: 'nowrap',
                 '&:hover': {
-                  background: isDark
-                    ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)'
-                    : '#1e293b',
+                  borderColor: isDark ? '#34d399' : '#047857',
+                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#d1fae5',
                 },
               }}
             >
-              Create Customer
-            </Button>}
+              Export Excel
+            </Button>
+
+            {/* Import Excel Button */}
+            {hasPermission("customer", "add") && (
+              <Button
+                onClick={() => setImportModalOpen(true)}
+                variant="outlined"
+                size="small"
+                startIcon={<UploadFileIcon />}
+                sx={{
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderColor: isDark ? '#6366f1' : '#4f46e5',
+                  color: isDark ? '#818cf8' : '#4f46e5',
+                  backgroundColor: isDark ? 'rgba(99, 102, 241, 0.1)' : '#eef2ff',
+                  px: 2,
+                  py: 0.9,
+                  whiteSpace: 'nowrap',
+                  '&:hover': {
+                    borderColor: isDark ? '#818cf8' : '#3730a3',
+                    backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#e0e7ff',
+                  },
+                }}
+              >
+                Import Excel
+              </Button>
+            )}
+
+            {/* Create Customer Button */}
+            {hasPermission("customer", "add") && (
+              <Button
+                onClick={() => setCreateModalOpen(true)}
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon />}
+                sx={{
+                  background: isDark
+                    ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+                    : '#0f172a',
+                  color: '#ffffff',
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  px: 2,
+                  py: 0.9,
+                  whiteSpace: 'nowrap',
+                  boxShadow: isDark
+                    ? '0 6px 16px -4px rgba(99, 102, 241, 0.5)'
+                    : '0 4px 10px rgba(15, 23, 42, 0.2)',
+                  '&:hover': {
+                    background: isDark
+                      ? 'linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)'
+                      : '#1e293b',
+                  },
+                }}
+              >
+                Create Customer
+              </Button>
+            )}
           </div>
         </div>
 
@@ -188,6 +247,16 @@ export default function CustomerPage() {
         <CreateCustomerModal
           open={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
+          onSuccess={handleRefresh}
+          isDark={isDark}
+        />
+      )}
+
+      {/* Modal Dialog for Customer Import */}
+      {importModalOpen && (
+        <CustomerImportModal
+          open={importModalOpen}
+          onClose={() => setImportModalOpen(false)}
           onSuccess={handleRefresh}
           isDark={isDark}
         />
