@@ -53,5 +53,21 @@ export const EmployeeRoute = {
       };
       return errorData;
     }
+  },
+  refreshToken: async () => {
+    try {
+      const result = await axios.post(`${baseURL}/api/v1/employees/refresh-token`, {}, {
+        withCredentials: true,
+      });
+      return result.data;
+    } catch (error) {
+      console.log(error);
+      const errorData = error.response?.data || {
+        statusCode: 500,
+        message: error.message || "Failed to refresh token",
+        success: false,
+      };
+      return errorData;
+    }
   }
 };

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/common/Navbar';
 import EmployeeTable from '../../views/employee/EmployeeTable';
 import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
-import { MOCK_EMPLOYEES } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { DashboardRoute } from '../../routes/dashboard/dashboard.route';
@@ -55,7 +54,7 @@ export default function DashboardPage() {
   const [chartKey, setChartKey] = useState(0);
 
   // Employee list state
-  const [employees, setEmployees] = useState(MOCK_EMPLOYEES);
+  const [employees, setEmployees] = useState([]);
 
   // Sidebar state
   const [activeSidebar, setActiveSidebar] = useState('Summary');

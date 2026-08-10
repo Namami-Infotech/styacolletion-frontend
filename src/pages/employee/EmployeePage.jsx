@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { MOCK_EMPLOYEES } from '../../services/api';
 import { EmployeeRoute } from '../../routes/employee/employee.route.js';
 
 // MUI Components
