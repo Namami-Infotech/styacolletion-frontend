@@ -5,8 +5,13 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  CircularProgress,
 } from "@mui/material";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DeleteIcon from "@mui/icons-material/Delete";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { CustomerRoute } from "../../../routes/customers/customer.route.js";
+import { UploadRoute } from "../../../routes/upload/upload.route.js";
 import { toast } from "react-toastify";
 
 export default function EditCustomerModel({
@@ -20,12 +25,14 @@ export default function EditCustomerModel({
   const [formData, setFormData] = useState({});
   const [loadingFields, setLoadingFields] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingFields, setUploadingFields] = useState({});
 
   useEffect(() => {
     if (open && customer) {
       loadCustomerFields();
     } else {
       setFormData({});
+      setUploadingFields({});
     }
   }, [open, customer]);
 
@@ -59,6 +66,45 @@ export default function EditCustomerModel({
 
   const handleChange = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleImageUpload = async (fieldName, event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploadingFields((prev) => ({ ...prev, [fieldName]: true }));
+      const base64Image = await convertFileToBase64(file);
+
+      // Temporarily set base64 preview while uploading
+      handleChange(fieldName, base64Image);
+
+      const res = await UploadRoute.uploadImage(base64Image, "customer");
+      if (res?.success && (res?.data?.url || res?.url)) {
+        const uploadedUrl = res.data?.url || res.url;
+        handleChange(fieldName, uploadedUrl);
+        toast.success("Image uploaded successfully!");
+      } else {
+        toast.error(res?.message || "Failed to upload image.");
+        handleChange(fieldName, "");
+      }
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      toast.error("Failed to process or upload image.");
+      handleChange(fieldName, "");
+    } finally {
+      setUploadingFields((prev) => ({ ...prev, [fieldName]: false }));
+      if (event.target) event.target.value = "";
+    }
   };
 
   const handleSubmit = async () => {
@@ -161,6 +207,133 @@ export default function EditCustomerModel({
                 transition: "border-color 0.2s",
               };
 
+              const isImageField =
+                field.name === "image" ||
+                field.name === "imageUrl" ||
+                field.name === "photo" ||
+                field.type === "file" ||
+                (field.label && field.label.toLowerCase().includes("image"));
+
+              if (isImageField) {
+                const isUploading = !!uploadingFields[field.name];
+                const currentImageUrl = val;
+
+                return (
+                  <div key={fieldKey} className="flex flex-col">
+                    <FieldLabel />
+                    <div
+                      style={{
+                        ...nativeInputStyle,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
+                        minHeight: "40px",
+                        padding: currentImageUrl ? "4px 10px" : "6px 12px",
+                      }}
+                    >
+                      {currentImageUrl ? (
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className="relative w-7 h-7 flex-shrink-0 flex items-center justify-center">
+                              <img
+                                src={currentImageUrl}
+                                alt="Preview"
+                                className={`w-7 h-7 object-cover rounded-md border shadow-xs transition-opacity ${
+                                  isUploading ? "opacity-40" : "opacity-100"
+                                }`}
+                                style={{ borderColor: isDark ? "#334155" : "#cbd5e1" }}
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = "https://via.placeholder.com/40?text=IMG";
+                                }}
+                              />
+                              {isUploading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">
+                                  <CircularProgress size={14} sx={{ color: "#ffffff" }} />
+                                </div>
+                              )}
+                            </div>
+
+                            <span
+                              className="text-xs truncate font-medium"
+                              style={{ color: isDark ? "#e2e8f0" : "#334155" }}
+                              title={currentImageUrl}
+                            >
+                              {isUploading ? (
+                                <span className="text-indigo-600 dark:text-indigo-400 font-semibold animate-pulse">
+                                  Uploading image...
+                                </span>
+                              ) : (
+                                "Image Attached"
+                              )}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {isUploading ? (
+                              <CircularProgress size={16} color="primary" />
+                            ) : (
+                              <>
+                                <label
+                                  htmlFor={`file-input-${fieldId}`}
+                                  className="text-xs font-semibold cursor-pointer text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5"
+                                >
+                                  <RefreshIcon style={{ fontSize: 13 }} />
+                                  Change
+                                </label>
+                                <span className="text-slate-300 dark:text-slate-700">|</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleChange(field.name, "")}
+                                  className="text-xs font-semibold cursor-pointer text-rose-500 hover:underline flex items-center gap-0.5"
+                                >
+                                  <DeleteIcon style={{ fontSize: 13 }} />
+                                  Remove
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ) : isUploading ? (
+                        <div className="flex items-center gap-2 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                          <CircularProgress size={18} color="inherit" />
+                          <span>Uploading image...</span>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor={`file-input-${fieldId}`}
+                          className="flex items-center justify-between w-full cursor-pointer text-xs group"
+                          style={{ color: isDark ? "#94a3b8" : "#64748b" }}
+                        >
+                          <span className="truncate">Upload customer image...</span>
+                          <div
+                            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors"
+                            style={{
+                              backgroundColor: isDark ? "rgba(99,102,241,0.15)" : "#eef2ff",
+                              color: isDark ? "#818cf8" : "#4f46e5",
+                              border: `1px solid ${isDark ? "rgba(99,102,241,0.3)" : "#c7d2fe"}`,
+                            }}
+                          >
+                            <CloudUploadIcon style={{ fontSize: 16 }} />
+                            Browse
+                          </div>
+                        </label>
+                      )}
+
+                      <input
+                        id={`file-input-${fieldId}`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isUploading}
+                        onChange={(e) => handleImageUpload(field.name, e)}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
               if (field.type === "select") {
                 return (
                   <div key={fieldKey} className="flex flex-col">
@@ -225,3 +398,4 @@ export default function EditCustomerModel({
     </Dialog>
   );
 }
+
