@@ -102,11 +102,10 @@ export default function TablePaginationComponent({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-3.5 py-1.5 border-t text-xs font-medium transition-colors duration-200 ${
-        isDark
+      className={`flex flex-col sm:flex-row items-center justify-between gap-3 px-3.5 py-1.5 border-t text-xs font-medium transition-colors duration-200 ${isDark
           ? 'border-slate-800/80 bg-slate-900/90 text-slate-300'
           : 'border-slate-200 bg-white text-slate-700'
-      }`}
+        }`}
     >
       {/* Left side: Rows per page selector & range info */}
       <div className="flex items-center gap-4 flex-wrap">
@@ -221,15 +220,14 @@ export default function TablePaginationComponent({
               <button
                 key={pageItem}
                 onClick={(e) => handlePageClick(e, pageItem)}
-                className={`min-w-[30px] h-[30px] px-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center justify-center cursor-pointer ${
-                  isSelected
+                className={`min-w-[30px] h-[30px] px-2 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center justify-center cursor-pointer ${isSelected
                     ? isDark
                       ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/30 border border-indigo-400/50'
                       : 'bg-slate-900 text-white shadow-sm border border-slate-900'
                     : isDark
                       ? 'bg-slate-800/60 text-slate-300 border border-slate-700/50 hover:bg-slate-700/80 hover:text-white'
                       : 'bg-slate-100 text-slate-800 border border-slate-300 hover:bg-slate-200 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 {pageItem + 1}
               </button>

@@ -38,6 +38,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import BadgeIcon from '@mui/icons-material/Badge';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 
 // Views
 import OrganizationDetailsView from '../../views/admin/OrganizationDetailsView';
@@ -50,6 +51,7 @@ import RolesPage from '../roles/RolesPage';
 import OfficePage from '../office/OfficePage';
 import TaskTypePage from '../tasks/taskTypePage';
 import ContactsTable from '../../views/contacts/contacts.table';
+import LoanNumberPage from '../loanNumberPage/LoanNumberPage';
 
 export default function AdminPage() {
   const { isDark } = useThemeMode();
@@ -142,6 +144,7 @@ export default function AdminPage() {
       { key: 'region', name: 'Region', icon: ExploreIcon, description: 'Manage geographical regions and territory boundaries' },
       { key: 'branch', name: 'Branch', icon: LocationOnIcon, description: 'Manage office branches and location details' },
       { key: 'office', name: 'Office Settings', icon: LocationCityIcon, description: 'Manage office locations, punch-in radius, and office details' },
+      { key: 'loanNos', name: 'Loan Nos', icon: FormatListNumberedIcon, description: 'Manage loan numbers and perform bulk Excel upload' },
     ],
     []
   );
@@ -198,6 +201,7 @@ export default function AdminPage() {
       else if (path.includes('branches')) setActiveSectionKey('branch');
       else if (path.includes('roles')) setActiveSectionKey('role');
       else if (path.includes('office')) setActiveSectionKey('department');
+      else if (path.includes('loan-nos') || path.includes('loannumbers')) setActiveSectionKey('loanNos');
       else if (path.includes('leave-types')) setActiveSectionKey('leaveType');
       else if (path.includes('leave-profiles')) setActiveSectionKey('leaveprofile');
       else if (path.includes('leaves')) setActiveSectionKey('leave');
@@ -244,6 +248,8 @@ export default function AdminPage() {
         return 'Add Branch';
       case 'office':
         return 'Add Office';
+      case 'loanNos':
+        return 'Add Loan No';
       case 'contacts':
         return 'Add Contact';
       case 'role':
@@ -444,6 +450,7 @@ export default function AdminPage() {
             {activeSectionKey === 'role' && <RolesPage />}
             {(activeSectionKey === 'office' || activeSectionKey === 'department' || activeSectionKey === 'designation') && <OfficePage />}
             {activeSectionKey === 'contacts' && <ContactsTable searchTerm={searchTerm} />}
+            {activeSectionKey === 'loanNos' && <LoanNumberPage />}
             {activeSectionKey !== 'organizationDetails' &&
               activeSectionKey !== 'tasktype' &&
               activeSectionKey !== 'state' &&
@@ -452,6 +459,7 @@ export default function AdminPage() {
               activeSectionKey !== 'role' &&
               activeSectionKey !== 'office' &&
               activeSectionKey !== 'contacts' &&
+              activeSectionKey !== 'loanNos' &&
               activeSectionKey !== 'department' &&
               activeSectionKey !== 'designation' && (
                 <GenericAdminSectionView

@@ -31,67 +31,102 @@ export const downloadCustomerDemoExcel = () => {
     "Customer Name": "Rahul Sharma",
     "Email Address": "rahul.sharma@example.com",
     "Phone Number": "9876543210",
+    "Owner Employee": "EMP101",
     "Location": "Connaught Place, New Delhi",
     "District": "Central Delhi",
     "State": "Delhi",
+    "Sub State": "North Delhi",
+    "Pincode": "110001",
     "Branch": "Delhi Central",
     "Branch Code": "BR001",
     "Center": "CP Center",
     "Center Code": "CNT01",
-    "Loan Type": "Personal Loan",
+    "Loan Type": "IL",
     "Loan No": "LN-1001",
+    "Old Loan No": "OLD-LN-801",
+    "Old Customer No": "OLD-CUST-101",
+    "Cycle": 1,
+    "Loan Disb Date": "2024-01-15",
     "Loan Amount": 50000,
+    "O/S Principal": 40000,
+    "O/S Interest": 2000,
+    "PAR": 0,
+    "O/D Principal": 0,
+    "O/D Interest": 0,
     "Total Due Amount": 12000,
+    "Total Principal Collectible": 5000,
+    "Total Interest Collectible": 1000,
+    "IRR Rate": 12.5,
+    "No Of Installments": 12,
+    "Last Due Date": "2024-12-15",
+    "Last Paid Trx Date": "2024-11-10",
+    "DPD": 0,
+    "Paid Inst No": "10",
     "Loan Status": "Open",
     "Spouse Name": "Anita Sharma",
     "Installment Amount": 5000,
-    "No Of Installments": 12,
+    "Maturity Date": "2025-01-15",
+    "Pre Closure Amt": 42000,
+    "Closed Date": "",
   };
 
   const sampleRow2 = {
     "Customer Name": "Priya Patel",
     "Email Address": "priya.patel@example.com",
     "Phone Number": "9812345678",
+    "Owner Employee": "EMP102",
     "Location": "MG Road, Bengaluru",
     "District": "Bengaluru Urban",
     "State": "Karnataka",
+    "Sub State": "South Bengaluru",
+    "Pincode": "560001",
     "Branch": "Bengaluru Main",
     "Branch Code": "BR002",
     "Center": "MG Center",
     "Center Code": "CNT02",
-    "Loan Type": "Business Loan",
+    "Loan Type": "GL",
     "Loan No": "LN-1002",
+    "Old Loan No": "OLD-LN-802",
+    "Old Customer No": "OLD-CUST-102",
+    "Cycle": 2,
+    "Loan Disb Date": "2023-06-10",
     "Loan Amount": 100000,
-    "Total Due Amount": 25000,
+    "O/S Principal": 0,
+    "O/S Interest": 0,
+    "PAR": 0,
+    "O/D Principal": 0,
+    "O/D Interest": 0,
+    "Total Due Amount": 0,
+    "Total Principal Collectible": 0,
+    "Total Interest Collectible": 0,
+    "IRR Rate": 14.0,
+    "No Of Installments": 24,
+    "Last Due Date": "2024-06-10",
+    "Last Paid Trx Date": "2024-06-05",
+    "DPD": 0,
+    "Paid Inst No": "24",
     "Loan Status": "Closed",
     "Spouse Name": "Rohan Patel",
-    "Installment Amount": 10000,
-    "No Of Installments": 24,
+    "Installment Amount": 5000,
+    "Maturity Date": "2024-06-10",
+    "Pre Closure Amt": 0,
+    "Closed Date": "2024-06-05",
   };
 
-  const ws = XLSX.utils.json_to_sheet([sampleRow1, sampleRow2]);
+  const rows = [sampleRow1, sampleRow2];
+  const ws = XLSX.utils.json_to_sheet(rows);
 
-  // Set explicit column widths for clean Excel presentation
-  ws["!cols"] = [
-    { wch: 22 }, // Customer Name
-    { wch: 28 }, // Email Address
-    { wch: 16 }, // Phone Number
-    { wch: 32 }, // Location
-    { wch: 18 }, // District
-    { wch: 16 }, // State
-    { wch: 18 }, // Branch
-    { wch: 14 }, // Branch Code
-    { wch: 16 }, // Center
-    { wch: 14 }, // Center Code
-    { wch: 18 }, // Loan Type
-    { wch: 16 }, // Loan No
-    { wch: 16 }, // Loan Amount
-    { wch: 18 }, // Total Due Amount
-    { wch: 14 }, // Loan Status
-    { wch: 20 }, // Spouse Name
-    { wch: 20 }, // Installment Amount
-    { wch: 20 }, // No Of Installments
-  ];
+  // Auto-calculate column widths for clean Excel presentation
+  const colWidths = Object.keys(rows[0]).map((key) => {
+    let maxLen = key.length;
+    rows.forEach((row) => {
+      const val = row[key] !== undefined && row[key] !== null ? String(row[key]) : "";
+      if (val.length > maxLen) maxLen = val.length;
+    });
+    return { wch: Math.min(Math.max(maxLen + 3, 14), 45) };
+  });
+
+  ws["!cols"] = colWidths;
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Customer_Import_Template");
@@ -125,25 +160,42 @@ export const exportCustomersToExcel = async (providedCustomers = [], filename = 
         "Phone Number": c.phone || "",
         "Email Address": c.email || "",
         "Loan Status": c.loanStatus || "Open",
-        "Owner": ownerObj?.name ? `${ownerObj.name} (${ownerObj.identity || ownerObj.email || ""})` : "N/A",
+        "Owner": ownerObj?.name ? `${ownerObj.name} (${ownerObj.identity || ownerObj.emp_id || ownerObj.email || ""})` : (c.owner || "N/A"),
         "Loan Type": c.loanType || "",
         "Loan No": c.loanNo || "",
         "Old Loan No": c.oldLoanNo || "",
         "Old Customer No": c.oldCustomerNo || "",
+        "Cycle": c.cycle !== null && c.cycle !== undefined ? c.cycle : "",
+        "Loan Disb Date": c.loanDisbDate || "",
         "Loan Amount": c.loanAmount ? `₹${c.loanAmount}` : "₹0",
-        "Total Due Amount": c.totalDueAmount ? `₹${c.totalDueAmount}` : "₹0",
         "O/S Principal": c.os_principal ? `₹${c.os_principal}` : "₹0",
         "O/S Interest": c.os_interest ? `₹${c.os_interest}` : "₹0",
+        "PAR": c.par !== null && c.par !== undefined ? c.par : 0,
+        "O/D Principal": c.od_principal ? `₹${c.od_principal}` : "₹0",
+        "O/D Interest": c.od_interest ? `₹${c.od_interest}` : "₹0",
+        "Total Due Amount": c.totalDueAmount ? `₹${c.totalDueAmount}` : "₹0",
+        "Total Principal Collectible": c.total_principal_collectible ? `₹${c.total_principal_collectible}` : "₹0",
+        "Total Interest Collectible": c.total_interest_collectible ? `₹${c.total_interest_collectible}` : "₹0",
+        "IRR Rate": c.irrRate ? `${c.irrRate}%` : "",
+        "No Of Installments": c.noOfInstallment || "",
+        "Last Due Date": c.lastDueDate || "",
+        "Last Paid Trx Date": c.lastPaidTrxDate || "",
+        "DPD": c.dpd !== null && c.dpd !== undefined ? c.dpd : 0,
+        "Paid Inst No": c.paidInstNo || "0",
+        "Spouse Name": c.spouseName || "",
+        "Installment Amount": c.installmentAmount ? `₹${c.installmentAmount}` : "₹0",
+        "Maturity Date": c.maturityDate || "",
         "Location": c.location || "",
         "District": c.district || "",
         "State": c.state || "",
+        "Sub State": c.sub_state || "",
+        "Pincode": c.pincode || "",
         "Branch": c.branch || "",
         "Branch Code": c.branch_code || "",
         "Center": c.center || "",
         "Center Code": c.center_code || "",
-        "Spouse Name": c.spouseName || "",
-        "Installment Amount": c.installmentAmount ? `₹${c.installmentAmount}` : "₹0",
-        "No Of Installments": c.noOfInstallment || "",
+        "Pre Closure Amt": c.preClosureAmt ? `₹${c.preClosureAmt}` : "₹0",
+        "Closed Date": c.closedDate || "",
         "Created At": c.createdAt ? new Date(c.createdAt).toLocaleString() : "",
       };
     });

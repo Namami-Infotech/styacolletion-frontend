@@ -210,7 +210,7 @@ export default function CustomerTable({
       }),
       columnHelper.accessor('owner', {
         id: 'owner',
-        header: 'Owner',
+        header: 'Employee',
         cell: ({ row }) => (
           <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
             {formatCellText(row.original.owner?.name ?? row.original.owner)}
@@ -289,24 +289,7 @@ export default function CustomerTable({
           </span>
         ),
       }),
-      columnHelper.accessor('spouseName', {
-        id: 'spouseName',
-        header: 'Spouse Name',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-            {formatCellText(row.original.spouseName)}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('dpd', {
-        id: 'dpd',
-        header: 'DPD',
-        cell: ({ row }) => (
-          <span className={`text-xs font-mono font-bold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-            {formatCellText(row.original.dpd)}
-          </span>
-        ),
-      }),
+   
       columnHelper.accessor('createdAt', {
         id: 'createdAt',
         header: 'Created On',

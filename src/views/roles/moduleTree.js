@@ -93,7 +93,7 @@ export const MODULE_TREE = [
       { key: 'branch', name: 'Branch', description: 'Branch settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
       { key: 'office', name: 'Office', description: 'Office locations, punch radius, and office settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
       { key: 'contacts', name: 'Contacts', description: 'Contact directory settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
-      //{ key: 'department', name: 'Department', description: 'Company departments and business units', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
+      { key: 'loanNos', name: 'Loan Nos', description: 'Loan Nos settings', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
      // { key: 'designation', name: 'Designation', description: 'Employee job titles and designations', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
     ],
   },

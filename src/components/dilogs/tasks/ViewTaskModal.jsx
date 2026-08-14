@@ -72,22 +72,6 @@ export default function ViewTaskModal({ open, onClose, activeTask, isDark }) {
             <p className="text-sm font-semibold">{activeTask?.status ?? "null"}</p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400">Payment Amount</p>
-            <p className="text-sm font-semibold">{activeTask?.payment_type ? `₹${activeTask.payment_type}` : "null"}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-400">Start Date & Time</p>
-            <p className="text-sm font-semibold">
-              {activeTask?.startDateTime ? new Date(activeTask.startDateTime).toLocaleString() : "null"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-400">End Date & Time</p>
-            <p className="text-sm font-semibold">
-              {activeTask?.endDateTime ? new Date(activeTask.endDateTime).toLocaleString() : "null"}
-            </p>
-          </div>
-          <div>
             <p className="text-xs font-semibold text-slate-400">Created By</p>
             <p className="text-sm font-semibold">{activeTask?.createdBy?.name ?? "null"}</p>
           </div>

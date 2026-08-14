@@ -47,40 +47,14 @@ const ALL_TASK_COLUMNS = [
   { id: "workLocation", label: "Work Location" },
   { id: "team", label: "Team" },
   { id: "manager", label: "Manager" },
-  { id: "designations", label: "Designations" },
-  { id: "department", label: "Department" },
   { id: "priority", label: "Priority" },
   { id: "status", label: "Status" },
   { id: "taskType", label: "Type" },
   { id: "createdBy", label: "Creator" },
-  { id: "deletedBy", label: "Deleted By" },
-  { id: "deletedAt", label: "Deleted At" },
-  { id: "startedAt", label: "Started" },
-  { id: "completedAt", label: "Completed" },
-  { id: "startDateTime", label: "Start" },
-  { id: "endDateTime", label: "Expire" },
-  { id: "address", label: "Address" },
-  { id: "repeat", label: "Repeat" },
-  { id: "downloads", label: "Downloads" },
   { id: "createdAt", label: "Created on" },
-  { id: "id", label: "DBID" },
-  { id: "employeeIden", label: "Employee Iden" },
   { id: "followUp", label: "Follow Up" },
   { id: "customerMobile", label: "Customer Mobile" },
-  { id: "lastComment", label: "Last Comment" },
-  { id: "followUpComment", label: "Follow Up Comment" },
-  { id: "lastCommentTime", label: "Last Comment Time" },
-  { id: "taskCompletedAddress", label: "Task Completed Address" },
-  { id: "taskAccuracy", label: "Task Accuracy" },
-  { id: "taskAccuracyUnit", label: "Task Accuracy(metre/km)" },
-  { id: "contact", label: "Contact" },
-  { id: "startLatLng", label: "Start Lat/Lng" },
-  { id: "taskWorkLocation", label: "Task Work Location" },
-  { id: "totalTimeTaken", label: "Total Time Taken" },
-  { id: "processIden", label: "Process Iden" },
-  { id: "employeeState", label: "State Name & Id - Employee tag" },
-  { id: "employeeRegion", label: "Region Name & Id - Employee tag" },
-  { id: "employeeBranch", label: "Branch Name & Id - Employee tag" },
+  { id: "taskCompletedAddress", label: "Task Completed Address" }
 ];
 
 export default function TaskPage() {
@@ -599,7 +573,7 @@ export default function TaskPage() {
               </Tooltip>
 
               {/* Export Excel Button */}
-              <Tooltip title="Export current tasks to Excel">
+              {/* <Tooltip title="Export current tasks to Excel">
                 <Button
                   onClick={() => exportTasksToExcel(tasks, `Tasks_Export_${new Date().toISOString().slice(0, 10)}.xlsx`)}
                   variant="outlined"
@@ -620,7 +594,7 @@ export default function TaskPage() {
                 >
                   Export Excel
                 </Button>
-              </Tooltip>
+              </Tooltip> */}
 
               {/* Import Excel Button */}
               {hasPermission("task", "add", currentSubModule) && (
@@ -728,6 +702,7 @@ export default function TaskPage() {
         formFields={formFields}
         isDark={isDark}
         onSuccess={fetchTasks}
+        onOpenImport={() => setImportModalOpen(true)}
       />
 
       {/* Import Task Excel Modal */}

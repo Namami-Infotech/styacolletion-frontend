@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import { TaskTypeRoute } from "../../../routes/tasks/task-type.js";
 import CreateCustomerModel from "../customer/CreateCustomer.Model";
 import { useAuth } from "../../../contexts/AuthContext.jsx";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 const getCurrentDateTimeLocal = () => {
   const now = new Date();
@@ -34,6 +35,7 @@ export default function TaskFormModal({
   isDark,
   onSuccess,
   onAddCustomer,
+  onOpenImport,
 }) {
   // Form definitions & values state
   const [internalFormFields, setInternalFormFields] = useState([]);
@@ -100,14 +102,49 @@ export default function TaskFormModal({
     } else if (activeTask) {
       const editForm = {};
       fields.forEach((f) => {
-        const val = activeTask[f.name];
-        let finalVal = val;
+        let val = activeTask[f.name];
+
+        // Check field aliases if value is missing on activeTask
         if (
-          val &&
-          typeof val === "object" &&
-          (val.id !== undefined || val._id !== undefined)
+          (val === undefined || val === null || val === "") &&
+          (f.name === "assigneeToEmployeeId" ||
+            f.name === "assignedTo" ||
+            f.name === "employeeId" ||
+            f.name === "employee" ||
+            f.name === "employeeIden")
         ) {
-          finalVal = val.id || val._id;
+          val =
+            activeTask.assigneeToEmployeeId ??
+            activeTask.assignedTo ??
+            activeTask.employeeId ??
+            activeTask.employee ??
+            activeTask.employeeIden;
+        }
+
+        if (
+          (val === undefined || val === null || val === "") &&
+          (f.name === "customerId" || f.name === "customer")
+        ) {
+          val = activeTask.customerId ?? activeTask.customer;
+        }
+
+        if (
+          (val === undefined || val === null || val === "") &&
+          (f.name === "taskType" || f.name === "type")
+        ) {
+          val = activeTask.taskType ?? activeTask.type ?? activeTask.typeDetails;
+        }
+
+        let finalVal = val;
+        if (val && typeof val === "object") {
+          finalVal =
+            val.id !== undefined
+              ? val.id
+              : val._id !== undefined
+              ? val._id
+              : val.emp_id !== undefined
+              ? val.emp_id
+              : val;
         }
         editForm[f.name] =
           finalVal !== undefined && finalVal !== null
@@ -178,10 +215,23 @@ export default function TaskFormModal({
     await fetchCustomers("");
     if (newCustomer) {
       const newId = newCustomer.id || newCustomer._id;
+      const ownerVal =
+        typeof newCustomer.owner === "object" && newCustomer.owner !== null
+          ? newCustomer.owner.id || newCustomer.owner._id || newCustomer.owner.emp_id || newCustomer.owner.identity
+          : newCustomer.owner || newCustomer.ownerId || newCustomer.owner_id;
+
       setTaskForm((prev) => ({
         ...prev,
         customerId: newId,
         customer: newId,
+        ...(ownerVal !== undefined && ownerVal !== null && ownerVal !== ""
+          ? {
+              assigneeToEmployeeId: ownerVal,
+              assignedTo: ownerVal,
+              employeeId: ownerVal,
+              employee: ownerVal,
+            }
+          : {}),
       }));
     }
   };
@@ -192,10 +242,35 @@ export default function TaskFormModal({
     try {
       const res = await EmployeeRoute.getAllEmployee({ search: query });
       if (res?.success) {
-        const list =
+        let list =
           res.data?.employees ||
           res.data?.employee ||
           (Array.isArray(res.data) ? res.data : []);
+
+        if (activeTask) {
+          const empFromTask =
+            typeof activeTask.assigneeToEmployeeId === "object" && activeTask.assigneeToEmployeeId
+              ? activeTask.assigneeToEmployeeId
+              : typeof activeTask.assignedTo === "object" && activeTask.assignedTo
+              ? activeTask.assignedTo
+              : typeof activeTask.employee === "object" && activeTask.employee
+              ? activeTask.employee
+              : null;
+
+          if (empFromTask) {
+            const empId = empFromTask.id || empFromTask._id || empFromTask.emp_id || empFromTask.identity;
+            const exists = list.some(
+              (e) =>
+                String(e.id || "") === String(empId) ||
+                String(e._id || "") === String(empId) ||
+                String(e.emp_id || "") === String(empId) ||
+                String(e.identity || "") === String(empId)
+            );
+            if (!exists) {
+              list = [empFromTask, ...list];
+            }
+          }
+        }
         setEmployeesList(list);
       }
     } catch (err) {
@@ -222,6 +297,8 @@ export default function TaskFormModal({
       }
     }
   }, [open, addModalOpen, activeTask, propFormFields]);
+
+
 
   // MUI debounced search handlers (400ms delay)
   const debouncedFetchTaskType = useMemo(
@@ -284,23 +361,6 @@ export default function TaskFormModal({
       return;
     }
 
-    const startVal = taskForm.startDateTime || taskForm.startDate;
-    const endVal = taskForm.endDateTime || taskForm.endDate;
-
-    if (startVal) {
-      const startMs = new Date(startVal).getTime();
-      const marginNowMs = Date.now() - 60000;
-      if (addModalOpen && startMs < marginNowMs) {
-        toast.error("Start Date & Time cannot be in the past!");
-        return;
-      }
-    }
-
-    if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
-      toast.error("End Date & Time cannot be less than Start Date & Time!");
-      return;
-    }
-
     setSubmitting(true);
     try {
       if (addModalOpen) {
@@ -359,6 +419,42 @@ export default function TaskFormModal({
         </DialogTitle>
 
         <DialogContent dividers>
+          {addModalOpen && onOpenImport && (
+            <div
+              className={`p-3 rounded-xl border flex items-center justify-between gap-2 mb-3 ${
+                isDark
+                  ? "bg-indigo-950/40 border-indigo-800/50 text-indigo-200"
+                  : "bg-indigo-50/80 border-indigo-100 text-indigo-900"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <UploadFileIcon
+                  className={isDark ? "text-indigo-400" : "text-indigo-600"}
+                  fontSize="small"
+                />
+                <span className="text-xs font-semibold">
+                  Want to import tasks in bulk via Excel file?
+                </span>
+              </div>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  onClose();
+                  onOpenImport();
+                }}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: "8px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                }}
+              >
+                Upload Excel
+              </Button>
+            </div>
+          )}
+
           {loadingFields ? (
             <div
               style={{
@@ -648,9 +744,29 @@ export default function TaskFormModal({
 
                 // ── customerId / customer — searchable customer picker ────────
                 if (field.name === "customerId" || field.name === "customer") {
+                  const getCustLabel = (c) => {
+                    if (!c) return "";
+                    const name =
+                      c.name ||
+                      c.customer_name ||
+                      c.companyName ||
+                      c.email ||
+                      "";
+                    const code = c.customer_id || c.id || c._id || "";
+                    return code ? `${name} (${code})` : name;
+                  };
+
                   const selectedCustomer = customersList.find(
                     (c) => String(c.id || c._id) === String(value)
                   );
+
+                  const displayCustomerText = selectedCustomer
+                    ? getCustLabel(selectedCustomer)
+                    : typeof value === "object" && value !== null
+                    ? getCustLabel(value)
+                    : value
+                    ? `Customer #${value}`
+                    : "Select Customer";
 
                   return (
                     <div
@@ -682,7 +798,7 @@ export default function TaskFormModal({
                       >
                         <span
                           style={{
-                            color: selectedCustomer
+                            color: selectedCustomer || (typeof value === "object" && value !== null)
                               ? isDark
                                 ? "#fff"
                                 : "#0f172a"
@@ -691,12 +807,7 @@ export default function TaskFormModal({
                                 : "#94a3b8",
                           }}
                         >
-                          {selectedCustomer
-                            ? selectedCustomer.name ||
-                            selectedCustomer.customer_name ||
-                            selectedCustomer.companyName ||
-                            selectedCustomer.email
-                            : "Select Customer"}
+                          {displayCustomerText}
                         </span>
                         <svg
                           width="16"
@@ -836,19 +947,33 @@ export default function TaskFormModal({
                             ) : (
                               customersList.map((c, cIdx) => {
                                 const cId = c.id || c._id || cIdx;
-                                const cName =
-                                  c.name ||
-                                  c.customer_name ||
-                                  c.companyName ||
-                                  c.email ||
-                                  String(cId);
+                                const cLabel = getCustLabel(c) || String(cId);
                                 return (
                                   <button
                                     key={`cust-${cId}-${cIdx}`}
                                     type="button"
                                     onClick={() => {
-                                      onChange(c.id || c._id);
+                                      const custVal = c.id || c._id;
+                                      onChange(custVal);
                                       setCustomerOpen(false);
+
+                                      const ownerVal =
+                                        typeof c.owner === "object" && c.owner !== null
+                                          ? c.owner.id || c.owner._id || c.owner.emp_id || c.owner.identity
+                                          : c.owner || c.ownerId || c.owner_id;
+
+                                      if (ownerVal !== undefined && ownerVal !== null && ownerVal !== "") {
+                                        setTaskForm((prev) => ({
+                                          ...prev,
+                                          [field.name]: custVal,
+                                          customerId: custVal,
+                                          customer: custVal,
+                                          assigneeToEmployeeId: ownerVal,
+                                          assignedTo: ownerVal,
+                                          employeeId: ownerVal,
+                                          employee: ownerVal,
+                                        }));
+                                      }
                                     }}
                                     style={{
                                       display: "block",
@@ -882,7 +1007,7 @@ export default function TaskFormModal({
                                         : "transparent")
                                     }
                                   >
-                                    {cName}
+                                    {cLabel}
                                   </button>
                                 );
                               })
@@ -902,15 +1027,57 @@ export default function TaskFormModal({
                   field.name === "employee" ||
                   field.name === "employeeIden"
                 ) {
-                  const getEmpName = (emp) =>
-                    emp.name ||
-                    (emp.first_name
-                      ? `${emp.first_name} ${emp.last_name || ""}`.trim()
-                      : emp.email || emp.username || String(emp.id || emp._id));
+                  const getEmpLabel = (emp) => {
+                    if (!emp) return "";
+                    if (typeof emp === "string") return emp;
+                    const name =
+                      emp.name ||
+                      (emp.first_name
+                        ? `${emp.first_name} ${emp.last_name || ""}`.trim()
+                        : emp.email || emp.username || (emp.emp_id ? `Employee #${emp.emp_id}` : String(emp.id || emp._id || "")));
+                    const code = emp.emp_id || emp.identity || (emp.id !== undefined && String(emp.id) !== String(name) ? emp.id : "");
+                    return code && String(code) !== String(name) ? `${name} (${code})` : name;
+                  };
 
                   const selectedEmployee = employeesList.find(
-                    (e) => String(e.id || e._id) === String(value)
+                    (e) =>
+                      String(e.id || "") === String(value) ||
+                      String(e._id || "") === String(value) ||
+                      String(e.emp_id || "") === String(value) ||
+                      String(e.identity || "") === String(value)
                   );
+
+                  const activeEmpObj =
+                    typeof activeTask === "object" && activeTask
+                      ? (typeof activeTask.assigneeToEmployeeId === "object" && activeTask.assigneeToEmployeeId) ||
+                        (typeof activeTask.assignedTo === "object" && activeTask.assignedTo) ||
+                        (typeof activeTask.employee === "object" && activeTask.employee)
+                      : null;
+
+                  const isEmpSelected = Boolean(
+                    selectedEmployee ||
+                      (typeof value === "object" && value !== null) ||
+                      (activeEmpObj &&
+                        (String(activeEmpObj.id || "") === String(value) ||
+                          String(activeEmpObj._id || "") === String(value) ||
+                          String(activeEmpObj.emp_id || "") === String(value) ||
+                          String(activeEmpObj.identity || "") === String(value))) ||
+                      (typeof activeTask?.assignedTo === "string" && activeTask.assignedTo)
+                  );
+
+                  const displayEmployeeText = selectedEmployee
+                    ? getEmpLabel(selectedEmployee)
+                    : typeof value === "object" && value !== null
+                    ? getEmpLabel(value)
+                    : activeEmpObj &&
+                      (String(activeEmpObj.id || "") === String(value) ||
+                        String(activeEmpObj._id || "") === String(value) ||
+                        String(activeEmpObj.emp_id || "") === String(value) ||
+                        String(activeEmpObj.identity || "") === String(value))
+                    ? getEmpLabel(activeEmpObj)
+                    : value
+                    ? (typeof activeTask?.assignedTo === "string" ? activeTask.assignedTo : `Employee #${value}`)
+                    : "Select Employee";
 
                   return (
                     <div
@@ -942,7 +1109,7 @@ export default function TaskFormModal({
                       >
                         <span
                           style={{
-                            color: selectedEmployee
+                            color: isEmpSelected
                               ? isDark
                                 ? "#fff"
                                 : "#0f172a"
@@ -951,9 +1118,7 @@ export default function TaskFormModal({
                                 : "#94a3b8",
                           }}
                         >
-                          {selectedEmployee
-                            ? getEmpName(selectedEmployee)
-                            : "Select Employee"}
+                          {displayEmployeeText}
                         </span>
                         <svg
                           width="16"
@@ -1001,7 +1166,7 @@ export default function TaskFormModal({
                             <input
                               autoFocus
                               type="text"
-                              placeholder="Search employee from backend..."
+                              placeholder="Search employee by name or emp_id..."
                               value={employeeSearch}
                               onChange={(e) => {
                                 const val = e.target.value;
@@ -1051,14 +1216,20 @@ export default function TaskFormModal({
                               </div>
                             ) : (
                               employeesList.map((emp, empIdx) => {
-                                const empId = emp.id || emp._id || empIdx;
-                                const empName = getEmpName(emp);
+                                const empId = emp.id || emp._id || emp.emp_id || empIdx;
+                                const empLabel = getEmpLabel(emp) || String(empId);
+                                const isSelected =
+                                  String(emp.id || "") === String(value) ||
+                                  String(emp._id || "") === String(value) ||
+                                  String(emp.emp_id || "") === String(value) ||
+                                  String(emp.identity || "") === String(value);
+
                                 return (
                                   <button
                                     key={`emp-${empId}-${empIdx}`}
                                     type="button"
                                     onClick={() => {
-                                      onChange(emp.id || emp._id);
+                                      onChange(emp.id || emp._id || emp.emp_id || empId);
                                       setEmployeeOpen(false);
                                     }}
                                     style={{
@@ -1066,12 +1237,11 @@ export default function TaskFormModal({
                                       width: "100%",
                                       padding: "9px 14px",
                                       textAlign: "left",
-                                      backgroundColor:
-                                        String(emp.id || emp._id) === String(value)
-                                          ? isDark
-                                            ? "rgba(99,102,241,0.15)"
-                                            : "#eef2ff"
-                                          : "transparent",
+                                      backgroundColor: isSelected
+                                        ? isDark
+                                          ? "rgba(99,102,241,0.15)"
+                                          : "#eef2ff"
+                                        : "transparent",
                                       color: isDark ? "#e2e8f0" : "#1e293b",
                                       fontSize: "13px",
                                       cursor: "pointer",
@@ -1085,15 +1255,14 @@ export default function TaskFormModal({
                                       : "#f1f5f9")
                                     }
                                     onMouseLeave={(e) =>
-                                    (e.currentTarget.style.backgroundColor =
-                                      String(emp.id || emp._id) === String(value)
-                                        ? isDark
-                                          ? "rgba(99,102,241,0.15)"
-                                          : "#eef2ff"
-                                        : "transparent")
+                                    (e.currentTarget.style.backgroundColor = isSelected
+                                      ? isDark
+                                        ? "rgba(99,102,241,0.15)"
+                                        : "#eef2ff"
+                                      : "transparent")
                                     }
                                   >
-                                    {empName}
+                                    {empLabel}
                                   </button>
                                 );
                               })

@@ -211,11 +211,16 @@ export default function CreateEmployeePage() {
   const [formTitle, setFormTitle] = useState(isEditMode ? 'Edit Employee' : 'Create Employee');
 
   // Switch states
-  const [enablePassword, setEnablePassword] = useState(false);
-  const [enableAdvanceSettings, setEnableAdvanceSettings] = useState(isEditMode);
+  const [enableAdvanceSettings, setEnableAdvanceSettings] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [isMobileFocused, setIsMobileFocused] = useState(false);
+
+  const maxDobDate = React.useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().split('T')[0];
+  }, []);
 
   // Form field states
   const [formData, setFormData] = useState({
@@ -230,6 +235,7 @@ export default function CreateEmployeePage() {
     license: '',
     password: '',
     thumbnail: null,
+    image: null,
 
     // Tag Details
     state: '',
@@ -237,10 +243,11 @@ export default function CreateEmployeePage() {
     branchTag: '',
 
     // Personal Details (Advance)
+    enableAdvanceSettings: isEditMode,
     branch: '',
     gender: '',
     bloodGroup: '',
-    label: '',
+    label: '#6366f1',
     dateOfBirth: '',
     dateOfJoining: '',
     address: '',
@@ -260,9 +267,6 @@ export default function CreateEmployeePage() {
     tracker: false,
     trackerWebsite: false,
     disableAutoPunchOut: false,
-
-    // Override Shift Timing
-    maxPunchInTime: '',
   });
 
   // Customer Filters (Advance)
@@ -297,6 +301,10 @@ export default function CreateEmployeePage() {
     };
 
     const maxTime = emp.maxPunchInTime || emp.max_punch_in_time || emp.maxPunchIn || '09:30';
+    const pwd = emp.password || '';
+    if (pwd) {
+      setEnablePassword(true);
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -312,7 +320,7 @@ export default function CreateEmployeePage() {
       region: extractPrimitive(emp.region, emp.region_id, emp.employeeRegion),
       branchTag: extractPrimitive(emp.branchTag, emp.branch_id, emp.employeeBranch),
       branch: extractPrimitive(emp.branch, emp.branch_id),
-      gender: extractPrimitive(emp.gender) || 'male',
+      gender: extractPrimitive(emp.gender) || 'Male',
       bloodGroup: extractPrimitive(emp.bloodGroup, emp.blood_group) || 'O+',
       label: emp.label || emp.label_color || prev.label || '#6366f1',
       dateOfBirth: formattedDob || '1995-01-01',
@@ -327,6 +335,8 @@ export default function CreateEmployeePage() {
       leaveProfile: extractPrimitive(emp.leaveProfile, emp.leave_profile, emp.leaveProfiles) || 'Standard Policy',
       thumbnail: emp.thumbnail || emp.image || prev.thumbnail,
       image: emp.image || emp.thumbnail || prev.image,
+      password: pwd,
+      enableAdvanceSettings: true,
       tracker: emp.tracker !== undefined ? Boolean(emp.tracker) : true,
       trackerWebsite: emp.trackerWebsite !== undefined ? Boolean(emp.trackerWebsite) : true,
       disableAutoPunchOut: emp.disableAutoPunchOut !== undefined ? Boolean(emp.disableAutoPunchOut) : false,
@@ -405,8 +415,6 @@ export default function CreateEmployeePage() {
     }
   }, [isEditMode, editEmployee, populateEmployeeData]);
 
-
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let newValue = type === 'checkbox' ? checked : value;
@@ -434,7 +442,13 @@ export default function CreateEmployeePage() {
   const handleFilterChange = (index, field, value) => {
     setCustomerFilters((prev) => {
       const updated = [...prev];
-      updated[index][field] = value;
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      };
+      if (field === 'tag') {
+        updated[index].tagValue = '';
+      }
       return updated;
     });
   };
@@ -453,6 +467,17 @@ export default function CreateEmployeePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.dateOfBirth) {
+      const selectedDob = new Date(formData.dateOfBirth);
+      const minAgeDob = new Date();
+      minAgeDob.setFullYear(minAgeDob.getFullYear() - 18);
+      if (selectedDob > minAgeDob) {
+        alert('Date of Birth must be at least 18 years ago (Age 18+).');
+        return;
+      }
+    }
+
     setLoading(true);
 
     const typeField = formFields.find((f) => f.name === 'type');
@@ -482,9 +507,9 @@ export default function CreateEmployeePage() {
       validMobile = '9999999999';
     }
 
-    const validPassword = (enablePassword && formData.password && formData.password.length >= 6)
-      ? formData.password
-      : (formData.password && formData.password.length >= 6 ? formData.password : '123456');
+    const validPassword = (formData.password && formData.password.trim().length >= 6)
+      ? formData.password.trim()
+      : (isEditMode ? undefined : '123456');
 
     const mapGeofenceToIds = (fieldName, rawVal) => {
       if (!rawVal) return [];
@@ -520,6 +545,7 @@ export default function CreateEmployeePage() {
       name: formData.name,
       identity: formData.identity || `EMP-${Date.now().toString().slice(-4)}`,
       email: generatedEmail,
+      loginId: generatedEmail,
       mobile: validMobile,
       mobileCountryCode: formData.mobileCountryCode || '+91',
       country_code: formData.mobileCountryCode || '+91',
@@ -530,22 +556,12 @@ export default function CreateEmployeePage() {
       manager_id: (formData.manager_id !== '' && formData.manager_id !== null && formData.manager_id !== undefined && !isNaN(Number(formData.manager_id)))
         ? Number(formData.manager_id)
         : (formData.reportingManager && !isNaN(Number(formData.reportingManager)) ? Number(formData.reportingManager) : undefined),
-      license: formData.license,
+      license: formData.license || 'Full Access License',
       password: validPassword,
-      department: 'Engineering',
-      designations: resolvedDesignation,
       work_shift: formData.workingShift,
       status: 'Active',
       work_location: formData.homeLocation,
       emp_type: 'Full Time',
-      business_unit: 'Core',
-      cost_center: 'CC-101',
-      app_version: '1.0.0',
-      desktop_version: '1.0.0',
-      last_desktop_started_at: new Date(),
-      last_Sync_desktop_at: new Date(),
-      last_Sync_mobile: new Date(),
-      last_location: formData.homeLocation,
       location: formData.homeLocation,
       address: formData.address,
       date_of_birth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : new Date('1995-01-01'),
@@ -557,9 +573,9 @@ export default function CreateEmployeePage() {
       punchOut: mapGeofenceToIds('punchOutGeoFence', formData.punchOutGeoFence?.length ? formData.punchOutGeoFence : formData.punchOut),
       entryAlerts: mapGeofenceToIds('entryAlertGeoFence', formData.entryAlertGeoFence?.length ? formData.entryAlertGeoFence : formData.entryAlerts),
       exitAlerts: mapGeofenceToIds('exitAlertGeoFence', formData.exitAlertGeoFence?.length ? formData.exitAlertGeoFence : formData.exitAlerts),
-      state_id: 1,
-      region_id: 1,
-      branch_id: 1,
+      state_id: formData.state && !isNaN(Number(formData.state)) ? Number(formData.state) : 1,
+      region_id: formData.region && !isNaN(Number(formData.region)) ? Number(formData.region) : 1,
+      branch_id: formData.branchTag && !isNaN(Number(formData.branchTag)) ? Number(formData.branchTag) : 1,
       tracker: Boolean(formData.tracker),
       trackerWebsite: Boolean(formData.trackerWebsite),
       disableAutoPunchOut: Boolean(formData.disableAutoPunchOut),
@@ -622,19 +638,20 @@ export default function CreateEmployeePage() {
 
   // Dynamic Field Renderer Function
   const renderDynamicField = (field) => {
-    // Visibility condition checks
-    if (field.dependsOnSwitch === 'enablePassword' && !enablePassword) return null;
+    // Visibility checks based on switches and parent fields
     if (field.dependsOnSwitch === 'enableAdvanceSettings' && !enableAdvanceSettings) return null;
-    if (!isEditMode) {
-      if (field.dependsOnField === 'state' && !formData.state) return null;
-      if (field.dependsOnField === 'region' && !formData.region) return null;
-    }
+    if (field.dependsOnSwitch && field.dependsOnSwitch !== 'enableAdvanceSettings' && !formData[field.dependsOnSwitch]) return null;
 
+    if (field.dependsOnField && !formData[field.dependsOnField]) return null;
+
+    // Mobile combined input
     if (field.name === 'mobileCountryCode') {
       const opts = field.options && field.options.length > 0 ? field.options : allCountryCodeOptions;
       return (
         <Grid size={{ xs: 12, md: 4 }} key="mobile_combined">
-          <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>Mobile</Typography>
+          <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>
+            Mobile{field.required && <span className="text-red-500 ml-0.5">*</span>}
+          </Typography>
           <Box
             className="flex items-center w-full rounded-lg border transition-all overflow-hidden"
             sx={{
@@ -708,54 +725,44 @@ export default function CreateEmployeePage() {
       return null;
     }
 
-    if (field.name === 'enablePassword') {
+    // Password input field
+    if (field.name === 'password' || field.type === 'password') {
       return (
         <Grid size={{ xs: 12, md: 4 }} key={field.name}>
-          <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>Password</Typography>
-          <Box className="flex items-center gap-3">
-            {/* <Switch
-              checked={enablePassword}
-              onChange={(e) => setEnablePassword(e.target.checked)}
-              color="primary"
-            /> */}
-            {/* {enablePassword && ( */}
-            <TextField
-              fullWidth
-              size="small"
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter Password"
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        edge="end"
-                        size="small"
-                        sx={{ color: labelColor }}
-                      >
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={inputStyle}
-            />
-            {/* )} */}
-          </Box>
+          <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>
+            {field.label || 'Password'}{field.required && <span className="text-red-500 ml-0.5">*</span>}
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            value={formData.password || ''}
+            onChange={handleChange}
+            placeholder={field.placeholder || "Enter Password"}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      edge="end"
+                      size="small"
+                      sx={{ color: labelColor }}
+                    >
+                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={inputStyle}
+          />
         </Grid>
       );
     }
 
-    if (field.name === 'password') {
-      // Handled inside enablePassword switch container above
-      return null;
-    }
-
+    // enableAdvanceSettings switch
     if (field.name === 'enableAdvanceSettings') {
       return (
         <Grid size={{ xs: 12 }} key={field.name}>
@@ -763,7 +770,11 @@ export default function CreateEmployeePage() {
             <Typography variant="body2" className={`font-semibold ${labelColor}`}>{field.label}</Typography>
             <Switch
               checked={enableAdvanceSettings}
-              onChange={(e) => setEnableAdvanceSettings(e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setEnableAdvanceSettings(checked);
+                setFormData((prev) => ({ ...prev, enableAdvanceSettings: checked }));
+              }}
               color="primary"
             />
           </Box>
@@ -771,6 +782,7 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // label color field
     if (field.name === 'label') {
       const colorValue = formData.label || '#6366f1';
       return (
@@ -787,7 +799,6 @@ export default function CreateEmployeePage() {
               '&:hover': { borderColor: isDark ? '#6366f1' : '#0f172a' },
             }}
           >
-            {/* Color Swatch — native color input overlaid on top */}
             <Box sx={{ position: 'relative', width: 28, height: 28, flexShrink: 0 }}>
               <Box
                 sx={{
@@ -816,7 +827,6 @@ export default function CreateEmployeePage() {
               />
             </Box>
 
-            {/* Editable Hex Input */}
             <input
               type="text"
               value={colorValue.toUpperCase()}
@@ -838,10 +848,8 @@ export default function CreateEmployeePage() {
               }}
             />
 
-            {/* Divider */}
             <Box sx={{ width: '1px', height: '22px', backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : '#e2e8f0', flexShrink: 0 }} />
 
-            {/* Preset color dots */}
             <Box className="flex items-center gap-1">
               {['#6366f1', '#ef4444', '#22c55e', '#f59e0b', '#3b82f6', '#ec4899', '#14b8a6', '#8b5cf6'].map((c) => (
                 <Box
@@ -867,14 +875,28 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // Generic switch field
     if (field.type === 'switch') {
+      const isSwitchChecked = field.name === 'enableAdvanceSettings'
+        ? enableAdvanceSettings
+        : (field.name === 'enablePassword' ? enablePassword : Boolean(formData[field.name]));
+
       return (
         <Grid size={{ xs: 12, md: 4 }} key={field.name}>
-          <Box className="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+          <Box className="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-slate-800" sx={{ height: '40px' }}>
             <Typography variant="body2" className={`font-semibold ${labelColor}`}>{field.label}</Typography>
             <Switch
-              checked={Boolean(formData[field.name])}
-              onChange={(e) => handleChange({ target: { name: field.name, value: e.target.checked } })}
+              checked={isSwitchChecked}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setFormData((prev) => ({ ...prev, [field.name]: checked }));
+                if (field.name === 'enableAdvanceSettings') {
+                  setEnableAdvanceSettings(checked);
+                }
+                if (field.name === 'enablePassword') {
+                  setEnablePassword(checked);
+                }
+              }}
               color="primary"
             />
           </Box>
@@ -882,6 +904,7 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // multiselect field
     if (field.type === 'multiselect' || field.type === 'multi-select' || field.multiple || (field.name && field.name.endsWith('GeoFence'))) {
       const fieldLabelText = typeof field.label === 'object' ? (field.label.name || field.label.title || 'Options') : field.label;
       const opts = field.options || [];
@@ -973,6 +996,7 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // single select field
     if (field.type === 'select') {
       const fieldLabelText = typeof field.label === 'object' ? (field.label.name || field.label.title || 'Option') : field.label;
       const opts = field.options || [];
@@ -991,8 +1015,7 @@ export default function CreateEmployeePage() {
 
         return (
           String(val) === String(targetVal) ||
-          String(lbl).toLowerCase() === String(targetVal).toLowerCase() ||
-          (typeof targetVal === 'string' && String(lbl).toLowerCase().includes(targetVal.toLowerCase()))
+          String(lbl).toLowerCase() === String(targetVal).toLowerCase()
         );
       });
 
@@ -1039,6 +1062,7 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // google_map location field
     if (field.type === 'google_map' || field.name === 'homeLocation' || field.label === 'Home Location') {
       const locationVal = formData[field.name] || formData.homeLocation || '';
       return (
@@ -1102,6 +1126,7 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // file field
     if (field.type === 'file') {
       const filePreview = formData[field.name] || formData.image || formData.thumbnail;
       const isUploading = Boolean(uploadingFields[field.name] || uploadingFields.image || uploadingFields.thumbnail);
@@ -1175,7 +1200,6 @@ export default function CreateEmployeePage() {
               thumbnail: true,
             }));
 
-            // Compress image to max 50KB before uploading
             const compressedBase64 = await compressImageToMax50KB(file, 50 * 1024);
 
             setFormData((prev) => ({
@@ -1185,7 +1209,6 @@ export default function CreateEmployeePage() {
               thumbnail: compressedBase64,
             }));
 
-            // Upload compressed image to backend upload API under 'employee' folder
             const res = await UploadRoute.uploadImage(compressedBase64, "employee");
             if (res?.success && res?.data?.url) {
               const fullUrl = res.data.url;
@@ -1286,7 +1309,6 @@ export default function CreateEmployeePage() {
               </>
             )}
 
-            {/* FULL CARD OVERLAY WHEN UPLOADING */}
             {isUploading && (
               <Box
                 className="absolute inset-0 flex flex-col items-center justify-center rounded-xl z-30"
@@ -1306,6 +1328,7 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // textarea field
     if (field.type === 'textarea') {
       return (
         <Grid size={{ xs: 12 }} key={field.name}>
@@ -1328,6 +1351,45 @@ export default function CreateEmployeePage() {
       );
     }
 
+    // password field
+    if (field.type === 'password' || field.name === 'password') {
+      return (
+        <Grid size={{ xs: 12, md: 4 }} key={field.name}>
+          <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>
+            {field.label}{field.required && <span className="text-red-500 ml-0.5">*</span>}
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            type={showPassword ? 'text' : 'password'}
+            name={field.name}
+            value={formData[field.name] || ''}
+            onChange={handleChange}
+            placeholder={field.placeholder || 'Enter Password'}
+            required={field.required}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      edge="end"
+                      size="small"
+                    >
+                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={inputStyle}
+          />
+        </Grid>
+      );
+    }
+
+    // default field renderer (text, date, time, number, email)
     return (
       <Grid size={{ xs: 12, md: 4 }} key={field.name}>
         <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>
@@ -1336,12 +1398,17 @@ export default function CreateEmployeePage() {
         <TextField
           fullWidth
           size="small"
-          type={field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : field.type === 'number' ? 'number' : 'text'}
+          type={field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : 'text'}
           name={field.name}
           value={formData[field.name] || ''}
           onChange={handleChange}
           placeholder={field.placeholder || `Enter ${field.label}`}
           required={field.required}
+          slotProps={{
+            htmlInput: {
+              ...(field.type === 'date' && (field.name === 'dateOfBirth' || field.name === 'date_of_birth') ? { max: maxDobDate } : {}),
+            },
+          }}
           sx={inputStyle}
         />
       </Grid>
@@ -1363,8 +1430,7 @@ export default function CreateEmployeePage() {
       'Geo Fence Restriction',
       'Additional Details',
       'Other Details',
-      'Customer Filters',
-      'Override Shift Timing',
+      'Filters',
     ];
   }, [formFields]);
 
@@ -1451,25 +1517,30 @@ export default function CreateEmployeePage() {
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             {sectionsList.map((secName, idx) => {
+              const secFields = formFields.filter((f) => f.section === secName);
               const isAdvanceSec = [
                 'Personal Details',
                 'Geo Fence Restriction',
                 'Additional Details',
                 'Other Details',
+                'Filters',
                 'Customer Filters',
-              ].includes(secName);
+              ].includes(secName) || (secFields.length > 0 && secFields.every((f) => f.dependsOnSwitch === 'enableAdvanceSettings'));
 
               if (isAdvanceSec && !enableAdvanceSettings) return null;
 
-              const secFields = formFields.filter((f) => f.section === secName);
+              const isCustomerFiltersSection =
+                secName === 'Filters' ||
+                secName === 'Customer Filters' ||
+                secFields.some((f) => f.type === 'customer_filters' || f.name === 'customerFilters');
 
               return (
                 <React.Fragment key={secName}>
                   {idx > 0 && <hr className={`border-t ${isDark ? 'border-slate-800' : 'border-slate-200'}`} />}
                   <Box>
                     <SectionHeader title={secName} />
-                    {secName === 'Customer Filters' ? (() => {
-                      const customerFilterField = formFields.find((f) => f.name === 'customerFilters' || f.section === 'Customer Filters');
+                    {isCustomerFiltersSection ? (() => {
+                      const customerFilterField = formFields.find((f) => f.name === 'customerFilters' || f.type === 'customer_filters');
                       const tagOpts = customerFilterField?.options?.tags || [
                         { label: 'Region', value: 'Region' },
                         { label: 'Tier', value: 'Tier' },
@@ -1535,14 +1606,48 @@ export default function CreateEmployeePage() {
                               </Grid>
                               <Grid size={{ xs: 12, md: 3.5 }}>
                                 <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>Tag Value</Typography>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  value={filter.tagValue}
-                                  onChange={(e) => handleFilterChange(fIdx, 'tagValue', e.target.value)}
-                                  placeholder="Select Filter"
-                                  sx={inputStyle}
-                                />
+                                {(() => {
+                                  const tagValuesMap = customerFilterField?.options?.values || {};
+                                  const tagValueOptions = filter.tag ? (tagValuesMap[filter.tag] || []) : [];
+
+                                  if (tagValueOptions.length > 0) {
+                                    return (
+                                      <TextField
+                                        fullWidth
+                                        select
+                                        size="small"
+                                        value={filter.tagValue || ''}
+                                        onChange={(e) => handleFilterChange(fIdx, 'tagValue', e.target.value)}
+                                        slotProps={{ select: { displayEmpty: true } }}
+                                        sx={inputStyle}
+                                      >
+                                        <MenuItem value="">
+                                          <em style={{ fontStyle: 'normal', opacity: 0.6 }}>Select Value</em>
+                                        </MenuItem>
+                                        {tagValueOptions.map((vOpt, vIdx) => {
+                                          const val = typeof vOpt === 'object' ? (vOpt.value ?? vOpt.name) : vOpt;
+                                          const lbl = typeof vOpt === 'object' ? (vOpt.label ?? vOpt.name) : vOpt;
+                                          return (
+                                            <MenuItem key={val || vIdx} value={val}>
+                                              {lbl}
+                                            </MenuItem>
+                                          );
+                                        })}
+                                      </TextField>
+                                    );
+                                  }
+
+                                  return (
+                                    <TextField
+                                      fullWidth
+                                      size="small"
+                                      value={filter.tagValue || ''}
+                                      onChange={(e) => handleFilterChange(fIdx, 'tagValue', e.target.value)}
+                                      placeholder="Enter Tag Value"
+                                      sx={inputStyle}
+                                    />
+                                  );
+                                })()}
                               </Grid>
                               <Grid size={{ xs: 12, md: 1 }} className="pt-6 flex items-center">
                                 {customerFilters.length > 1 && (

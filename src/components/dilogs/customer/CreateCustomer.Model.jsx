@@ -6,10 +6,13 @@ import {
   DialogActions,
   Button,
   CircularProgress,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { CustomerRoute } from "../../../routes/customers/customer.route.js";
 import { UploadRoute } from "../../../routes/upload/upload.route.js";
 import { toast } from "react-toastify";
@@ -19,6 +22,7 @@ export default function CreateCustomerModel({
   onClose,
   onSuccess,
   isDark = false,
+  onOpenImport,
 }) {
   const [formFields, setFormFields] = useState([]);
   const [formData, setFormData] = useState({});
@@ -146,6 +150,42 @@ export default function CreateCustomerModel({
       <DialogTitle sx={{ fontWeight: 800 }}>Create New Customer</DialogTitle>
 
       <DialogContent dividers>
+        {onOpenImport && (
+          <div
+            className={`p-3 rounded-xl border flex items-center justify-between gap-2 mb-3 ${
+              isDark
+                ? "bg-indigo-950/40 border-indigo-800/50 text-indigo-200"
+                : "bg-indigo-50/80 border-indigo-100 text-indigo-900"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <UploadFileIcon
+                className={isDark ? "text-indigo-400" : "text-indigo-600"}
+                fontSize="small"
+              />
+              <span className="text-xs font-semibold">
+                Want to import multiple customer profiles via Excel file?
+              </span>
+            </div>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                onClose();
+                onOpenImport();
+              }}
+              sx={{
+                textTransform: "none",
+                borderRadius: "8px",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+              }}
+            >
+              Upload Excel
+            </Button>
+          </div>
+        )}
+
         {loadingFields ? (
           <div
             style={{
@@ -319,44 +359,80 @@ export default function CreateCustomerModel({
               }
 
               if (field.type === "select") {
+                const options = field.options || [];
+                const selectedOption = options.find((opt) => String(opt.value) === String(val)) || null;
+
                 return (
                   <div key={fieldKey} className="flex flex-col">
                     <FieldLabel />
-                    <select
+                    <Autocomplete
                       id={fieldId}
-                      value={val}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      style={{ ...nativeInputStyle, cursor: "pointer" }}
-                    >
-                      <option
-                        value=""
-                        style={{ backgroundColor: isDark ? "#0f172a" : "#fff" }}
-                      >
-                        — Select —
-                      </option>
-                      {(field.options || []).map((opt, optIdx) => (
-                        <option
-                          key={`opt-${opt.value || optIdx}`}
-                          value={opt.value}
-                          style={{ backgroundColor: isDark ? "#0f172a" : "#fff" }}
-                        >
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                      options={options}
+                      getOptionLabel={(option) => option.label || ""}
+                      isOptionEqualToValue={(option, value) => String(option.value) === String(value.value)}
+                      value={selectedOption}
+                      onChange={(e, newValue) => {
+                        handleChange(field.name, newValue ? newValue.value : "");
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder={field.placeholder || "Select option"}
+                          size="small"
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "10px",
+                              backgroundColor: isDark ? "rgba(15,23,42,0.6)" : "#fff",
+                              color: isDark ? "#fff" : "#0f172a",
+                              fontSize: "14px",
+                              "& fieldset": {
+                                borderColor: isDark ? "rgba(255,255,255,0.1)" : "#cbd5e1",
+                              },
+                              "&:hover fieldset": {
+                                borderColor: isDark ? "rgba(255,255,255,0.2)" : "#94a3b8",
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#6366f1",
+                              },
+                            },
+                            "& .MuiInputBase-input": {
+                              color: isDark ? "#fff" : "#0f172a",
+                              fontSize: "14px",
+                              py: "4px !important",
+                            },
+                            "& .MuiSvgIcon-root": {
+                              color: isDark ? "#94a3b8" : "#64748b",
+                            },
+                          }}
+                        />
+                      )}
+                    />
                   </div>
                 );
               }
+
+              const isNumberField = field.type === "number";
 
               return (
                 <div key={fieldKey} className="flex flex-col">
                   <FieldLabel />
                   <input
                     id={fieldId}
-                    type={field.type || "text"}
+                    type={isNumberField ? "text" : field.type || "text"}
                     placeholder={field.placeholder || ""}
                     value={val}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    onChange={(e) => {
+                      let inputVal = e.target.value;
+                      if (isNumberField) {
+                        // Allow digits and optional decimal point for numbers
+                        inputVal = inputVal.replace(/[^0-9.]/g, "");
+                        const parts = inputVal.split(".");
+                        if (parts.length > 2) {
+                          inputVal = parts[0] + "." + parts.slice(1).join("");
+                        }
+                      }
+                      handleChange(field.name, inputVal);
+                    }}
                     style={nativeInputStyle}
                   />
                 </div>

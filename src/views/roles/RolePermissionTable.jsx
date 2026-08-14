@@ -96,8 +96,8 @@ const formatDate = (dateString) => {
 export default function RolePermissionTable({
   roles = [],
   totalData,
-  page = 0,
-  rowsPerPage = 10,
+  page: propPage,
+  rowsPerPage: propRowsPerPage,
   onPageChange,
   onRowsPerPageChange,
   onEditClick,
@@ -105,6 +105,24 @@ export default function RolePermissionTable({
   loading = false,
   maxHeight,
 }) {
+  const [internalPage, setInternalPage] = useState(0);
+  const [internalRowsPerPage, setInternalRowsPerPage] = useState(10);
+
+  const page = propPage !== undefined ? propPage : internalPage;
+  const rowsPerPage = propRowsPerPage !== undefined ? propRowsPerPage : internalRowsPerPage;
+
+  const handlePageChange = (e, newPage) => {
+    setInternalPage(newPage);
+    if (onPageChange) onPageChange(e, newPage);
+  };
+
+  const handleRowsPerPageChange = (e) => {
+    const newSize = parseInt(e.target.value, 10);
+    setInternalRowsPerPage(newSize);
+    setInternalPage(0);
+    if (onRowsPerPageChange) onRowsPerPageChange(e);
+  };
+
   const [sorting, setSorting] = useState([]);
   const { isDark } = useThemeMode();
 
@@ -348,6 +366,10 @@ export default function RolePermissionTable({
     columns,
     state: {
       sorting,
+      pagination: {
+        pageIndex: page,
+        pageSize: rowsPerPage,
+      },
     },
     onSortingChange: setSorting,
     filterFns: {
@@ -358,6 +380,8 @@ export default function RolePermissionTable({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  const currentPageRows = table.getPaginationRowModel().rows;
 
   if (loading) {
     return (
@@ -374,12 +398,12 @@ export default function RolePermissionTable({
         className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
           isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
         }`}
-        sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 310px)' }}
+        sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 375px)' }}
       >
-      <TableContainer
-        className="overflow-auto overflow-y-auto w-full flex-1 min-h-0 custom-scrollbar"
-        sx={{ maxHeight: maxHeight ? `calc(${maxHeight} - 45px)` : 'calc(100vh - 360px)' }}
-      >
+        <TableContainer
+          className="overflow-auto w-full flex-1 min-h-0 custom-scrollbar"
+          sx={{ maxHeight: maxHeight ? `calc(${maxHeight} - 45px)` : 'calc(100vh - 425px)' }}
+        >
         <Table sx={{ minWidth: 700 }} size="small" stickyHeader>
           <TableHead sx={{ position: 'sticky', top: 0, zIndex: 30 }}>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -432,7 +456,7 @@ export default function RolePermissionTable({
                   </div>
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : currentPageRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
                   <div className="flex flex-col items-center justify-center gap-2">
@@ -447,7 +471,7 @@ export default function RolePermissionTable({
                 </TableCell>
               </TableRow>
             ) : (
-              table.getRowModel().rows.map((row) => (
+              currentPageRows.map((row) => (
                 <TableRow
                   key={row.id}
                   hover
@@ -480,8 +504,9 @@ export default function RolePermissionTable({
           totalData={totalData ?? roles.length}
           count={totalData ?? roles.length}
           page={page}
-          onPageChange={onPageChange}
-          onRowsPerPageChange={onRowsPerPageChange}
+          setPage={(newPage) => handlePageChange(null, newPage)}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
           rowsPerPageOptions={[10, 20, 25, 50]}
         />
       </div>

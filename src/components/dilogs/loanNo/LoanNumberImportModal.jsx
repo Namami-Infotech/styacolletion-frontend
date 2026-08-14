@@ -20,139 +20,74 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import * as XLSX from "xlsx";
-import { TaskRoute } from "../../../routes/tasks/task.route.js";
-import { CustomerRoute } from "../../../routes/customers/customer.route.js";
-import { EmployeeRoute } from "../../../routes/employee/employee.route.js";
-import { TaskTypeRoute } from "../../../routes/tasks/task-type.js";
+import { loanNumberRoute } from "../../../routes/loanNumber/loanNumber.route";
 import { toast } from "react-toastify";
 
-/**
- * Utility to generate and download Demo Excel Template matching Task Form Fields with custom column widths & sample rows
- */
-export const downloadTaskDemoExcel = async (formFields = []) => {
-  let sampleCustId = "101";
-  let sampleEmpId = "5";
-  let sampleTaskType1 = "Custom";
-  let sampleTaskType2 = "Onboarding";
+export const downloadLoanNumberDemoExcel = () => {
+  const sampleData = [
+    { "Loan No": "LN-1001", Status: "active" },
+    { "Loan No": "LN-1002", Status: "active" },
+    { "Loan No": "LN-1003", Status: "inactive" },
+  ];
 
+  const ws = XLSX.utils.json_to_sheet(sampleData);
+  ws["!cols"] = [{ wch: 18 }, { wch: 14 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Loan_Numbers_Template");
+  XLSX.writeFile(wb, "Loan_Numbers_Import_Demo.xlsx");
+};
+
+export const exportLoanNumbersToExcel = async (providedData = [], filename = null) => {
   try {
-    const typeRes = await TaskTypeRoute.getAllTaskTypes();
-    if (typeRes?.success) {
-      const list = typeRes.data?.taskTypes || typeRes.data?.taskType || (Array.isArray(typeRes.data) ? typeRes.data : []);
-      if (list.length > 0) {
-        sampleTaskType1 = list[0].task_type_id || list[0].id || "TSKT1001";
-        sampleTaskType2 = list[1]?.task_type_id || list[0].task_type_id || list[0].id || "TSKT1002";
+    let dataToExport = providedData;
+
+    if (!dataToExport || dataToExport.length === 0) {
+      toast.info("Fetching loan numbers data for export...");
+      const res = await loanNumberRoute.getAllLoanNumbers({ limit: "all" });
+      if (res?.success && res?.data?.loanNumbers && res.data.loanNumbers.length > 0) {
+        dataToExport = res.data.loanNumbers;
+      } else {
+        toast.error("No loan number records found to export.");
+        return;
       }
     }
 
-    const custRes = await CustomerRoute.getCustomers({ page: 1, limit: 1 });
-    if (custRes?.success && custRes.data?.customers && custRes.data.customers.length > 0) {
-      const c = custRes.data.customers[0];
-      sampleCustId = c.customer_id || c.id;
-    }
-
-    const empRes = await EmployeeRoute.getEmployees({ page: 1, limit: 1 });
-    if (empRes?.success && empRes.data?.employees && empRes.data.employees.length > 0) {
-      const e = empRes.data.employees[0];
-      sampleEmpId = e.emp_id || e.identity || e.id;
-    }
-  } catch (err) {
-    console.log("Pre-fetching customer/employee/taskType for template fallback:", err);
-  }
-
-  const sampleRow1 = {
-    "Task Type": sampleTaskType1,
-    "Customer ID": sampleCustId,
-    "Description": "Follow up with customer regarding documentation",
-    "Priority": "high",
-    "Assignee Employee ID": sampleEmpId,
-  };
-
-  const sampleRow2 = {
-    "Task Type": sampleTaskType2,
-    "Customer ID": sampleCustId,
-    "Description": "Complete customer KYC verification and onboarding",
-    "Priority": "medium",
-    "Assignee Employee ID": sampleEmpId,
-  };
-
-  const ws = XLSX.utils.json_to_sheet([sampleRow1, sampleRow2]);
-
-  // Set explicit column widths for neat Excel layout
-  ws["!cols"] = [
-    { wch: 16 }, // Task Type
-    { wch: 20 }, // Customer ID
-    { wch: 48 }, // Description
-    { wch: 12 }, // Priority
-    { wch: 22 }, // Assignee Employee ID
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Task_Import_Template");
-  XLSX.writeFile(wb, "Task_Import_Demo.xlsx");
-};
-
-/**
- * Utility to export tasks list to formatted Excel
- */
-export const exportTasksToExcel = (tasks = [], filename = "Tasks_Export.xlsx") => {
-  if (!tasks || tasks.length === 0) {
-    toast.error("No task data available to export.");
-    return;
-  }
-
-  const exportData = tasks.map((t, idx) => {
-    const cust = t.customerId;
-    const emp = t.assigneeToEmployeeId;
-    const creator = t.createdBy;
-
-    return {
-      "S.No": idx + 1,
-      "Task ID": t.task_id || t.id || "",
-      "Task Type": t.taskType?.name || (typeof t.taskType === "string" || typeof t.taskType === "number" ? t.taskType : ""),
-      "Description": t.description || "",
-      "Priority": t.priority ? String(t.priority).toUpperCase() : "MEDIUM",
-      "Status": t.status ? String(t.status).toUpperCase() : "PENDING",
-      "Customer Name": cust?.name || "",
-      "Customer ID": cust?.customer_id || cust?.id || "",
-      "Customer Phone": cust?.phone || "",
-      "Customer Location": cust?.location || cust?.district || "",
-      "Assignee Employee": emp?.name || "",
-      "Employee Identity": emp?.identity || emp?.emp_id || "",
-      "Department": emp?.department || "",
-      "Designations": emp?.designations || "",
-      "Manager Name": emp?.manager?.name || "",
-      "Manager Email": emp?.manager?.email || "",
-      "Created By": creator?.name || "",
-      "Created At": t.createdAt ? new Date(t.createdAt).toLocaleString() : "",
-    };
-  });
-
-  const ws = XLSX.utils.json_to_sheet(exportData);
-
-  // Auto calculate column widths
-  const colWidths = Object.keys(exportData[0] || {}).map((key) => {
-    let maxLen = key.length;
-    exportData.forEach((row) => {
-      const val = row[key] ? String(row[key]) : "";
-      if (val.length > maxLen) maxLen = val.length;
+    const exportRows = dataToExport.map((item, idx) => {
+      const creatorObj = item.createdBy || item.creator;
+      return {
+        "S.No": idx + 1,
+        "Loan No": item.loanNo || "",
+        Status: item.status || "active",
+        "Created By": creatorObj?.name ? `${creatorObj.name} (${creatorObj.identity || ""})` : "N/A",
+        "Created At": item.createdAt ? new Date(item.createdAt).toLocaleString() : "",
+      };
     });
-    return { wch: Math.min(Math.max(maxLen + 3, 12), 50) };
-  });
 
-  ws["!cols"] = colWidths;
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    ws["!cols"] = [
+      { wch: 8 },
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 25 },
+      { wch: 22 },
+    ];
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Tasks");
-  XLSX.writeFile(wb, filename);
-  toast.success(`Exported ${tasks.length} tasks to Excel successfully!`);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "LoanNumbers");
+    const exportFileName = filename || `Loan_Numbers_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, exportFileName);
+    toast.success(`Exported ${dataToExport.length} loan numbers to Excel successfully!`);
+  } catch (error) {
+    console.error("Error exporting loan numbers to Excel:", error);
+    toast.error("Failed to export loan numbers to Excel.");
+  }
 };
 
-export default function TaskImportModal({
+export default function LoanNumberImportModal({
   open,
   onClose,
-  formFields = [],
-  isDark,
+  isDark = false,
   onSuccess,
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -181,7 +116,7 @@ export default function TaskImportModal({
           setColumns(Object.keys(data[0]));
           setPreviewData(data);
         } else {
-          setErrorMsg("The selected file is empty.");
+          setErrorMsg("The selected Excel file is empty.");
           setPreviewData([]);
           setColumns([]);
         }
@@ -213,17 +148,17 @@ export default function TaskImportModal({
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const res = await TaskRoute.uploadExcelTasks(formData);
+      const res = await loanNumberRoute.uploadExcelLoanNumbers(formData);
 
       if (res?.success) {
-        toast.success(res.message || `${res.data?.total || previewData.length} tasks imported successfully!`);
+        toast.success(res.message || `${res.data?.total || previewData.length} Loan Numbers imported successfully!`);
         if (typeof onSuccess === "function") {
           onSuccess();
         }
         handleReset();
         onClose();
       } else {
-        const msg = res?.message || "Failed to import excel tasks.";
+        const msg = res?.message || "Failed to import excel loan numbers.";
         setErrorMsg(msg);
         toast.error(msg);
       }
@@ -265,7 +200,7 @@ export default function TaskImportModal({
       >
         <div className="flex items-center gap-2">
           <UploadFileIcon className={isDark ? "text-indigo-400" : "text-indigo-600"} />
-          <span>Import Tasks from Excel</span>
+          <span>Import Loan Numbers from Excel</span>
         </div>
         <IconButton
           onClick={() => {
@@ -290,15 +225,15 @@ export default function TaskImportModal({
         >
           <div className="space-y-1">
             <Typography variant="subtitle2" className="font-bold">
-              Need sample format?
+              Need sample Excel format?
             </Typography>
             <Typography variant="caption" className={isDark ? "text-slate-400" : "text-slate-600"}>
-              Download the demo Excel file containing all required & optional fields of the Task modal form.
+              Download demo Excel file containing "Loan No" and "Status" headers.
             </Typography>
           </div>
 
           <Button
-            onClick={() => downloadTaskDemoExcel(formFields)}
+            onClick={downloadLoanNumberDemoExcel}
             variant="outlined"
             size="small"
             startIcon={<FileDownloadIcon />}
@@ -315,7 +250,7 @@ export default function TaskImportModal({
               },
             }}
           >
-            Download Demo Excel
+            Download Excel Format (Sample)
           </Button>
         </div>
 
@@ -330,9 +265,9 @@ export default function TaskImportModal({
               accept=".xlsx, .xls, .csv"
               onChange={handleFileChange}
               style={{ display: "none" }}
-              id="excel-task-file-input"
+              id="excel-loanno-file-input"
             />
-            <label htmlFor="excel-task-file-input">
+            <label htmlFor="excel-loanno-file-input">
               <Button
                 component="span"
                 variant="contained"
@@ -360,7 +295,7 @@ export default function TaskImportModal({
 
         {/* Error Alert if any */}
         {errorMsg && (
-          <Alert severity="error" sx={{ borderRadius: "10px" }}>
+          <Alert severity="error" sx={{ borderRadius: "10px", whitespace: "pre-line" }}>
             {errorMsg}
           </Alert>
         )}
@@ -458,7 +393,7 @@ export default function TaskImportModal({
               : "#0f172a",
           }}
         >
-          {uploading ? "Importing..." : `Import ${previewData.length} Tasks`}
+          {uploading ? "Importing..." : `Import ${previewData.length} Loan Numbers`}
         </Button>
       </DialogActions>
     </Dialog>

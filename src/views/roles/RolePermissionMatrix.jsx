@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import {
   Checkbox,
   Tooltip,
-  IconButton,
   TextField,
   InputAdornment,
   Chip,
-  Button,
+  MenuItem,
 } from '@mui/material';
 
 import SecurityIcon from '@mui/icons-material/Security';
@@ -95,6 +94,10 @@ export default function RolePermissionMatrix({
   permissions = {},
   onChange = () => { },
   isReadOnly = false,
+  roles = [],
+  selectedRoleId,
+  onRoleChange,
+  getRoleGrantedCount,
 }) {
   const { isDark } = useThemeMode();
   const [searchTerm, setSearchTerm] = useState('');
@@ -712,16 +715,62 @@ export default function RolePermissionMatrix({
   const isAllExpanded = MODULE_TREE.filter((m) => m.subModules).every((m) => expanded[m.key]);
 
   return (
-    <div className={`space-y-4 font-sans ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
-      {/* Top Header & Presets Bar */}
+    <div className={`space-y-4 font-sans pb-12 sm:pb-16 ${isDark ? 'text-slate-100' : 'text-slate-800'}`}>
+      {/* Consolidated Top Header & Filters Panel */}
       <div
-        className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
-          }`}
+        className={`p-3.5 sm:p-4 rounded-xl border flex flex-col gap-3 shadow-2xs ${
+          isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200'
+        }`}
       >
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <SecurityIcon className="text-blue-500" sx={{ fontSize: 22 }} />
-            <h2 className="text-base font-bold">Module Permission Matrix</h2>
+        {/* Row 1: Title, Role Selector & Preset Buttons */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <SecurityIcon sx={{ fontSize: 20 }} />
+            </div>
+            <h2 className="text-sm sm:text-base font-extrabold tracking-tight">Module Permission Matrix</h2>
+
+            {/* Inline Selected Role Dropdown */}
+            {roles && roles.length > 0 && (
+              <div className="min-w-[200px] sm:min-w-[240px]">
+                <TextField
+                  select
+                  size="small"
+                  value={selectedRoleId || (roles[0]?.id ?? '')}
+                  onChange={(e) => onRoleChange && onRoleChange(e.target.value)}
+                  fullWidth
+                  slotProps={{
+                    input: {
+                      sx: {
+                        borderRadius: '0.5rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                        color: isDark ? '#f8fafc' : '#0f172a',
+                        '& fieldset': {
+                          borderColor: isDark ? '#334155' : '#cbd5e1',
+                        },
+                      },
+                    },
+                  }}
+                >
+                  {roles.map((r) => {
+                    const stats = getRoleGrantedCount ? getRoleGrantedCount(r) : { granted: 0, total: 70, percent: 0 };
+                    return (
+                      <MenuItem key={r.id} value={r.id}>
+                        <div className="flex items-center justify-between w-full font-semibold text-xs py-0.5 gap-3">
+                          <span className="font-extrabold">{r.name}</span>
+                          <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[10px] font-bold border border-blue-500/20 whitespace-nowrap">
+                            {stats.granted}/{stats.total} ({stats.percent}%)
+                          </span>
+                        </div>
+                      </MenuItem>
+                    );
+                  })}
+                </TextField>
+              </div>
+            )}
+
             <Chip
               label={`${totalChecked} / ${maxPossible} True (${percentageGranted}%)`}
               size="small"
@@ -730,136 +779,134 @@ export default function RolePermissionMatrix({
               className="font-extrabold text-xs"
             />
           </div>
-          <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Manage access controls for all modules and sub-modules. Click arrow icons to expand/collapse module groups.
-          </p>
 
-          {/* Action-wise Breakdown Summary Badges */}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Action Breakdown:</span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          {/* Quick Action Presets */}
+          {!isReadOnly && (
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <button
+                onClick={() => handleExpandAll(!isAllExpanded)}
+                className={`px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                  isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {isAllExpanded ? <UnfoldLessIcon sx={{ fontSize: 15 }} /> : <UnfoldMoreIcon sx={{ fontSize: 15 }} />}
+                {isAllExpanded ? 'Collapse All' : 'Expand All'}
+              </button>
+              <button
+                onClick={() => handleApplyPreset('full')}
+                className="px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-500 shadow-2xs cursor-pointer"
+              >
+                <SelectAllIcon sx={{ fontSize: 15 }} />
+                Full Access
+              </button>
+              <button
+                onClick={() => handleApplyPreset('viewOnly')}
+                className="px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all bg-blue-600 text-white hover:bg-blue-700 border-blue-500 shadow-2xs cursor-pointer"
+              >
+                <VisibilityIcon sx={{ fontSize: 15 }} />
+                View Only
+              </button>
+              <button
+                onClick={() => handleApplyPreset('standard')}
+                className="px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all bg-amber-600 text-white hover:bg-amber-700 border-amber-500 shadow-2xs cursor-pointer"
+              >
+                <CheckCircleOutlinedIcon sx={{ fontSize: 15 }} />
+                Standard
+              </button>
+              <button
+                onClick={() => handleApplyPreset('clear')}
+                className={`px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                  isDark ? 'bg-slate-800 border-slate-700 text-rose-400 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-rose-600 hover:bg-slate-200'
+                }`}
+              >
+                <ClearAllIcon sx={{ fontSize: 15 }} />
+                Clear All
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Row 2: Search, Breakdown Badges & Category Filter Pills */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Search Input */}
+          <div className="w-full lg:w-60">
+            <TextField
+              placeholder="Search module..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="small"
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon className={isDark ? 'text-slate-400' : 'text-slate-500'} sx={{ fontSize: 18 }} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: '0.5rem',
+                    fontSize: '0.8rem',
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    '& fieldset': {
+                      borderColor: isDark ? '#334155' : '#cbd5e1',
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+
+          {/* Action Breakdown Badges */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-0.5">Actions:</span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               Add: {actionCounts.add}
             </span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               Edit: {actionCounts.edit}
             </span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
               Delete: {actionCounts.delete}
             </span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               All View: {actionCounts.allView}
             </span>
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
               Own View: {actionCounts.ownView}
             </span>
           </div>
-        </div>
 
-        {/* Quick Action Presets */}
-        {!isReadOnly && (
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <button
-              onClick={() => handleExpandAll(!isAllExpanded)}
-              className={`px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all cursor-pointer ${isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 lg:pb-0">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-2.5 py-1 text-[11px] rounded-full border transition-all whitespace-nowrap cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-blue-600 border-blue-600 text-white font-bold shadow-2xs'
+                    : isDark
+                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                    : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
                 }`}
-            >
-              {isAllExpanded ? <UnfoldLessIcon sx={{ fontSize: 16 }} /> : <UnfoldMoreIcon sx={{ fontSize: 16 }} />}
-              {isAllExpanded ? 'Collapse All' : 'Expand All'}
-            </button>
-            <button
-              onClick={() => handleApplyPreset('full')}
-              className="px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-500 shadow-2xs cursor-pointer"
-            >
-              <SelectAllIcon sx={{ fontSize: 16 }} />
-              Full Access
-            </button>
-            <button
-              onClick={() => handleApplyPreset('viewOnly')}
-              className="px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all bg-blue-600 text-white hover:bg-blue-700 border-blue-500 shadow-2xs cursor-pointer"
-            >
-              <VisibilityIcon sx={{ fontSize: 16 }} />
-              View Only
-            </button>
-            <button
-              onClick={() => handleApplyPreset('standard')}
-              className="px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all bg-amber-600 text-white hover:bg-amber-700 border-amber-500 shadow-2xs cursor-pointer"
-            >
-              <CheckCircleOutlinedIcon sx={{ fontSize: 16 }} />
-              Standard
-            </button>
-            <button
-              onClick={() => handleApplyPreset('clear')}
-              className={`px-2.5 py-1.5 rounded-lg border font-semibold flex items-center gap-1 transition-all cursor-pointer ${isDark ? 'bg-slate-800 border-slate-700 text-rose-400 hover:bg-slate-700' : 'bg-slate-100 border-slate-300 text-rose-600 hover:bg-slate-200'
-                }`}
-            >
-              <ClearAllIcon sx={{ fontSize: 16 }} />
-              Clear All
-            </button>
+              >
+                {cat}
+              </button>
+            ))}
           </div>
-        )}
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div
-        className={`p-3 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-slate-50 border-slate-200'
-          }`}
-      >
-        <div className="w-full sm:w-72">
-          <TextField
-            placeholder="Search module name or key..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            size="small"
-            fullWidth
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon className={isDark ? 'text-slate-400' : 'text-slate-500'} sx={{ fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-                sx: {
-                  borderRadius: '0.5rem',
-                  fontSize: '0.85rem',
-                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                  color: isDark ? '#f8fafc' : '#0f172a',
-                  '& fieldset': {
-                    borderColor: isDark ? '#334155' : '#cbd5e1',
-                  },
-                },
-              },
-            }}
-          />
-        </div>
-
-        {/* Category Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1 text-xs rounded-full border transition-all whitespace-nowrap cursor-pointer ${selectedCategory === cat
-                ? 'bg-blue-600 border-blue-600 text-white font-bold shadow-2xs'
-                : isDark
-                  ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-                }`}
-            >
-              {cat}
-            </button>
-          ))}
         </div>
       </div>
 
       {/* Collapsible Permission Table */}
       <div
-        className={`overflow-x-auto rounded-xl border shadow-xs ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        className={`overflow-x-auto rounded-xl border shadow-xs mb-10 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           }`}
       >
         <table className="w-full text-left border-collapse text-xs">
-          <thead>
+          <thead className="sticky top-0 z-20">
             <tr
-              className={`border-b ${isDark ? 'bg-slate-950/80 border-slate-800 text-slate-300' : 'bg-slate-100/80 border-slate-200 text-slate-700'
+              className={`border-b shadow-2xs ${isDark ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-700'
                 }`}
             >
               <th className="py-3 px-4 font-bold min-w-[280px]">

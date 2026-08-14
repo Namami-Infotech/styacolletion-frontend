@@ -139,7 +139,7 @@ export default function CustomerPage() {
             </TextField>
 
             {/* Export Excel Button */}
-            <Button
+            {/* <Button
               onClick={() => exportCustomersToExcel([], `Customers_Export_${new Date().toISOString().slice(0, 10)}.xlsx`)}
               variant="outlined"
               size="small"
@@ -161,7 +161,7 @@ export default function CustomerPage() {
               }}
             >
               Export Excel
-            </Button>
+            </Button> */}
 
             {/* Import Excel Button */}
             {hasPermission("customer", "add") && (
@@ -249,6 +249,7 @@ export default function CustomerPage() {
           onClose={() => setCreateModalOpen(false)}
           onSuccess={handleRefresh}
           isDark={isDark}
+          onOpenImport={() => setImportModalOpen(true)}
         />
       )}
 

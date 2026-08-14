@@ -244,7 +244,7 @@ export default function EmployeeTable({
       }),
       columnHelper.accessor('employee_id', {
         id: 'employee_id',
-        header: 'Id',
+        header: 'Employee ID',
         cell: ({ row }) => (
           <span
             className={`font-mono text-xs font-bold px-2 py-0.5 rounded border whitespace-nowrap ${isDark
@@ -256,15 +256,7 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('department', {
-        id: 'department',
-        header: 'Department',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
-            {formatCellText(row.original.department)}
-          </span>
-        ),
-      }),
+   
       columnHelper.accessor('email', {
         id: 'email',
         header: 'Email',
@@ -274,15 +266,7 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('role', {
-        id: 'role',
-        header: 'Designations',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-            {formatCellText(row.original.designations ?? row.original.role ?? row.original.designation)}
-          </span>
-        ),
-      }),
+    
       columnHelper.accessor('phone', {
         id: 'phone',
         header: 'Mobile',
@@ -332,7 +316,7 @@ export default function EmployeeTable({
       }),
       columnHelper.accessor('type', {
         id: 'type',
-        header: 'Type',
+        header: 'Role/Type',
         cell: ({ row }) => (
           <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
             {formatCellText(row.original.type)}
@@ -353,93 +337,12 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('businessUnit', {
-        id: 'businessUnit',
-        header: 'Business Unit',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.business_unit ?? row.original.businessUnit)}
-          </span>
-        ),
-      }),
       columnHelper.accessor('licenses', {
         id: 'licenses',
         header: 'Licenses',
         cell: ({ row }) => (
           <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
             {formatCellText(row.original.license ?? row.original.licenses)}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('costCenter', {
-        id: 'costCenter',
-        header: 'Cost Center',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.cost_center ?? row.original.costCenter)}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('roles', {
-        id: 'roles',
-        header: 'Roles',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.roles ?? row.original.role ?? (row.original.role_id !== null && row.original.role_id !== undefined ? `Role #${row.original.role_id}` : null))}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('appVersion', {
-        id: 'appVersion',
-        header: 'App Version',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.app_version ?? row.original.appVersion ?? 'null'}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('desktopVersion', {
-        id: 'desktopVersion',
-        header: 'Desktop Version',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.desktop_version ?? row.original.desktopVersion ?? 'null'}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('lastDesktopStarted', {
-        id: 'lastDesktopStarted',
-        header: 'Last Desktop Started',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.last_desktop_started_at ? new Date(row.original.last_desktop_started_at).toLocaleString() : (row.original.lastDesktopStarted ?? 'null')}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('lastSyncDesktop', {
-        id: 'lastSyncDesktop',
-        header: 'Last Sync Desktop',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.last_Sync_desktop_at ? new Date(row.original.last_Sync_desktop_at).toLocaleString() : (row.original.lastSyncDesktop ?? 'null')}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('lastSyncMobile', {
-        id: 'lastSyncMobile',
-        header: 'Last Sync Mobile',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.last_Sync_mobile ? new Date(row.original.last_Sync_mobile).toLocaleString() : (row.original.lastSyncMobile ?? 'null')}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('lastLocation', {
-        id: 'lastLocation',
-        header: 'Last Location',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.last_location ?? row.original.lastLocation ?? 'null'}
           </span>
         ),
       }),
@@ -476,15 +379,6 @@ export default function EmployeeTable({
         cell: ({ row }) => (
           <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
             {row.original.date_of_joining ? new Date(row.original.date_of_joining).toLocaleDateString() : (row.original.joining_date ?? row.original.dateOfJoining ?? 'null')}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('id', {
-        id: 'id',
-        header: 'DBID',
-        cell: ({ row }) => (
-          <span className={`font-mono text-xs whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.id !== null && row.original.id !== undefined ? String(row.original.id) : 'null'}
           </span>
         ),
       }),
@@ -560,15 +454,7 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('functionalManager', {
-        id: 'functionalManager',
-        header: 'Functional Manager',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.functionalManager)}
-          </span>
-        ),
-      }),
+   
       columnHelper.accessor('dateOfExit', {
         id: 'dateOfExit',
         header: 'Date of Exit',

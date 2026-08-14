@@ -6,6 +6,8 @@ import {
   DialogActions,
   Button,
   CircularProgress,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -335,44 +337,80 @@ export default function EditCustomerModel({
               }
 
               if (field.type === "select") {
+                const options = field.options || [];
+                const selectedOption = options.find((opt) => String(opt.value) === String(val)) || null;
+
                 return (
                   <div key={fieldKey} className="flex flex-col">
                     <FieldLabel />
-                    <select
+                    <Autocomplete
                       id={fieldId}
-                      value={val}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      style={{ ...nativeInputStyle, cursor: "pointer" }}
-                    >
-                      <option
-                        value=""
-                        style={{ backgroundColor: isDark ? "#0f172a" : "#fff" }}
-                      >
-                        — Select —
-                      </option>
-                      {(field.options || []).map((opt, optIdx) => (
-                        <option
-                          key={`opt-${opt.value || optIdx}`}
-                          value={opt.value}
-                          style={{ backgroundColor: isDark ? "#0f172a" : "#fff" }}
-                        >
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                      options={options}
+                      getOptionLabel={(option) => option.label || ""}
+                      isOptionEqualToValue={(option, value) => String(option.value) === String(value.value)}
+                      value={selectedOption}
+                      onChange={(e, newValue) => {
+                        handleChange(field.name, newValue ? newValue.value : "");
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder={field.placeholder || "Select option"}
+                          size="small"
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "10px",
+                              backgroundColor: isDark ? "rgba(15,23,42,0.6)" : "#fff",
+                              color: isDark ? "#fff" : "#0f172a",
+                              fontSize: "14px",
+                              "& fieldset": {
+                                borderColor: isDark ? "rgba(255,255,255,0.1)" : "#cbd5e1",
+                              },
+                              "&:hover fieldset": {
+                                borderColor: isDark ? "rgba(255,255,255,0.2)" : "#94a3b8",
+                              },
+                              "&.Mui-focused fieldset": {
+                                borderColor: "#6366f1",
+                              },
+                            },
+                            "& .MuiInputBase-input": {
+                              color: isDark ? "#fff" : "#0f172a",
+                              fontSize: "14px",
+                              py: "4px !important",
+                            },
+                            "& .MuiSvgIcon-root": {
+                              color: isDark ? "#94a3b8" : "#64748b",
+                            },
+                          }}
+                        />
+                      )}
+                    />
                   </div>
                 );
               }
+
+              const isNumberField = field.type === "number";
 
               return (
                 <div key={fieldKey} className="flex flex-col">
                   <FieldLabel />
                   <input
                     id={fieldId}
-                    type={field.type || "text"}
+                    type={isNumberField ? "text" : field.type || "text"}
                     placeholder={field.placeholder || ""}
                     value={val}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    onChange={(e) => {
+                      let inputVal = e.target.value;
+                      if (isNumberField) {
+                        // Allow digits and optional decimal point for numbers
+                        inputVal = inputVal.replace(/[^0-9.]/g, "");
+                        const parts = inputVal.split(".");
+                        if (parts.length > 2) {
+                          inputVal = parts[0] + "." + parts.slice(1).join("");
+                        }
+                      }
+                      handleChange(field.name, inputVal);
+                    }}
                     style={nativeInputStyle}
                   />
                 </div>

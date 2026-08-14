@@ -404,6 +404,7 @@ export default function Navbar({
         leave: { label: 'Leave Settings', path: '/admin?tab=leave' },
         nonworking: { label: 'Non Working', path: '/admin?tab=nonworking' },
         holidays: { label: 'Holidays', path: '/admin?tab=holidays' },
+        loanNos: { label: 'Loan Numbers', path: '/admin?tab=loanNos' },
       },
     },
     department: { label: 'Department Settings', path: '/office', icon: <BusinessIcon fontSize="small" /> },

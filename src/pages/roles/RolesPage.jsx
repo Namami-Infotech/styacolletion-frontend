@@ -401,7 +401,7 @@ export default function RolesPage() {
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 space-y-3.5 w-full">
+        <div className="p-3 sm:p-4 pb-20 sm:pb-28 space-y-3.5 w-full flex-1 overflow-y-auto custom-scrollbar">
         {/* KPI Metric Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Card 1: Total Roles */}
@@ -462,7 +462,7 @@ export default function RolesPage() {
         </div>
 
         {/* View Toggle Tabs & Search Controls */}
-        <div className={`p-3 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-3 shadow-xs ${
+        <div className={`p-3 rounded-xl border flex flex-col md:flex-row items-center justify-between gap-3 shadow-xs shrink-0 ${
           isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           {/* Tab Switcher */}
@@ -566,77 +566,20 @@ export default function RolesPage() {
 
         {/* Tab 2: Live Interactive Permission Matrix Sandbox */}
         {activeTab === 'matrixPreview' && (
-          <div className="space-y-4">
-            {/* Live Role Selector Bar */}
-            <div
-              className={`p-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs ${
-                isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-                  <AdminPanelSettingsIcon sx={{ fontSize: 22 }} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-extrabold leading-tight">Select Saved Role to Inspect Matrix</h3>
-                  <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    Choose any system or custom role to view its exact module & sub-module permissions live.
-                  </p>
-                </div>
-              </div>
-
-              <div className="w-full sm:w-72">
-                <TextField
-                  select
-                  label="Selected Role"
-                  value={selectedPreviewRoleId}
-                  onChange={(e) => {
-                    const rId = e.target.value;
-                    setSelectedPreviewRoleId(rId);
-                    const found = roles.find((r) => String(r.id) === String(rId));
-                    if (found) {
-                      setSampleMatrixPermissions(unpackRolePermissions(found));
-                    }
-                  }}
-                  size="small"
-                  fullWidth
-                  InputProps={{
-                    sx: {
-                      borderRadius: '0.5rem',
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                      backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      '& fieldset': {
-                        borderColor: isDark ? '#334155' : '#cbd5e1',
-                      },
-                    },
-                  }}
-                >
-                  {roles.map((r) => {
-                    const stats = getRoleGrantedCount(r);
-                    return (
-                      <MenuItem key={r.id} value={r.id}>
-                        <div className="flex items-center justify-between w-full font-semibold text-xs py-0.5 gap-4">
-                          <span className="font-extrabold">{r.name}</span>
-                          <div className="flex items-center gap-1.5 font-mono text-[10px]">
-                            <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20">
-                              {stats.granted} / {stats.total} True ({stats.percent}%)
-                            </span>
-                          </div>
-                        </div>
-                      </MenuItem>
-                    );
-                  })}
-                </TextField>
-              </div>
-            </div>
-
-            <RolePermissionMatrix
-              permissions={sampleMatrixPermissions}
-              onChange={(updated) => setSampleMatrixPermissions(updated)}
-            />
-          </div>
+          <RolePermissionMatrix
+            permissions={sampleMatrixPermissions}
+            onChange={(updated) => setSampleMatrixPermissions(updated)}
+            roles={roles}
+            selectedRoleId={selectedPreviewRoleId}
+            onRoleChange={(rId) => {
+              setSelectedPreviewRoleId(rId);
+              const found = roles.find((r) => String(r.id) === String(rId));
+              if (found) {
+                setSampleMatrixPermissions(unpackRolePermissions(found));
+              }
+            }}
+            getRoleGrantedCount={getRoleGrantedCount}
+          />
         )}
         </div>
       </main>

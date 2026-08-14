@@ -377,19 +377,7 @@ export default function TaskTable({
           );
         },
       }),
-      columnHelper.accessor("workLocation", {
-        id: "workLocation",
-        header: "Work Location",
-        cell: ({ row }) => {
-          const loc = row.original.workLocation ?? row.original.work_location;
-          const locVal = typeof loc === "object" ? loc?.name : (loc ?? "null");
-          return (
-            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-              {locVal ?? "null"}
-            </span>
-          );
-        },
-      }),
+   
       columnHelper.accessor("team", {
         id: "team",
         header: "Team",
@@ -407,32 +395,6 @@ export default function TaskTable({
             {row.original.assigneeToEmployeeId?.manager?.name ?? (typeof row.original.manager === "string" ? row.original.manager : null) ?? "null"}
           </span>
         ),
-      }),
-      columnHelper.accessor("designations", {
-        id: "designations",
-        header: "Designations",
-        cell: ({ row }) => {
-          const desig = row.original?.assigneeToEmployeeId?.designation ?? row.original?.assigneeToEmployeeId?.designations;
-          const desigVal = typeof desig === "object" ? desig?.name : (desig ?? "null");
-          return (
-            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-              {desigVal ?? "null"}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor("department", {
-        id: "department",
-        header: "Department",
-        cell: ({ row }) => {
-          const dept = row.original?.assigneeToEmployeeId?.department;
-          const deptVal = typeof dept === "object" ? dept?.name : (dept ?? "null");
-          return (
-            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-              {deptVal ?? "null"}
-            </span>
-          );
-        },
       }),
       columnHelper.accessor("priority", {
         id: "priority",
@@ -456,7 +418,7 @@ export default function TaskTable({
       }),
       columnHelper.accessor("createdBy", {
         id: "createdBy",
-        header: "Creator",
+        header: "Created By",
         cell: ({ row }) => {
           const creator = row.original.createdBy;
           const creatorName = creator?.name ?? (typeof creator === "string" ? creator : null) ?? "null";
@@ -490,15 +452,7 @@ export default function TaskTable({
           </span>
         ),
       }),
-      columnHelper.accessor("startedAt", {
-        id: "startedAt",
-        header: "Started",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.startDateTime ? new Date(row.original.startDateTime).toLocaleString() : "null"}
-          </span>
-        ),
-      }),
+
       columnHelper.accessor("completedAt", {
         id: "completedAt",
         header: "Completed At",
@@ -508,66 +462,22 @@ export default function TaskTable({
           </span>
         ),
       }),
-      columnHelper.accessor("startDateTime", {
-        id: "startDateTime",
-        header: "Start",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.startDateTime ? new Date(row.original.startDateTime).toLocaleString() : "null"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("endDateTime", {
-        id: "endDateTime",
-        header: "Expire",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.endDateTime ? new Date(row.original.endDateTime).toLocaleString() : "null"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("address", {
-        id: "address",
-        header: "Address",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.address ?? "null"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("repeat", {
-        id: "repeat",
-        header: "Repeat",
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.repeat !== undefined && row.original.repeat !== null ? String(row.original.repeat) : "null"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("downloads", {
-        id: "downloads",
-        header: "Downloads",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.downloads ?? "null"}
-          </span>
-        ),
-      }),
       columnHelper.accessor("createdAt", {
         id: "createdAt",
-        header: "Created on",
+        header: "Created On",
         cell: ({ row }) => (
           <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
             {row.original.createdAt ? new Date(row.original.createdAt).toLocaleString() : "null"}
           </span>
         ),
       }),
-      columnHelper.accessor("id", {
-        id: "id",
-        header: "DBID",
+  
+      columnHelper.accessor("downloads", {
+        id: "downloads",
+        header: "Downloads",
         cell: ({ row }) => (
-          <span className={`font-mono text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.id ?? "null"}
+          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
+            {row.original.downloads ?? "null"}
           </span>
         ),
       }),
@@ -673,72 +583,7 @@ export default function TaskTable({
           </span>
         ),
       }),
-      columnHelper.accessor("taskWorkLocation", {
-        id: "taskWorkLocation",
-        header: "Task Work Location",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.taskWorkLocation ?? "null"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("totalTimeTaken", {
-        id: "totalTimeTaken",
-        header: "Total Time Taken",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.totalTimeTaken ?? "null"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("processIden", {
-        id: "processIden",
-        header: "Process Iden",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.processIden ?? "null"}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("employeeState", {
-        id: "employeeState",
-        header: "State Name & Id - Employee tag",
-        cell: ({ row }) => {
-          const st = row.original.employeeState ?? row.original.stateTag;
-          const stVal = typeof st === "object" ? st?.name : (st ?? "null");
-          return (
-            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-              {stVal ?? "null"}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor("employeeRegion", {
-        id: "employeeRegion",
-        header: "Region Name & Id - Employee tag",
-        cell: ({ row }) => {
-          const reg = row.original.employeeRegion ?? row.original.regionTag;
-          const regVal = typeof reg === "object" ? reg?.name : (reg ?? "null");
-          return (
-            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-              {regVal ?? "null"}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor("employeeBranch", {
-        id: "employeeBranch",
-        header: "Branch Name & Id - Employee tag",
-        cell: ({ row }) => {
-          const br = row.original.employeeBranch ?? row.original.branchTag;
-          const brVal = typeof br === "object" ? br?.name : (br ?? "null");
-          return (
-            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-              {brVal ?? "null"}
-            </span>
-          );
-        },
-      }),
+ 
       columnHelper.display({
         id: "actions",
         header: "ACTIONS",

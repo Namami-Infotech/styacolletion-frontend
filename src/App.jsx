@@ -27,6 +27,7 @@ const StatePage = lazy(() => import('./pages/location/state.Page'));
 const RegionPage = lazy(() => import('./pages/location/region.Page'));
 const BranchPage = lazy(() => import('./pages/location/branch.Page'));
 const TaskTypePage = lazy(() => import('./pages/tasks/taskTypePage'));
+const LoanNumberPage = lazy(() => import('./pages/loanNumberPage/LoanNumberPage'));
 const AdminPage = lazy(() => import('./pages/admin/AdminPage'));
 
 // Listener to fetch permissions on every route/page change
@@ -257,6 +258,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <TaskTypePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/loan-numbers/*"
+                element={
+                  <ProtectedRoute>
+                    <LoanNumberPage />
                   </ProtectedRoute>
                 }
               />
