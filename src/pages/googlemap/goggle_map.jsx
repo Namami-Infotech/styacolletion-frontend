@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -23,28 +23,57 @@ import ClearIcon from '@mui/icons-material/Clear';
 import PlaceIcon from '@mui/icons-material/Place';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import { toast } from 'react-toastify';
+import {
+  loadGoogleMapsSDK,
+  fetchPlaceSuggestions,
+  getGooglePlaceDetails,
+  reverseGeocodeCoords,
+} from '../../utils/locationService';
 
 export default function GoogleMap({ value = '', onChange, label = 'Home Location', mapHeight = '380px' }) {
   const { isDark } = useThemeMode();
   const [searchQuery, setSearchQuery] = useState(value || '');
   const [activeLocation, setActiveLocation] = useState(value || 'India');
+  const [activeCoords, setActiveCoords] = useState({ lat: null, lng: null });
   const [isMapExpanded, setIsMapExpanded] = useState(true);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const containerRef = useRef(null);
   const prevValueRef = useRef(value);
 
-  // Sync internal state ONLY when prop `value` changes from parent (e.g. modal open or external reset)
+  // Initialize Google SDK if API key available
+  useEffect(() => {
+    loadGoogleMapsSDK();
+  }, []);
+
+  // Parse coordinates from string if present
+  const extractCoords = (str) => {
+    if (!str) return { lat: null, lng: null };
+    const match = str.match(/(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)/);
+    if (match) {
+      const lat = parseFloat(match[1]);
+      const lng = parseFloat(match[3]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
+      }
+    }
+    return { lat: null, lng: null };
+  };
+
+  // Sync internal state when prop `value` changes
   useEffect(() => {
     if (value !== prevValueRef.current) {
       prevValueRef.current = value;
       setSearchQuery(value || '');
       setActiveLocation(value && value.trim() ? value : 'India');
+      setActiveCoords(extractCoords(value));
     }
   }, [value]);
 
-  // Real-time Place Search API (Photon Geocoding + Nominatim fallback + Guaranteed Custom search option)
+  // Real-time Place Search Suggestions
   useEffect(() => {
     const query = searchQuery.trim();
     if (!query || query.length < 2) {
@@ -53,87 +82,30 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
       return;
     }
 
+    let isMounted = true;
     const timer = setTimeout(async () => {
       setLoadingSearch(true);
       try {
-        let list = [];
-
-        // 1. Try Photon Geocoding API (Fast, CORS-enabled, great for Indian places & villages)
-        try {
-          const photonRes = await fetch(
-            `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lang=en`
-          );
-          if (photonRes.ok) {
-            const photonData = await photonRes.json();
-            if (photonData?.features && photonData.features.length > 0) {
-              list = photonData.features.map((feat) => {
-                const props = feat.properties || {};
-                const nameParts = [
-                  props.name,
-                  props.street,
-                  props.district || props.city,
-                  props.state,
-                  props.country || 'India',
-                ].filter(Boolean);
-                const uniqueParts = Array.from(new Set(nameParts));
-                const fullName = uniqueParts.join(', ');
-                return {
-                  displayName: fullName || query,
-                  shortName: props.name || props.city || props.district || query,
-                };
-              });
-            }
-          }
-        } catch (e) {
-          console.warn('Photon API fetch error:', e);
+        const list = await fetchPlaceSuggestions(query, activeCoords.lat ? activeCoords : null);
+        if (isMounted) {
+          setSuggestions(list);
         }
-
-        // 2. Fallback to OpenStreetMap / Nominatim if Photon returned no items
-        if (list.length === 0) {
-          try {
-            const nomRes = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-                query
-              )}&limit=8&addressdetails=1`
-            );
-            if (nomRes.ok) {
-              const nomData = await nomRes.json();
-              if (Array.isArray(nomData) && nomData.length > 0) {
-                list = nomData.map((item) => ({
-                  displayName: item.display_name,
-                  shortName:
-                    item.name ||
-                    item.address?.city ||
-                    item.address?.town ||
-                    item.address?.suburb ||
-                    item.display_name.split(',')[0],
-                }));
-              }
-            }
-          } catch (e) {
-            console.warn('Nominatim API fetch error:', e);
-          }
-        }
-
-        // 3. Guaranteed custom search item so dropdown is NEVER empty when user types!
-        const exactMatchItem = {
-          displayName: `Search "${query}" on Map`,
-          shortName: query,
-          isExactCustom: true,
-        };
-
-        setSuggestions([exactMatchItem, ...list]);
       } catch (err) {
         console.warn('Location search error:', err);
-        setSuggestions([
-          { displayName: `Search "${query}" on Map`, shortName: query, isExactCustom: true },
-        ]);
+        if (isMounted) {
+          setSuggestions([]);
+        }
       } finally {
-        setLoadingSearch(false);
+        if (isMounted) {
+          setLoadingSearch(false);
+        }
       }
     }, 250);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [searchQuery]);
 
   // Close suggestions on click outside
@@ -153,43 +125,73 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
     setShowSuggestions(true);
   };
 
-  const handleSearchSubmit = (e) => {
-    if (e) e.preventDefault();
+  const handleSelectPlace = async (place) => {
     setShowSuggestions(false);
-    const targetLoc = searchQuery.trim();
-    if (targetLoc) {
-      setActiveLocation(targetLoc);
-      prevValueRef.current = targetLoc;
-      if (onChange) {
-        onChange(targetLoc);
-      }
-    } else {
-      setActiveLocation('India');
-      prevValueRef.current = '';
-      if (onChange) {
-        onChange('');
+    if (!place) return;
+
+    if (place.isGooglePlace && place.placeId) {
+      setLoadingSearch(true);
+      try {
+        const details = await getGooglePlaceDetails(place.placeId);
+        if (details) {
+          const finalVal = details.displayName || place.displayName;
+          setSearchQuery(finalVal);
+          setActiveLocation(finalVal);
+          setActiveCoords({ lat: details.lat, lng: details.lng });
+          prevValueRef.current = finalVal;
+          if (onChange) onChange(finalVal);
+          return;
+        }
+      } finally {
+        setLoadingSearch(false);
       }
     }
-  };
 
-  const handleSelectPlace = (place) => {
-    const isCustom = typeof place === 'object' && place.isExactCustom;
-    const finalVal = isCustom
-      ? place.shortName
-      : (typeof place === 'object' ? (place.displayName || place.shortName) : place);
+    const finalVal = typeof place === 'object' ? (place.displayName || place.shortName) : place;
+    const lat = place && place.lat != null ? place.lat : null;
+    const lng = place && place.lng != null ? place.lng : null;
 
     setSearchQuery(finalVal);
     setActiveLocation(finalVal);
-    setShowSuggestions(false);
+    setActiveCoords({ lat, lng });
     prevValueRef.current = finalVal;
     if (onChange) {
       onChange(finalVal);
     }
   };
 
+  const handleSearchSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setShowSuggestions(false);
+    const targetLoc = searchQuery.trim();
+    if (!targetLoc) {
+      handleClear();
+      return;
+    }
+
+    // Check if coordinates were typed
+    const coords = extractCoords(targetLoc);
+    if (coords.lat != null && coords.lng != null) {
+      setActiveCoords(coords);
+      setActiveLocation(targetLoc);
+      prevValueRef.current = targetLoc;
+      if (onChange) onChange(targetLoc);
+      return;
+    }
+
+    // Directly set user's typed search query to Google Maps iframe embed
+    setActiveCoords({ lat: null, lng: null });
+    setActiveLocation(targetLoc);
+    prevValueRef.current = targetLoc;
+    if (onChange) {
+      onChange(targetLoc);
+    }
+  };
+
   const handleClear = () => {
     setSearchQuery('');
     setActiveLocation('India');
+    setActiveCoords({ lat: null, lng: null });
     setSuggestions([]);
     setShowSuggestions(false);
     prevValueRef.current = '';
@@ -199,32 +201,61 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
   };
 
   const handleUseCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latLngStr = `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
-          const locText = `Current Location (${latLngStr})`;
-          setSearchQuery(locText);
-          setActiveLocation(latLngStr);
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = Number(position.coords.latitude.toFixed(6));
+        const lng = Number(position.coords.longitude.toFixed(6));
+
+        try {
+          const resolvedAddress = await reverseGeocodeCoords(lat, lng);
+          const finalAddress = resolvedAddress || `${lat}, ${lng}`;
+
+          setSearchQuery(finalAddress);
+          setActiveLocation(finalAddress);
+          setActiveCoords({ lat, lng });
           setShowSuggestions(false);
-          prevValueRef.current = locText;
+          prevValueRef.current = finalAddress;
+
           if (onChange) {
-            onChange(locText);
+            onChange(finalAddress);
           }
-        },
-        (error) => {
-          console.warn('Geolocation failed:', error);
-          const fallback = 'New Delhi, India';
+          toast.success('Current location detected successfully!');
+        } catch (err) {
+          console.warn('Geolocation reverse error:', err);
+          const fallback = `${lat}, ${lng}`;
           setSearchQuery(fallback);
           setActiveLocation(fallback);
+          setActiveCoords({ lat, lng });
           setShowSuggestions(false);
           prevValueRef.current = fallback;
           if (onChange) {
             onChange(fallback);
           }
+        } finally {
+          setIsLocating(false);
         }
-      );
-    }
+      },
+      (error) => {
+        console.warn('Geolocation failed:', error);
+        setIsLocating(false);
+        let msg = 'Unable to retrieve current location.';
+        if (error.code === error.PERMISSION_DENIED) {
+          msg = 'Location permission denied. Please allow location access in your browser settings.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          msg = 'GPS location is unavailable.';
+        } else if (error.code === error.TIMEOUT) {
+          msg = 'Location request timed out. Please try again.';
+        }
+        toast.error(msg);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
   };
 
   const labelColor = isDark ? '#94a3b8' : '#475569';
@@ -245,12 +276,25 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
     },
   };
 
-  // Google Maps Embed URL centered on searched location or coordinates
-  const isDefaultIndia = !activeLocation || activeLocation.trim().toLowerCase() === 'india';
-  const mapZoom = isDefaultIndia ? 5 : 14;
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(
-    isDefaultIndia ? 'India' : activeLocation
-  )}&t=&z=${mapZoom}&ie=UTF8&iwloc=&output=embed`;
+  // Google Maps Embed URL centered on precise coordinates or searched location
+  const getMapEmbedUrl = () => {
+    if (activeCoords.lat != null && activeCoords.lng != null) {
+      return `https://maps.google.com/maps?q=${activeCoords.lat},${activeCoords.lng}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+    }
+
+    const coordsFromText = extractCoords(activeLocation);
+    if (coordsFromText.lat != null && coordsFromText.lng != null) {
+      return `https://maps.google.com/maps?q=${coordsFromText.lat},${coordsFromText.lng}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+    }
+
+    const isDefaultIndia = !activeLocation || activeLocation.trim().toLowerCase() === 'india';
+    const mapZoom = isDefaultIndia ? 5 : 15;
+    return `https://maps.google.com/maps?q=${encodeURIComponent(
+      isDefaultIndia ? 'India' : activeLocation
+    )}&t=&z=${mapZoom}&ie=UTF8&iwloc=&output=embed`;
+  };
+
+  const mapEmbedUrl = getMapEmbedUrl();
 
   return (
     <Box ref={containerRef} className="w-full space-y-3 relative">
@@ -283,7 +327,7 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
           value={searchQuery}
           onChange={handleInputChange}
           onFocus={() => setShowSuggestions(true)}
-          placeholder="Search Google Maps places (e.g. sapaha kasia kushinagar, Connaught Place)..."
+          placeholder="Search Google Maps places (e.g. kasia kushinagar, Connaught Place)..."
           slotProps={{
             input: {
               startAdornment: (
@@ -293,16 +337,18 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
               ),
               endAdornment: (
                 <InputAdornment position="end" className="flex items-center gap-1">
-                  {loadingSearch && <CircularProgress size={16} color="inherit" />}
+                  {(loadingSearch || isLocating) && <CircularProgress size={16} color="inherit" />}
                   {searchQuery && (
                     <IconButton size="small" onClick={handleClear}>
                       <ClearIcon fontSize="small" className={isDark ? 'text-slate-400' : 'text-slate-500'} />
                     </IconButton>
                   )}
                   <Tooltip title="Detect Current GPS Location">
-                    <IconButton size="small" onClick={handleUseCurrentLocation}>
-                      <MyLocationIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
-                    </IconButton>
+                    <span>
+                      <IconButton size="small" onClick={handleUseCurrentLocation} disabled={isLocating}>
+                        <MyLocationIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
+                      </IconButton>
+                    </span>
                   </Tooltip>
                   <IconButton size="small" type="submit">
                     <SearchIcon fontSize="small" className={isDark ? 'text-slate-300' : 'text-slate-700'} />
@@ -342,8 +388,10 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
                     py: 1.2,
                     px: 2,
                     borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid #f1f5f9',
-                    backgroundColor: item.isExactCustom
-                      ? (isDark ? 'rgba(99, 102, 241, 0.12)' : '#f0f9ff')
+                    backgroundColor: item.isDirectQuery
+                      ? isDark
+                        ? 'rgba(99, 102, 241, 0.15)'
+                        : '#f0f9ff'
                       : 'transparent',
                     '&:hover': {
                       backgroundColor: isDark ? 'rgba(99, 102, 241, 0.25)' : '#e0f2fe',
@@ -351,19 +399,19 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 32 }}>
-                    {item.isExactCustom ? (
-                      <TravelExploreIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
+                    {item.isDirectQuery ? (
+                      <SearchIcon fontSize="small" sx={{ color: isDark ? '#818cf8' : '#0284c7' }} />
                     ) : (
                       <PlaceIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
                     )}
                   </ListItemIcon>
                   <ListItemText
-                    primary={item.isExactCustom ? item.displayName : (item.shortName || item.displayName)}
-                    secondary={item.isExactCustom ? 'Click or press Enter to load on Google Map' : item.displayName}
+                    primary={item.shortName || item.displayName}
+                    secondary={item.isDirectQuery ? 'Pin & navigate directly on Google Maps' : item.displayName}
                     primaryTypographyProps={{
                       fontSize: '0.85rem',
-                      fontWeight: item.isExactCustom ? 700 : 600,
-                      color: item.isExactCustom ? (isDark ? '#818cf8' : '#0284c7') : textPrimary,
+                      fontWeight: item.isDirectQuery ? 700 : 600,
+                      color: item.isDirectQuery ? (isDark ? '#a5b4fc' : '#0369a1') : textPrimary,
                     }}
                     secondaryTypographyProps={{
                       fontSize: '0.75rem',
@@ -392,7 +440,7 @@ export default function GoogleMap({ value = '', onChange, label = 'Home Location
         >
           <Box className="relative w-full" sx={{ height: mapHeight }}>
             <iframe
-              key={activeLocation}
+              key={mapEmbedUrl}
               title="Google Map Location Search Preview"
               width="100%"
               height="100%"

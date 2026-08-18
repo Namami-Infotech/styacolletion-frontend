@@ -20,7 +20,16 @@ import MyLocationIcon from '@mui/icons-material/MyLocation';
 import MapIcon from '@mui/icons-material/Map';
 import ClearIcon from '@mui/icons-material/Clear';
 import PlaceIcon from '@mui/icons-material/Place';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import SearchIcon from '@mui/icons-material/Search';
 import { useThemeMode } from '../../../contexts/ThemeContext';
+import { toast } from 'react-toastify';
+import {
+  loadGoogleMapsSDK,
+  fetchPlaceSuggestions,
+  getGooglePlaceDetails,
+  reverseGeocodeCoords,
+} from '../../../utils/locationService';
 
 export default function OfficeLocationPicker({
   address = '',
@@ -39,8 +48,13 @@ export default function OfficeLocationPicker({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [showMap, setShowMap] = useState(true);
   const containerRef = useRef(null);
+
+  useEffect(() => {
+    loadGoogleMapsSDK();
+  }, []);
 
   useEffect(() => {
     setSearchQuery(address || '');
@@ -53,7 +67,7 @@ export default function OfficeLocationPicker({
     }
   }, [address, latitude, longitude]);
 
-  // Real-time Place Search API (Photon Geocoding + Nominatim)
+  // Real-time Place Search API
   useEffect(() => {
     const query = searchQuery.trim();
     if (!query || query.length < 2) {
@@ -62,84 +76,30 @@ export default function OfficeLocationPicker({
       return;
     }
 
+    let isMounted = true;
     const timer = setTimeout(async () => {
       setLoadingSearch(true);
       try {
-        let list = [];
-
-        // 1. Try Photon Geocoding API
-        try {
-          const photonRes = await fetch(
-            `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lang=en`
-          );
-          if (photonRes.ok) {
-            const photonData = await photonRes.json();
-            if (photonData?.features?.length > 0) {
-              list = photonData.features.map((feat) => {
-                const props = feat.properties || {};
-                const coords = feat.geometry?.coordinates || [];
-                const lng = coords[0];
-                const lat = coords[1];
-
-                const nameParts = [
-                  props.name,
-                  props.street,
-                  props.district || props.city,
-                  props.state,
-                  props.country || 'India',
-                ].filter(Boolean);
-                const fullName = Array.from(new Set(nameParts)).join(', ');
-
-                return {
-                  displayName: fullName || query,
-                  shortName: props.name || props.city || query,
-                  lat: lat,
-                  lng: lng,
-                };
-              });
-            }
-          }
-        } catch (e) {
-          console.warn('Photon API fetch error:', e);
+        const list = await fetchPlaceSuggestions(query, activeCoords.lat ? activeCoords : null);
+        if (isMounted) {
+          setSuggestions(list);
         }
-
-        // 2. Nominatim fallback if list is empty
-        if (list.length === 0) {
-          try {
-            const nomRes = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-                query
-              )}&limit=7&addressdetails=1`
-            );
-            if (nomRes.ok) {
-              const nomData = await nomRes.json();
-              if (Array.isArray(nomData) && nomData.length > 0) {
-                list = nomData.map((item) => ({
-                  displayName: item.display_name,
-                  shortName:
-                    item.name ||
-                    item.address?.city ||
-                    item.address?.town ||
-                    item.display_name.split(',')[0],
-                  lat: parseFloat(item.lat),
-                  lng: parseFloat(item.lon),
-                }));
-              }
-            }
-          } catch (e) {
-            console.warn('Nominatim API fetch error:', e);
-          }
-        }
-
-        setSuggestions(list);
       } catch (err) {
         console.warn('Location search error:', err);
+        if (isMounted) {
+          setSuggestions([]);
+        }
       } finally {
-        setLoadingSearch(false);
+        if (isMounted) {
+          setLoadingSearch(false);
+        }
       }
-    }, 300);
+    }, 250);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [searchQuery]);
 
   // Click outside to hide suggestions
@@ -153,18 +113,50 @@ export default function OfficeLocationPicker({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelectPlace = (place) => {
+  const handleSelectPlace = async (place) => {
+    setShowSuggestions(false);
+    if (!place) return;
+
+    if (place.isGooglePlace && place.placeId) {
+      setLoadingSearch(true);
+      try {
+        const details = await getGooglePlaceDetails(place.placeId);
+        if (details) {
+          const selectedAddress = details.displayName || place.displayName;
+          const selectedLat = details.lat != null ? Number(details.lat.toFixed(6)) : '';
+          const selectedLng = details.lng != null ? Number(details.lng.toFixed(6)) : '';
+
+          setSearchQuery(selectedAddress);
+          setActiveCoords({
+            lat: selectedLat !== '' ? selectedLat : null,
+            lng: selectedLng !== '' ? selectedLng : null,
+            address: selectedAddress,
+          });
+
+          if (onLocationSelect) {
+            onLocationSelect({
+              address: selectedAddress,
+              latitude: selectedLat,
+              longitude: selectedLng,
+            });
+          }
+          return;
+        }
+      } finally {
+        setLoadingSearch(false);
+      }
+    }
+
     const selectedAddress = place.displayName || place.shortName;
-    const selectedLat = place.lat != null ? Number(place.lat.toFixed(6)) : 0;
-    const selectedLng = place.lng != null ? Number(place.lng.toFixed(6)) : 0;
+    const selectedLat = place.lat != null ? Number(place.lat.toFixed(6)) : '';
+    const selectedLng = place.lng != null ? Number(place.lng.toFixed(6)) : '';
 
     setSearchQuery(selectedAddress);
     setActiveCoords({
-      lat: selectedLat,
-      lng: selectedLng,
+      lat: selectedLat !== '' ? selectedLat : null,
+      lng: selectedLng !== '' ? selectedLng : null,
       address: selectedAddress,
     });
-    setShowSuggestions(false);
 
     if (onLocationSelect) {
       onLocationSelect({
@@ -175,46 +167,89 @@ export default function OfficeLocationPicker({
     }
   };
 
+  const handleSearchSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setShowSuggestions(false);
+    const targetLoc = searchQuery.trim();
+    if (!targetLoc) {
+      handleClear();
+      return;
+    }
+
+    setActiveCoords({
+      lat: null,
+      lng: null,
+      address: targetLoc,
+    });
+    if (onLocationSelect) {
+      onLocationSelect({
+        address: targetLoc,
+        latitude: '',
+        longitude: '',
+      });
+    }
+  };
+
   const handleUseCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = Number(position.coords.latitude.toFixed(6));
-          const lng = Number(position.coords.longitude.toFixed(6));
-          let addressText = `Current Location (${lat}, ${lng})`;
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
 
-          try {
-            const nomRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-            );
-            if (nomRes.ok) {
-              const data = await nomRes.json();
-              if (data?.display_name) {
-                addressText = data.display_name;
-              }
-            }
-          } catch (e) {
-            console.warn('Reverse geocode error:', e);
-          }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = Number(position.coords.latitude.toFixed(6));
+        const lng = Number(position.coords.longitude.toFixed(6));
 
-          setSearchQuery(addressText);
-          setActiveCoords({ lat, lng, address: addressText });
+        try {
+          const resolvedAddress = await reverseGeocodeCoords(lat, lng);
+          const finalAddress = resolvedAddress || `${lat}, ${lng}`;
+
+          setSearchQuery(finalAddress);
+          setActiveCoords({ lat, lng, address: finalAddress });
           setShowSuggestions(false);
 
           if (onLocationSelect) {
             onLocationSelect({
-              address: addressText,
+              address: finalAddress,
               latitude: lat,
               longitude: lng,
             });
           }
-        },
-        (error) => {
-          console.warn('Geolocation failed:', error);
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    }
+          toast.success('Current location detected successfully!');
+        } catch (err) {
+          console.warn('Reverse geocode error:', err);
+          const fallback = `${lat}, ${lng}`;
+          setSearchQuery(fallback);
+          setActiveCoords({ lat, lng, address: fallback });
+          setShowSuggestions(false);
+          if (onLocationSelect) {
+            onLocationSelect({
+              address: fallback,
+              latitude: lat,
+              longitude: lng,
+            });
+          }
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        console.warn('Geolocation failed:', error);
+        setIsLocating(false);
+        let msg = 'Unable to retrieve current location.';
+        if (error.code === error.PERMISSION_DENIED) {
+          msg = 'Location permission denied. Please enable location access in browser settings.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          msg = 'GPS location unavailable.';
+        } else if (error.code === error.TIMEOUT) {
+          msg = 'Location request timed out. Please try again.';
+        }
+        toast.error(msg);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
   };
 
   const handleClear = () => {
@@ -231,7 +266,7 @@ export default function OfficeLocationPicker({
     ? `${activeCoords.lat},${activeCoords.lng}`
     : (searchQuery || 'India');
 
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
 
   return (
     <Box ref={containerRef} className="w-full space-y-2 relative my-1">
@@ -251,7 +286,7 @@ export default function OfficeLocationPicker({
       </Box>
 
       {/* Location Search Input */}
-      <div className="relative">
+      <form onSubmit={handleSearchSubmit} className="relative">
         <TextField
           fullWidth
           size="small"
@@ -271,17 +306,22 @@ export default function OfficeLocationPicker({
               ),
               endAdornment: (
                 <InputAdornment position="end" className="flex items-center gap-1">
-                  {loadingSearch && <CircularProgress size={16} color="inherit" />}
+                  {(loadingSearch || isLocating) && <CircularProgress size={16} color="inherit" />}
                   {searchQuery && (
                     <IconButton size="small" onClick={handleClear}>
                       <ClearIcon fontSize="small" />
                     </IconButton>
                   )}
                   <Tooltip title="Use Current GPS Location">
-                    <IconButton size="small" onClick={handleUseCurrentLocation}>
-                      <MyLocationIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
-                    </IconButton>
+                    <span>
+                      <IconButton size="small" onClick={handleUseCurrentLocation} disabled={isLocating}>
+                        <MyLocationIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
+                      </IconButton>
+                    </span>
                   </Tooltip>
+                  <IconButton size="small" type="submit">
+                    <SearchIcon fontSize="small" className={isDark ? 'text-slate-300' : 'text-slate-700'} />
+                  </IconButton>
                 </InputAdornment>
               ),
             },
@@ -323,22 +363,44 @@ export default function OfficeLocationPicker({
                     py: 1,
                     px: 1.5,
                     borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid #f1f5f9',
+                    backgroundColor: item.isDirectQuery
+                      ? isDark
+                        ? 'rgba(99, 102, 241, 0.15)'
+                        : '#f0f9ff'
+                      : 'transparent',
                     '&:hover': { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#e0f2fe' },
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 32 }}>
-                    <PlaceIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
+                    {item.isDirectQuery ? (
+                      <SearchIcon fontSize="small" sx={{ color: isDark ? '#818cf8' : '#0284c7' }} />
+                    ) : (
+                      <PlaceIcon fontSize="small" className={isDark ? 'text-indigo-400' : 'text-blue-600'} />
+                    )}
                   </ListItemIcon>
                   <ListItemText
-                    primary={<Typography variant="body2" className="font-semibold text-xs">{item.shortName}</Typography>}
-                    secondary={<Typography variant="caption" className={`block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.displayName}</Typography>}
+                    primary={
+                      <Typography
+                        variant="body2"
+                        className={`font-semibold text-xs ${
+                          item.isDirectQuery ? (isDark ? 'text-indigo-300' : 'text-sky-700') : ''
+                        }`}
+                      >
+                        {item.shortName || item.displayName}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="caption" className={`block truncate ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {item.isDirectQuery ? 'Pin & navigate directly on Google Maps' : item.displayName}
+                      </Typography>
+                    }
                   />
                 </ListItemButton>
               ))}
             </List>
           </Paper>
         )}
-      </div>
+      </form>
 
       {/* Embedded Google Map Preview */}
       {showMap && (
