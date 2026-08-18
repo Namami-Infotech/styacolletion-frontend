@@ -41,6 +41,7 @@ export default function CompleteBehalfEmployeeModal({
   const [submitting, setSubmitting] = useState(false);
   const [uploadingFields, setUploadingFields] = useState({});
   const [formData, setFormData] = useState({});
+  const [contacts, setContacts] = useState([{ relation: "", clientPhone: "" }]);
   const [errors, setErrors] = useState({});
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
@@ -77,16 +78,42 @@ export default function CompleteBehalfEmployeeModal({
       initialData[field.name] = "";
     });
     setFormData(initialData);
+    setContacts([{ relation: "", clientPhone: "" }]);
     setErrors({});
   };
 
+  const handleAddContact = () => {
+    setContacts((prev) => [...prev, { relation: "", clientPhone: "" }]);
+  };
+
+  const handleRemoveContact = (index) => {
+    if (contacts.length <= 1) return;
+    setContacts((prev) => prev.filter((_, idx) => idx !== index));
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[`relation_${index}`];
+      delete updated[`clientPhone_${index}`];
+      return updated;
+    });
+  };
+
+  const handleContactChange = (index, field, value) => {
+    setContacts((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+
+    if (errors[`${field}_${index}`]) {
+      setErrors((prev) => ({ ...prev, [`${field}_${index}`]: "" }));
+    }
+  };
+
   const isFieldVisible = (fieldName, data) => {
-    // Default always visible API fields
+    // Default always visible API fields (relation and clientPhone are handled in contacts section)
     if (
       [
         "houseImage",
-        "relation",
-        "clientPhone",
         "collectPayment",
       ].includes(fieldName)
     ) {
@@ -145,8 +172,45 @@ export default function CompleteBehalfEmployeeModal({
 
   const validateForm = () => {
     const newErrors = {};
+
+    // Validate houseImage if configured
+    if (!formData.houseImage) {
+      newErrors.houseImage = "House image is required";
+    }
+
+    // Validate dynamic contacts
+    contacts.forEach((contact, idx) => {
+      if (idx === 0) {
+        if (!contact.relation) {
+          newErrors[`relation_${idx}`] = "Relation is required";
+        }
+        if (!contact.clientPhone || !contact.clientPhone.trim()) {
+          newErrors[`clientPhone_${idx}`] = "Phone number is required";
+        } else if (!/^\d{10}$/.test(contact.clientPhone.trim())) {
+          newErrors[`clientPhone_${idx}`] = "Enter a valid 10-digit phone number";
+        }
+      } else {
+        // For additional contact rows, if either field is filled, both are required
+        if (contact.relation || (contact.clientPhone && contact.clientPhone.trim())) {
+          if (!contact.relation) {
+            newErrors[`relation_${idx}`] = "Relation is required";
+          }
+          if (!contact.clientPhone || !contact.clientPhone.trim()) {
+            newErrors[`clientPhone_${idx}`] = "Phone number is required";
+          } else if (!/^\d{10}$/.test(contact.clientPhone.trim())) {
+            newErrors[`clientPhone_${idx}`] = "Enter a valid 10-digit phone number";
+          }
+        }
+      }
+    });
+
+    // Validate other visible fields
     fields.forEach((field) => {
-      if (isFieldVisible(field.name, formData) && field.required) {
+      if (
+        !["relation", "clientPhone", "houseImage"].includes(field.name) &&
+        isFieldVisible(field.name, formData) &&
+        field.required
+      ) {
         const val = formData[field.name];
         if (!val || val.toString().trim() === "") {
           newErrors[field.name] = `${field.label || field.name} is required`;
@@ -169,7 +233,18 @@ export default function CompleteBehalfEmployeeModal({
     try {
       const taskId = activeTask?.task_id || activeTask?._id || activeTask?.id;
 
-      const res = await TaskRoute.completeTask(taskId, formData);
+      // Filter out any completely empty secondary rows
+      const validContacts = contacts.filter((c) => c.relation && c.clientPhone);
+      const activeContactsList = validContacts.length > 0 ? validContacts : contacts;
+
+      const payload = {
+        ...formData,
+        contacts: activeContactsList,
+        relation: activeContactsList.map((c) => c.relation).join(", "),
+        clientPhone: activeContactsList.map((c) => c.clientPhone).join(", "),
+      };
+
+      const res = await TaskRoute.completeTask(taskId, payload);
 
       if (res?.success) {
         const msg =
@@ -192,6 +267,7 @@ export default function CompleteBehalfEmployeeModal({
 
   const handleClose = () => {
     setFormData({});
+    setContacts([{ relation: "", clientPhone: "" }]);
     setErrors({});
     setUploadingFields({});
     onClose();
@@ -402,8 +478,159 @@ export default function CompleteBehalfEmployeeModal({
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. House Image (Always rendered at the top) */}
+                <div className="col-span-1 md:col-span-2 space-y-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    House Image <span className="text-red-500">*</span>
+                  </label>
+                  {renderFieldInput({ name: "houseImage", label: "House Image" })}
+                  {errors.houseImage && (
+                    <p className="text-[11px] font-medium text-red-500 mt-0.5">
+                      {errors.houseImage}
+                    </p>
+                  )}
+                </div>
+
+                {/* 2. Client Relation & Phone Number Section with Add More */}
+                <div className="col-span-1 md:col-span-2 space-y-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        Client Relation & Phone Number
+                      </h4>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                        {contacts.length} {contacts.length > 1 ? "Numbers" : "Number"}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      size="small"
+                      startIcon={<AddIcon fontSize="small" />}
+                      onClick={handleAddContact}
+                      sx={{
+                        textTransform: "none",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        color: "#2563eb",
+                        backgroundColor: isDark ? "rgba(37, 99, 235, 0.15)" : "rgba(37, 99, 235, 0.08)",
+                        borderRadius: "10px",
+                        px: 2,
+                        py: 0.5,
+                        "&:hover": {
+                          backgroundColor: isDark ? "rgba(37, 99, 235, 0.25)" : "rgba(37, 99, 235, 0.16)",
+                        },
+                      }}
+                    >
+                      Add More
+                    </Button>
+                  </div>
+
+                  {/* Dynamic Contacts List */}
+                  <div className="space-y-3">
+                    {contacts.map((contact, idx) => {
+                      const relationField = fields.find((f) => f.name === "relation");
+                      const defaultOptions = [
+                        { label: "Self", value: "self" },
+                        { label: "Spouses", value: "spouses" },
+                        { label: "Father", value: "father" },
+                        { label: "Mother", value: "mother" },
+                        { label: "Brother", value: "brother" },
+                        { label: "Son", value: "son" },
+                        { label: "Daughter", value: "daughter" },
+                        { label: "Neighbour", value: "neighbour" },
+                        { label: "Relative", value: "relative" },
+                      ];
+                      const options = (relationField?.options && relationField.options.length > 0)
+                        ? relationField.options
+                        : defaultOptions;
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-xl border transition-all ${
+                            isDark ? "bg-slate-800/80 border-slate-700" : "bg-white border-slate-200 shadow-sm"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                              Contact #{idx + 1} {idx === 0 && <span className="text-red-500">*</span>}
+                            </span>
+                            {contacts.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveContact(idx)}
+                                className="text-[11px] text-red-500 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-1 font-medium transition-colors cursor-pointer"
+                              >
+                                <CloseIcon sx={{ fontSize: 14 }} /> Remove
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* Relation dropdown */}
+                            <div className="space-y-1">
+                              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Relation {idx === 0 && <span className="text-red-500">*</span>}
+                              </label>
+                              <select
+                                value={contact.relation}
+                                onChange={(e) => handleContactChange(idx, "relation", e.target.value)}
+                                className={`w-full px-3 py-2.5 text-xs rounded-xl border transition-colors outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  isDark
+                                    ? "bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500"
+                                    : "bg-slate-50 border-slate-300 text-slate-800 placeholder-slate-400"
+                                } ${errors[`relation_${idx}`] ? "border-red-500 focus:ring-red-500" : ""}`}
+                              >
+                                <option value="">Select relation</option>
+                                {options.map((opt, optIdx) => (
+                                  <option key={optIdx} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
+                              {errors[`relation_${idx}`] && (
+                                <p className="text-[11px] font-medium text-red-500 mt-0.5">
+                                  {errors[`relation_${idx}`]}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Client Phone Number input */}
+                            <div className="space-y-1">
+                              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Client Phone Number {idx === 0 && <span className="text-red-500">*</span>}
+                              </label>
+                              <input
+                                type="tel"
+                                maxLength={10}
+                                value={contact.clientPhone}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/g, "");
+                                  handleContactChange(idx, "clientPhone", val);
+                                }}
+                                placeholder="Enter client phone number"
+                                className={`w-full px-3 py-2.5 text-xs rounded-xl border transition-colors outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  isDark
+                                    ? "bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500"
+                                    : "bg-slate-50 border-slate-300 text-slate-800 placeholder-slate-400"
+                                } ${errors[`clientPhone_${idx}`] ? "border-red-500 focus:ring-red-500" : ""}`}
+                              />
+                              {errors[`clientPhone_${idx}`] && (
+                                <p className="text-[11px] font-medium text-red-500 mt-0.5">
+                                  {errors[`clientPhone_${idx}`]}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Other Dynamic Fields (Collect Payment, Payment Type, Remarks, etc.) */}
                 {fields
-                  .filter((field) => isFieldVisible(field.name, formData))
+                  .filter((field) => !["houseImage", "relation", "clientPhone"].includes(field.name) && isFieldVisible(field.name, formData))
                   .map((field) => {
                     if (field.name === "location") {
                       return (

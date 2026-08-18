@@ -810,60 +810,92 @@ export default function TaskDetails() {
                   </div>
 
                   {/* Client Relation & Mobile */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Client Relation Dropdown */}
-                    <div>
-                      <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
-                        Client Relation 1*
-                      </label>
-                      <select
-                        disabled
-                        value={completionDetails.relation || clientRelations.rel1 || ""}
-                        className={`w-full px-3 py-2 text-xs font-medium rounded-lg border outline-none cursor-not-allowed opacity-80 capitalize ${isDark
-                            ? "bg-slate-800/80 border-slate-700 text-slate-200"
-                            : "bg-slate-200 border-slate-300 text-slate-800"
-                          }`}
-                      >
-                        <option value="">Please select list</option>
-                        <option value="self">Self</option>
-                        <option value="Self">Self</option>
-                        <option value="spouse">Spouse</option>
-                        <option value="spouses">Spouses</option>
-                        <option value="Spouse">Spouse</option>
-                        <option value="father">Father</option>
-                        <option value="Father">Father</option>
-                        <option value="mother">Mother</option>
-                        <option value="Mother">Mother</option>
-                        <option value="brother">Brother</option>
-                        <option value="Brother">Brother</option>
-                        <option value="son">Son</option>
-                        <option value="Son">Son</option>
-                        <option value="daughter">Daughter</option>
-                        <option value="Daughter">Daughter</option>
-                        <option value="neighbour">Neighbour</option>
-                        <option value="Neighbor">Neighbor</option>
-                        <option value="relative">Relative</option>
-                        <option value="Relative">Relative</option>
-                      </select>
-                    </div>
+                  {(() => {
+                    const rawContacts =
+                      (Array.isArray(passedTask?.additionalFields?.contacts) && passedTask.additionalFields.contacts.length > 0)
+                        ? passedTask.additionalFields.contacts
+                        : (Array.isArray(passedTask?.contacts) && passedTask.contacts.length > 0)
+                          ? passedTask.contacts
+                          : [];
 
-                    {/* Client Mobile No Input */}
-                    <div>
-                      <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
-                        Client Mobile No. 1*
-                      </label>
-                      <input
-                        type="text"
-                        disabled
-                        placeholder="Please enter Mobile"
-                        value={completionDetails.clientPhone || clientRelations.mob1 || ""}
-                        className={`w-full px-3 py-2 text-xs font-medium rounded-lg border outline-none cursor-not-allowed opacity-80 ${isDark
-                            ? "bg-slate-800/80 border-slate-700 text-slate-200"
-                            : "bg-slate-200 border-slate-300 text-slate-800"
-                          }`}
-                      />
-                    </div>
-                  </div>
+                    if (rawContacts.length > 0) {
+                      return (
+                        <div className="space-y-3">
+                          {rawContacts.map((contact, idx) => (
+                            <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
+                                  Client Relation {idx + 1}*
+                                </label>
+                                <input
+                                  type="text"
+                                  disabled
+                                  value={contact.relation || ""}
+                                  className={`w-full px-3 py-2 text-xs font-medium rounded-lg border outline-none cursor-not-allowed opacity-80 capitalize ${
+                                    isDark
+                                      ? "bg-slate-800/80 border-slate-700 text-slate-200"
+                                      : "bg-slate-200 border-slate-300 text-slate-800"
+                                  }`}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
+                                  Client Mobile No. {idx + 1}*
+                                </label>
+                                <input
+                                  type="text"
+                                  disabled
+                                  placeholder="Please enter Mobile"
+                                  value={contact.clientPhone || ""}
+                                  className={`w-full px-3 py-2 text-xs font-medium rounded-lg border outline-none cursor-not-allowed opacity-80 ${
+                                    isDark
+                                      ? "bg-slate-800/80 border-slate-700 text-slate-200"
+                                      : "bg-slate-200 border-slate-300 text-slate-800"
+                                  }`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
+                            Client Relation 1*
+                          </label>
+                          <input
+                            type="text"
+                            disabled
+                            value={completionDetails.relation || clientRelations.rel1 || ""}
+                            className={`w-full px-3 py-2 text-xs font-medium rounded-lg border outline-none cursor-not-allowed opacity-80 capitalize ${
+                              isDark
+                                ? "bg-slate-800/80 border-slate-700 text-slate-200"
+                                : "bg-slate-200 border-slate-300 text-slate-800"
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-400">
+                            Client Mobile No. 1*
+                          </label>
+                          <input
+                            type="text"
+                            disabled
+                            placeholder="Please enter Mobile"
+                            value={completionDetails.clientPhone || clientRelations.mob1 || ""}
+                            className={`w-full px-3 py-2 text-xs font-medium rounded-lg border outline-none cursor-not-allowed opacity-80 ${
+                              isDark
+                                ? "bg-slate-800/80 border-slate-700 text-slate-200"
+                                : "bg-slate-200 border-slate-300 text-slate-800"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Payment type & Collect Payment */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
