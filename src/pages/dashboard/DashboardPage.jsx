@@ -1,45 +1,14 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/common/Navbar';
-import EmployeeTable from '../../views/employee/EmployeeTable';
-import DeleteConfirmationModal from '../../components/common/DeleteConfirmationModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { DashboardRoute } from '../../routes/dashboard/dashboard.route';
-import { EmployeeRoute } from '../../routes/employee/employee.route';
-
-// MUI Icons
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import PaymentsIcon from '@mui/icons-material/Payments';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-
-// Area Chart Daily Data Points Default (2026-07-01 to 2026-07-20)
-const DEFAULT_CHART_DATA = [
-  { date: '2026-07-01', val: 900 },
-  { date: '2026-07-02', val: 1200 },
-  { date: '2026-07-03', val: 1100 },
-  { date: '2026-07-04', val: 1501.71 },
-  { date: '2026-07-05', val: 1200 },
-  { date: '2026-07-06', val: 1800 },
-  { date: '2026-07-07', val: 980 },
-  { date: '2026-07-08', val: 10500 },
-  { date: '2026-07-09', val: 9000 },
-  { date: '2026-07-10', val: 1160 },
-  { date: '2026-07-11', val: 1190 },
-  { date: '2026-07-12', val: 1500 },
-  { date: '2026-07-13', val: 12100 },
-  { date: '2026-07-14', val: 11400 },
-  { date: '2026-07-15', val: 11800 },
-  { date: '2026-07-16', val: 1250 },
-  { date: '2026-07-17', val: 12200 },
-  { date: '2026-07-18', val: 1300 },
-  { date: '2026-07-19', val: 1800 },
-  { date: '2026-07-20', val: 1100 },
-];
+import { DateRangePicker } from 'react-date-range';
+import { format } from 'date-fns';
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file;
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -53,9 +22,6 @@ export default function DashboardPage() {
   // Animation key for graph refresh
   const [chartKey, setChartKey] = useState(0);
 
-  // Employee list state
-  const [employees, setEmployees] = useState([]);
-
   // Sidebar state
   const [activeSidebar, setActiveSidebar] = useState('Summary');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -63,21 +29,124 @@ export default function DashboardPage() {
   // Filters
   const [customerFilter, setCustomerFilter] = useState('All');
   const [employeeFilter, setEmployeeFilter] = useState('All');
-  const [dateRange, setDateRange] = useState('Month to Date');
+
+  // Global Date Range state for Stats & Attendance
+  const [globalDateRange, setGlobalDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection'
+    }
+  ]);
+  const [pendingDateRange, setPendingDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection'
+    }
+  ]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const datePickerRef = useRef(null);
+
+  // Attendance state with infinite scroll
+  const [attendanceMeta, setAttendanceMeta] = useState(null);   // summary counts, isDateRange etc.
+  const [attendanceRows, setAttendanceRows] = useState([]);      // accumulated rows
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [attendancePage, setAttendancePage] = useState(1);
+  const [attendanceHasMore, setAttendanceHasMore] = useState(false);
+  const [attendanceLoadingMore, setAttendanceLoadingMore] = useState(false);
+  const attendanceDateRef = useRef({ startDate: '', endDate: '' });
+  const scrollSentinelRef = useRef(null);
+  const ATTENDANCE_LIMIT = 50;
 
   // Fetch stats from backend API
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async (startDate, endDate) => {
     setLoading(true);
-    const res = await DashboardRoute.getStats({ customer: customerFilter, employee: employeeFilter, dateRange });
+    const res = await DashboardRoute.getStats({ customer: customerFilter, employee: employeeFilter, startDate, endDate });
     if (res?.success && res?.data) {
       setStats(res.data);
     }
     setLoading(false);
   };
 
+  // Fetch attendance data — page 1 resets list, subsequent pages append
+  const fetchAttendance = async (startDate, endDate, page = 1) => {
+    if (page === 1) {
+      setAttendanceLoading(true);
+      setAttendanceRows([]);
+    } else {
+      setAttendanceLoadingMore(true);
+    }
+    const res = await DashboardRoute.getAttendance({ startDate, endDate, page, limit: ATTENDANCE_LIMIT });
+    if (res?.success && res?.data) {
+      const data = res.data;
+      setAttendanceMeta({
+        isDateRange: data.isDateRange,
+        totalEmployees: data.totalEmployees,
+        totalRecords: data.totalRecords,
+        presentCount: data.presentCount,
+        absentCount: data.absentCount,
+        halfDayCount: data.halfDayCount,
+        currentPage: data.currentPage,
+        totalPages: data.totalPages,
+      });
+      setAttendanceRows(prev => page === 1 ? (data.attendanceList || []) : [...prev, ...(data.attendanceList || [])]);
+      setAttendanceHasMore(data.hasMore || false);
+      setAttendancePage(data.currentPage || 1);
+    }
+    if (page === 1) setAttendanceLoading(false);
+    else setAttendanceLoadingMore(false);
+  };
+
+  // Reset and fetch page 1 when date range / filters change
   useEffect(() => {
-    fetchDashboardStats();
-  }, [customerFilter, employeeFilter, dateRange]);
+    const formattedStart = format(globalDateRange[0].startDate, 'yyyy-MM-dd');
+    const formattedEnd = format(globalDateRange[0].endDate, 'yyyy-MM-dd');
+    attendanceDateRef.current = { startDate: formattedStart, endDate: formattedEnd };
+    fetchDashboardStats(formattedStart, formattedEnd);
+    fetchAttendance(formattedStart, formattedEnd, 1);
+  }, [customerFilter, employeeFilter, globalDateRange]);
+
+  // IntersectionObserver: load next page when sentinel comes into view
+  useEffect(() => {
+    const sentinel = scrollSentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && attendanceHasMore && !attendanceLoadingMore) {
+          const { startDate, endDate } = attendanceDateRef.current;
+          fetchAttendance(startDate, endDate, attendancePage + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [attendanceHasMore, attendanceLoadingMore, attendancePage]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+        setShowDatePicker(false);
+        // Reset pending to global when closed without saving
+        setPendingDateRange(globalDateRange);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [globalDateRange]);
+
+  const handleApplyDateRange = () => {
+    setGlobalDateRange(pendingDateRange);
+    setShowDatePicker(false);
+  };
+
+  const handleCancelDateRange = () => {
+    setPendingDateRange(globalDateRange);
+    setShowDatePicker(false);
+  };
 
   const activeChartData = useMemo(() => {
     return Array.isArray(stats?.chartData) ? stats.chartData : [];
@@ -85,16 +154,6 @@ export default function DashboardPage() {
 
   // Hovered Chart Point for Tooltip
   const [hoveredPoint, setHoveredPoint] = useState({ date: '2026-07-04', val: 11501.71, x: 210, y: 55 });
-
-  // Employee Table Pagination state
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  // Modals state
-  const [activeEmployee, setActiveEmployee] = useState(null);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   // Chart SVG Calculations
   const chartWidth = 1000;
@@ -142,24 +201,38 @@ export default function DashboardPage() {
     return { smoothLinePath: d, smoothAreaPath: areaD };
   }, [points, chartWidth, chartHeight]);
 
-  const handleUpdateEmployee = (updatedEmp) => {
-    setEmployees((prev) => prev.map((e) => (e.id === updatedEmp.id ? updatedEmp : e)));
-    setEditModalOpen(false);
+  // Status badge helper
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      PRESENT: { label: 'Present', bg: isDark ? 'bg-emerald-950/60' : 'bg-emerald-50', text: isDark ? 'text-emerald-400' : 'text-emerald-700', border: isDark ? 'border-emerald-800' : 'border-emerald-200' },
+      CLOCKED_IN: { label: 'Clocked In', bg: isDark ? 'bg-blue-950/60' : 'bg-blue-50', text: isDark ? 'text-blue-400' : 'text-blue-700', border: isDark ? 'border-blue-800' : 'border-blue-200' },
+      CLOCKED_OUT: { label: 'Clocked Out', bg: isDark ? 'bg-indigo-950/60' : 'bg-indigo-50', text: isDark ? 'text-indigo-400' : 'text-indigo-700', border: isDark ? 'border-indigo-800' : 'border-indigo-200' },
+      ABSENT: { label: 'Absent', bg: isDark ? 'bg-red-950/60' : 'bg-red-50', text: isDark ? 'text-red-400' : 'text-red-700', border: isDark ? 'border-red-800' : 'border-red-200' },
+      HALF_DAY: { label: 'Half Day', bg: isDark ? 'bg-amber-950/60' : 'bg-amber-50', text: isDark ? 'text-amber-400' : 'text-amber-700', border: isDark ? 'border-amber-800' : 'border-amber-200' },
+    };
+    const cfg = statusConfig[status] || statusConfig.ABSENT;
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+        {cfg.label}
+      </span>
+    );
   };
 
-  const handleDeleteEmployee = async (employeeOrId) => {
-    const slug = typeof employeeOrId === 'object' ? (employeeOrId?.slug || employeeOrId?.id) : employeeOrId;
-    if (!slug) return;
-    try {
-      const res = await EmployeeRoute.deleteEmployee(slug);
-      if (res?.success) {
-        setEmployees((prev) => prev.filter((e) => (e.slug || e.id) !== slug));
-      }
-    } catch (error) {
-      console.error("Failed to delete employee", error);
-    } finally {
-      setDeleteModalOpen(false);
+  // Format time helper
+  const formatTime = (dateStr) => {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
+  // Format distance helper (meters if < 1km)
+  const formatDistance = (distKm) => {
+    if (distKm == null || isNaN(Number(distKm))) return '—';
+    const val = Number(distKm);
+    if (val < 1) {
+      return `${(val * 1000).toFixed(0)} meters`;
     }
+    return `${val.toFixed(2)} Km`;
   };
 
   return (
@@ -171,65 +244,54 @@ export default function DashboardPage() {
       <div className={`flex-shrink-0 px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-3 transition-colors ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-2xs'}`}>
         <div>
           <h1 className={`text-sm font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>Dashboards</h1>
-          <p className="text-xs font-bold text-blue-600">Summary</p>
+          
         </div>
 
         {/* Filter Controls Right */}
         <div className="flex flex-wrap items-center gap-2.5 text-xs">
-          {/* Customers Filter */}
-          <div className="flex flex-col">
-            <span className={`text-[10px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-950'}`}>Customers (All)</span>
-            <select
-              value={customerFilter}
-              onChange={(e) => setCustomerFilter(e.target.value)}
-              className={`px-2.5 py-1 rounded-md border text-xs outline-none cursor-pointer font-bold transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-950 hover:border-slate-400 shadow-2xs'}`}
+          {/* Global Date Range Picker */}
+          <div className="flex flex-col relative" ref={datePickerRef}>
+            <span className={`text-[10px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-950'}`}>Date Range</span>
+            <div 
+              onClick={() => {
+                setPendingDateRange(globalDateRange);
+                setShowDatePicker(!showDatePicker);
+              }}
+              className={`flex items-center gap-2 px-2.5 py-1 rounded-md border text-xs font-bold cursor-pointer transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100 hover:border-slate-500' : 'bg-white border-slate-300 text-slate-950 hover:border-slate-400 shadow-2xs'}`}
             >
-              <option value="All" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Please select</option>
-              <option value="CustA" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Customer A</option>
-              <option value="CustB" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Customer B</option>
-            </select>
-          </div>
-
-          {/* Employee Filter */}
-          <div className="flex flex-col">
-            <span className={`text-[10px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-950'}`}>Employee (Equal)</span>
-            <select
-              value={employeeFilter}
-              onChange={(e) => setEmployeeFilter(e.target.value)}
-              className={`px-2.5 py-1 rounded-md border text-xs outline-none cursor-pointer font-bold transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-950 hover:border-slate-400 shadow-2xs'}`}
-            >
-              <option value="All" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Please select</option>
-              <option value="Emp1" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Alex Morgan</option>
-              <option value="Emp2" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>David Chen</option>
-            </select>
-          </div>
-
-          {/* Date Range Preset */}
-          <div className="flex flex-col">
-            <span className={`text-[10px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-950'}`}>&nbsp;</span>
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className={`px-2.5 py-1 rounded-md border text-xs font-bold outline-none cursor-pointer transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-950 hover:border-slate-400 shadow-2xs'}`}
-            >
-              <option value="Month to Date" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Month to Date</option>
-              <option value="Last 7 Days" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Last 7 Days</option>
-              <option value="Today" className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-950'}>Today</option>
-            </select>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1.5 mt-3">
-            <button className="p-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center cursor-pointer shadow-2xs transition-colors" title="Apply Filter">
-              <FilterListIcon sx={{ fontSize: 16 }} />
-            </button>
-            <button
-              onClick={() => setChartKey((prev) => prev + 1)}
-              className={`p-1.5 rounded-md border flex items-center justify-center cursor-pointer transition-colors ${isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-950 hover:bg-slate-100 shadow-2xs'}`}
-              title="Refresh / Re-animate Graph"
-            >
-              <RefreshIcon sx={{ fontSize: 16 }} />
-            </button>
+              <CalendarTodayIcon sx={{ fontSize: 14 }} className={isDark ? 'text-slate-400' : 'text-slate-600'} />
+              <span>
+                {format(globalDateRange[0].startDate, 'MMM d, yyyy')} - {format(globalDateRange[0].endDate, 'MMM d, yyyy')}
+              </span>
+            </div>
+            
+            {showDatePicker && (
+              <div className="absolute right-0 top-full mt-2 z-[100] shadow-2xl border border-slate-200 rounded-lg bg-white overflow-hidden text-slate-900 text-base" style={{ width: 'max-content' }}>
+                <DateRangePicker
+                  onChange={item => setPendingDateRange([item.selection])}
+                  showSelectionPreview={true}
+                  moveRangeOnFirstSelection={false}
+                  months={2}
+                  ranges={pendingDateRange}
+                  direction="horizontal"
+                  maxDate={new Date()}
+                />
+                <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                  <button 
+                    onClick={handleCancelDateRange}
+                    className="px-4 py-1.5 rounded-md text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleApplyDateRange}
+                    className="px-4 py-1.5 rounded-md text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -237,142 +299,54 @@ export default function DashboardPage() {
       {/* Main Body Area: Sidebar + Dashboard Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Clean Refined Sidebar for Light & Dark Mode */}
-        <aside className={`flex-shrink-0 transition-all duration-200 border-r flex flex-col justify-between ${sidebarCollapsed ? 'w-14' : 'w-48'} ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-2xs'}`}>
-          <div className="py-3 flex flex-col gap-1 px-1.5">
-            {/* Summary Tab */}
-            <button
-              onClick={() => setActiveSidebar('Summary')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                activeSidebar === 'Summary'
-                  ? isDark
-                    ? 'bg-blue-950/60 text-blue-400 border-l-4 border-blue-500 shadow-2xs'
-                    : 'bg-blue-50 text-blue-700 border-l-4 border-blue-600 shadow-2xs'
-                  : isDark
-                  ? 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
-                  : 'text-slate-900 hover:bg-slate-100 hover:text-slate-950 font-bold'
-              }`}
-            >
-              <AssessmentIcon sx={{ fontSize: 19 }} />
-              {!sidebarCollapsed && <span>Summary</span>}
-            </button>
-
-            {/* Task Tab */}
-            <button
-              onClick={() => setActiveSidebar('Task')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                activeSidebar === 'Task'
-                  ? isDark
-                    ? 'bg-blue-950/60 text-blue-400 border-l-4 border-blue-500 shadow-2xs'
-                    : 'bg-blue-50 text-blue-700 border-l-4 border-blue-600 shadow-2xs'
-                  : isDark
-                  ? 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
-                  : 'text-slate-900 hover:bg-slate-100 hover:text-slate-950 font-bold'
-              }`}
-            >
-              <AssignmentIcon sx={{ fontSize: 19 }} />
-              {!sidebarCollapsed && <span>Task</span>}
-            </button>
-
-            {/* Payment Analysis Tab */}
-            <button
-              onClick={() => setActiveSidebar('Payment')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                activeSidebar === 'Payment'
-                  ? isDark
-                    ? 'bg-blue-950/60 text-blue-400 border-l-4 border-blue-500 shadow-2xs'
-                    : 'bg-blue-50 text-blue-700 border-l-4 border-blue-600 shadow-2xs'
-                  : isDark
-                  ? 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
-                  : 'text-slate-900 hover:bg-slate-100 hover:text-slate-950 font-bold'
-              }`}
-            >
-              <PaymentsIcon sx={{ fontSize: 19 }} />
-              {!sidebarCollapsed && <span>Payment Analysis</span>}
-            </button>
-          </div>
-
-          {/* Sidebar Collapse Button */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`p-2.5 border-t flex items-center justify-center transition-colors cursor-pointer ${isDark ? 'border-slate-800 text-slate-400 hover:text-slate-200' : 'border-slate-300 text-slate-900 hover:text-slate-950'}`}
-          >
-            {sidebarCollapsed ? <ChevronRightIcon sx={{ fontSize: 18 }} /> : <ChevronLeftIcon sx={{ fontSize: 18 }} />}
-          </button>
-        </aside>
+      
 
         {/* Dashboard Main Content Area */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
           
-          {/* KPI Metrics Cards (7 Cards) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-            {/* 1. Distance */}
-            <div className={`p-3 rounded-xl border transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs hover:shadow-sm'}`}>
-              <div className="flex justify-between items-start">
-                <span className={`text-[11px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Distance</span>
-                <span className={`text-[9px] font-extrabold px-1 py-0.5 rounded ${isDark ? 'text-emerald-400 bg-emerald-950/60' : 'text-emerald-800 bg-emerald-100 border border-emerald-300'}`}>{stats?.kpi?.distance?.change || "▲ 11.7%"}</span>
-              </div>
-              <p className={`text-sm sm:text-base font-extrabold mt-1 tracking-tight ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{stats?.kpi?.distance?.value || "197,968.49"} <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-800'}`}>{stats?.kpi?.distance?.unit || "Km"}</span></p>
-            </div>
-
-            {/* 2. Travel Time */}
-            <div className={`p-3 rounded-xl border transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs hover:shadow-sm'}`}>
-              <div className="flex justify-between items-start">
-                <span className={`text-[11px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Travel Time</span>
-                <span className={`text-[9px] font-extrabold px-1 py-0.5 rounded ${isDark ? 'text-emerald-400 bg-emerald-950/60' : 'text-emerald-800 bg-emerald-100 border border-emerald-300'}`}>{stats?.kpi?.travelTime?.change || "▲ 18.98%"}</span>
-              </div>
-              <p className={`text-sm sm:text-base font-extrabold mt-1 tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-950'}`}>{stats?.kpi?.travelTime?.value || "13113:57"} <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-800'}`}>{stats?.kpi?.travelTime?.unit || "hh:mm"}</span></p>
-            </div>
-
-            {/* 3. Task */}
-            <div className={`p-3 rounded-xl border transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs hover:shadow-sm'}`}>
-              <div className="flex justify-between items-start">
-                <span className={`text-[11px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Task</span>
-                <span className={`text-[9px] font-extrabold px-1 py-0.5 rounded ${isDark ? 'text-emerald-400 bg-emerald-950/60' : 'text-emerald-800 bg-emerald-100 border border-emerald-300'}`}>{stats?.kpi?.task?.change || "▲ 8.47%"}</span>
-              </div>
-              <p className={`text-sm sm:text-base font-extrabold mt-1 tracking-tight ${isDark ? 'text-pink-400' : 'text-pink-700'}`}>{stats?.kpi?.task?.value || "42377"} <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-800'}`}>{stats?.kpi?.task?.unit || "Count"}</span></p>
-            </div>
-
-            {/* 4. Employee Present */}
-            <div className={`p-3 rounded-xl border transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs hover:shadow-sm'}`}>
-              <div className="flex justify-between items-start">
-                <span className={`text-[11px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Employee Present</span>
-                <span className={`text-[9px] font-extrabold px-1 py-0.5 rounded ${isDark ? 'text-emerald-400 bg-emerald-950/60' : 'text-emerald-800 bg-emerald-100 border border-emerald-300'}`}>{stats?.kpi?.employeePresent?.change || "▲ 18.66%"}</span>
-              </div>
-              <p className={`text-sm sm:text-base font-extrabold mt-1 tracking-tight ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>{stats?.kpi?.employeePresent?.value || "4117"} <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-800'}`}>{stats?.kpi?.employeePresent?.unit || "Count"}</span></p>
-            </div>
-
-            {/* 5. Working Hours */}
-            <div className={`p-3 rounded-xl border transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs hover:shadow-sm'}`}>
-              <div className="flex justify-between items-start">
-                <span className={`text-[11px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Working Hours</span>
-                <span className={`text-[9px] font-extrabold px-1 py-0.5 rounded ${isDark ? 'text-emerald-400 bg-emerald-950/60' : 'text-emerald-800 bg-emerald-100 border border-emerald-300'}`}>{stats?.kpi?.workingHours?.change || "▲ 5.11%"}</span>
-              </div>
-              <p className={`text-sm sm:text-base font-extrabold mt-1 tracking-tight ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{stats?.kpi?.workingHours?.value || "45232:54"} <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-800'}`}>{stats?.kpi?.workingHours?.unit || "hh:mm"}</span></p>
-            </div>
-
-            {/* 6. Payment Received */}
-            <div className={`p-3 rounded-xl border transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs hover:shadow-sm'}`}>
-              <div className="flex justify-between items-start">
-                <span className={`text-[11px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Payment Received</span>
-                <span className={`text-[9px] font-extrabold px-1 py-0.5 rounded ${isDark ? 'text-emerald-400 bg-emerald-950/60' : 'text-emerald-800 bg-emerald-100 border border-emerald-300'}`}>{stats?.kpi?.paymentReceived?.change || "▲ 5.49%"}</span>
-              </div>
-              <p className={`text-sm sm:text-base font-extrabold mt-1 tracking-tight ${isDark ? 'text-slate-100' : 'text-slate-950'}`}>{stats?.kpi?.paymentReceived?.value || "10,954,130"} <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-800'}`}>{stats?.kpi?.paymentReceived?.unit || "₹"}</span></p>
-            </div>
-
-            {/* 7. Payment Submitted */}
-            <div className={`p-3 rounded-xl border transition-all ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs hover:shadow-sm'}`}>
-              <div className="flex justify-between items-start">
-                <span className={`text-[11px] font-extrabold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>Payment Submitted</span>
-                <span className={`text-[9px] font-extrabold ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>{stats?.kpi?.paymentSubmitted?.change || "0%"}</span>
-              </div>
-              <p className={`text-sm sm:text-base font-extrabold mt-1 tracking-tight ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>{stats?.kpi?.paymentSubmitted?.value || "0"} <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-slate-800'}`}>{stats?.kpi?.paymentSubmitted?.unit || "₹"}</span></p>
-            </div>
+          {/* KPI Metrics Cards (6 Cards) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { label: 'Distance',         key: 'distance',         color: isDark ? 'text-amber-400' : 'text-amber-700', bg: isDark ? 'bg-amber-500/10' : 'bg-amber-50' },
+              { label: 'Working Hours',    key: 'workingHours',     color: isDark ? 'text-emerald-400' : 'text-emerald-700', bg: isDark ? 'bg-emerald-500/10' : 'bg-emerald-50' },
+              { label: 'Task',             key: 'task',             color: isDark ? 'text-pink-400' : 'text-pink-700', bg: isDark ? 'bg-pink-500/10' : 'bg-pink-50' },
+              { label: 'Employee Present', key: 'employeePresent',  color: isDark ? 'text-blue-400' : 'text-blue-700', bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50' },
+              { label: 'Travel Time',      key: 'travelTime',       color: isDark ? 'text-indigo-400' : 'text-indigo-700', bg: isDark ? 'bg-indigo-500/10' : 'bg-indigo-50' },
+              { label: 'Payment Received', key: 'paymentReceived',  color: isDark ? 'text-teal-400' : 'text-teal-700', bg: isDark ? 'bg-teal-500/10' : 'bg-teal-50' },
+            ].map(({ label, key, color, bg }) => {
+              const kpi = stats?.kpi?.[key];
+              return (
+                <div 
+                  key={key} 
+                  className={`p-3.5 rounded-xl border flex flex-col justify-between min-h-[76px] transition-all ${
+                    isDark ? 'bg-slate-900 border-slate-800 hover:border-slate-700' : 'bg-white border-slate-200 shadow-xs hover:shadow-sm'
+                  }`}
+                >
+                  <span className={`text-[11px] font-bold tracking-tight truncate ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {label}
+                  </span>
+                  {loading ? (
+                    <div className={`h-6 w-20 rounded animate-pulse mt-1.5 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
+                  ) : (
+                    <p className={`text-base sm:text-lg font-extrabold tracking-tight mt-1 flex items-baseline gap-1 ${color}`}>
+                      <span>{kpi?.value ?? '—'}</span>
+                      {kpi?.unit && (
+                        <span className={`text-[10px] font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {kpi.unit}
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
+
 
           {/* Area Chart Section - Distance ( Km ) */}
           <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs'}`}>
             <h3 className={`text-xs font-extrabold text-center mb-3 tracking-wide ${isDark ? 'text-white' : 'text-slate-950'}`}>
-              Employee Attendance — {dateRange}
+              Distance Statistics
             </h3>
 
             {/* SVG Interactive Area Chart Container */}
@@ -456,47 +430,167 @@ export default function DashboardPage() {
                 )}
 
                 {/* X-Axis Dates */}
-                <div className={`absolute bottom-0 left-8 right-0 flex justify-between text-[9px] font-extrabold pt-1 ${isDark ? 'text-slate-200' : 'text-slate-950'}`}>
-                  {activeChartData.map((d) => (
-                    <span key={d.date}>{d.date}</span>
-                  ))}
+                <div className={`absolute bottom-0 left-8 right-0 flex justify-between text-[10px] font-semibold pt-1 px-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                  {(() => {
+                    const total = activeChartData.length;
+                    if (total === 0) return null;
+
+                    // Choose step interval so we display at most ~6-8 evenly spaced labels
+                    const maxTicks = 7;
+                    const step = Math.max(1, Math.ceil(total / maxTicks));
+                    
+                    const formatChartDate = (dateStr) => {
+                      if (!dateStr) return '';
+                      try {
+                        const parts = dateStr.split('-');
+                        if (parts.length === 3) {
+                          const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                          return dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                        }
+                        return dateStr;
+                      } catch {
+                        return dateStr;
+                      }
+                    };
+
+                    return activeChartData.map((d, idx) => {
+                      const isFirst = idx === 0;
+                      const isLast = idx === total - 1;
+                      const isStep = idx % step === 0;
+                      
+                      // Always show first, last, and interval points
+                      const shouldShow = isFirst || isLast || (isStep && idx < total - (step / 2));
+
+                      if (!shouldShow) return null;
+
+                      // Position matching SVG cx calculation
+                      const leftPercent = total === 1 ? 50 : (idx / (total - 1)) * 100;
+
+                      return (
+                        <span
+                          key={d.date}
+                          className="absolute transform -translate-x-1/2 whitespace-nowrap text-[10px]"
+                          style={{ left: `${leftPercent}%` }}
+                        >
+                          {formatChartDate(d.date)}
+                        </span>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Full Enterprise Employee Table Component (with dual-axis sticky scroll & pagination) */}
-          <div className={`rounded-xl border overflow-hidden transition-colors ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs'}`}>
-            <div className={`p-3 sm:p-4 border-b ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f8fafc] border-slate-200'} flex items-center justify-between`}>
+          {/* Attendance Table with Date Picker */}
+          <div className={`rounded-xl border overflow-visible transition-colors ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-xs'}`}>
+            <div className={`p-3 sm:p-4 border-b ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-[#f8fafc] border-slate-200'} flex flex-wrap items-center justify-between gap-3`}>
               <div>
-                <h3 className={`text-sm font-extrabold ${isDark ? 'text-white' : 'text-slate-900'}`}>Employee Directory</h3>
-                <p className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Real-time HR employee list with dual-axis scrollable data grid</p>
+                <h3 className={`text-sm font-extrabold ${isDark ? 'text-white' : 'text-slate-900'}`}>Employee Attendance</h3>
+                <p className={`text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  {attendanceMeta ? (
+                    <span className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-emerald-500 font-bold">{attendanceMeta.presentCount} Present</span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-rose-500 font-bold">{attendanceMeta.absentCount} Absent</span>
+                      <span className="text-slate-400">·</span>
+                      <span className="text-amber-500 font-bold">{attendanceMeta.halfDayCount} Half Day</span>
+                      <span className="text-slate-400">—</span>
+                      <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Total: {attendanceMeta.totalEmployees}</span>
+                      {attendanceMeta.isDateRange && (
+                        <span className={`ml-1 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          ({attendanceRows.length} of {attendanceMeta.totalRecords} records)
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    'Loading...'
+                  )}
+                </p>
               </div>
             </div>
 
-            <EmployeeTable
-              filteredEmployees={employees}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              maxHeight="360px"
-              onPageChange={(e, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-              onViewClick={(emp) => {
-                setActiveEmployee(emp);
-                setViewModalOpen(true);
-              }}
-              onEditClick={(emp) => {
-                navigate('/create-employee', { state: { employee: emp, isEdit: true } });
-              }}
-              onDeleteClick={(emp) => {
-                setActiveEmployee(emp);
-                setDeleteModalOpen(true);
-              }}
-            />
+            {/* Attendance Table */}
+            <div className="overflow-x-auto" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+              <table className="w-full text-xs">
+                <thead className={`sticky top-0 z-10 ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                  <tr>
+                    {attendanceMeta?.isDateRange && (
+                      <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Date</th>
+                    )}
+                    <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Emp ID</th>
+                    <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Name</th>
+                    <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Status</th>
+                    <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Clock In</th>
+                    <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Clock Out</th>
+                    <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Total Hours</th>
+                    <th className={`px-4 py-2.5 text-left font-extrabold border-b ${isDark ? 'text-slate-200 border-slate-700' : 'text-slate-900 border-slate-200'}`}>Distance (Km)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendanceLoading ? (
+                    <tr>
+                      <td colSpan={attendanceMeta?.isDateRange ? 8 : 7} className={`px-4 py-8 text-center font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        Loading attendance...
+                      </td>
+                    </tr>
+                  ) : attendanceRows.length > 0 ? (
+                    <>
+                      {attendanceRows.map((att, idx) => (
+                        <tr
+                          key={`${att.employeeId}_${att.date}_${idx}`}
+                          className={`transition-colors ${isDark ? 'hover:bg-slate-800/60 border-slate-800' : 'hover:bg-slate-50 border-slate-100'} border-b`}
+                        >
+                          {attendanceMeta?.isDateRange && (
+                            <td className={`px-4 py-2.5 font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>{att.date}</td>
+                          )}
+                          <td className={`px-4 py-2.5 font-bold ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>{att.empId}</td>
+                          <td className={`px-4 py-2.5 font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{att.name}</td>
+                          <td className="px-4 py-2.5">{getStatusBadge(att.status)}</td>
+                          <td className={`px-4 py-2.5 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{formatTime(att.clockIn)}</td>
+                          <td className={`px-4 py-2.5 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{formatTime(att.clockOut)}</td>
+                          <td className={`px-4 py-2.5 font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{att.totalHours != null ? `${Number(att.totalHours).toFixed(1)} hrs` : '—'}</td>
+                          <td className={`px-4 py-2.5 font-bold ${isDark ? 'text-sky-400' : 'text-sky-600'}`}>{formatDistance(att.totalDistanceKm)}</td>
+                        </tr>
+                      ))}
+                      {/* Scroll sentinel — triggers next page load */}
+                      <tr ref={scrollSentinelRef}>
+                        <td colSpan={attendanceMeta?.isDateRange ? 8 : 7} className="py-1" />
+                      </tr>
+                      {attendanceLoadingMore && (
+                        <tr>
+                          <td colSpan={attendanceMeta?.isDateRange ? 8 : 7} className={`px-4 py-3 text-center text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            <span className="inline-flex items-center gap-2">
+                              <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                              </svg>
+                              Loading more...
+                            </span>
+                          </td>
+                        </tr>
+                      )}
+                      {!attendanceHasMore && attendanceRows.length > 0 && (
+                        <tr>
+                          <td colSpan={attendanceMeta?.isDateRange ? 8 : 7} className={`px-4 py-2 text-center text-xs ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+                            — All {attendanceRows.length} records loaded —
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ) : (
+                    <tr>
+                      <td colSpan={attendanceMeta?.isDateRange ? 8 : 7} className={`px-4 py-8 text-center font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        No attendance data for this date
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
+
+
 
         </main>
       </div>
@@ -509,18 +603,6 @@ export default function DashboardPage() {
           <a href="#terms" className="hover:underline hover:text-blue-600">Terms &amp; Conditions</a>
         </div>
       </footer>
-
-
-
-      {/* Delete Employee Modal */}
-      {deleteModalOpen && activeEmployee && (
-        <DeleteConfirmationModal
-          open={deleteModalOpen}
-          onClose={() => setDeleteModalOpen(false)}
-          employee={activeEmployee}
-          onConfirmDelete={() => handleDeleteEmployee(activeEmployee.id)}
-        />
-      )}
     </div>
   );
 }

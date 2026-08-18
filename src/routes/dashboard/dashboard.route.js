@@ -45,5 +45,23 @@ export const DashboardRoute = {
       return errorData;
     }
   },
-};
 
+  getAttendance: async (params = {}) => {
+    try {
+      const result = await axios.get(`${baseURL}/api/v1/dashboard/attendance`, {
+        params,
+        headers: getAuthHeaders(),
+        withCredentials: true,
+      });
+      return result.data;
+    } catch (error) {
+      console.error("Dashboard attendance error:", error);
+      const errorData = error.response?.data || {
+        statusCode: 500,
+        message: error.message || "Failed to fetch dashboard attendance",
+        success: false,
+      };
+      return errorData;
+    }
+  },
+};

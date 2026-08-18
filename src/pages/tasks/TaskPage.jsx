@@ -29,6 +29,7 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 // Common & View Components
 import Navbar from "../../components/common/Navbar";
 import TaskTable from "../../views/tasks/TaskTable";
+import PtpTaskTable from "../../views/tasks/ptpTaskTable";
 import { TaskRoute } from "../../routes/tasks/task.route.js";
 import { TaskTypeRoute } from "../../routes/tasks/task-type.js";
 
@@ -54,6 +55,7 @@ const ALL_TASK_COLUMNS = [
   { id: "createdAt", label: "Created on" },
   { id: "followUp", label: "Follow Up" },
   { id: "customerMobile", label: "Customer Mobile" },
+  { id: "promiseToPay", label: "Promise To Pay" },
   { id: "taskCompletedAddress", label: "Task Completed Address" }
 ];
 
@@ -69,6 +71,7 @@ export default function TaskPage() {
   const isTeamView = location.pathname.includes("/team");
   const isOnboardingView = location.pathname.includes("/task-on-boarding");
   const isDeletedView = location.pathname.includes("/deleted");
+  const isPtpView = location.pathname.includes("/ptp");
 
   const currentSubModule = useMemo(() => {
     if (isCustomerView) return "taskCustomer";
@@ -79,8 +82,8 @@ export default function TaskPage() {
   }, [isCustomerView, isOnboardingView, isTeamView, isDeletedView]);
 
   const getPageHeaderTitle = () => {
+    if (isPtpView) return "PTP Tasks";
     if (isCustomerView) return "Customer Tasks";
-    if (isOnboardingView) return "Onboarding Tasks";
     if (isTeamView) return "Tasks";
     if (isDeletedView) return "Deleted Tasks";
     if (isCustomView) return "Custom Team Tasks";
@@ -88,6 +91,7 @@ export default function TaskPage() {
   };
 
   const getPageHeaderDescription = () => {
+    if (isPtpView) return "Manage and track Promise to Pay (PTP) task commitments, client payment dates, and collected amounts.";
     if (isCustomerView) return "Manage and track all tasks created for or by customers with real-time updates.";
     if (isOnboardingView) return "Manage customer onboarding and setup workflows.";
     if (isTeamView) return "View tasks assigned to your team members.";
@@ -140,6 +144,7 @@ export default function TaskPage() {
     employeeIden: false,
     followUp: false,
     customerMobile: false,
+    promiseToPay: true,
     lastComment: false,
     followUpComment: false,
     lastCommentTime: false,
@@ -186,10 +191,7 @@ export default function TaskPage() {
     () => tasks.filter((t) => t.status === "Completed").length,
     [tasks],
   );
-  const inProgressCount = useMemo(
-    () => tasks.filter((t) => t.status === "In Progress").length,
-    [tasks],
-  );
+
   const urgentCount = useMemo(
     () =>
       tasks.filter((t) => t.priority === "Urgent" || t.status === "Pending")
@@ -242,15 +244,40 @@ export default function TaskPage() {
     }
   };
 
+  // Sync status filter from URL query param (?status=...) or location.state
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const queryStatus = searchParams.get("status");
+    const stateStatus = location.state?.status;
+    const initialStatus = queryStatus || stateStatus;
+
+    if (initialStatus) {
+      const lower = String(initialStatus).toLowerCase();
+      if (lower === "pending") {
+        setSelectedStatus("Pending");
+      } else if (lower === "completed") {
+        setSelectedStatus("Completed");
+      } else if (lower === "all") {
+        setSelectedStatus("All");
+      }
+      setPage(0);
+    }
+  }, [location.search, location.state]);
+
   const fetchTasks = async () => {
     setLoading(true);
     try {
+      const getNormalizedStatus = (st) => {
+        if (!st || st === "All") return undefined;
+        const lower = String(st).toLowerCase();
+        return lower;
+      };
+
       const params = {
         page: page + 1,
         limit: rowsPerPage,
         search: searchTerm || undefined,
-        status:
-          selectedStatus !== "All" ? selectedStatus.toLowerCase() : undefined,
+        status: getNormalizedStatus(selectedStatus),
         priority:
           selectedPriority !== "All" ? selectedPriority.toLowerCase() : undefined,
         taskType: selectedTaskType !== "All" ? selectedTaskType : undefined,
@@ -259,6 +286,8 @@ export default function TaskPage() {
       let res;
       if (isCustomerView) {
         res = await TaskRoute.getAllCustomerTasks(params);
+      } else if (isPtpView) {
+        res = await TaskRoute.getPTPTask(params);
       } else if (isTeamView) {
         res = await TaskRoute.getTeamTask(params);
       } else if (isDeletedView) {
@@ -317,6 +346,18 @@ export default function TaskPage() {
   if (isDetailsView) {
     return <TaskDetails />;
   }
+
+  // Client-side guarantee for status filter
+  const displayedTasks = useMemo(() => {
+    if (!selectedStatus || selectedStatus === "All") return tasks;
+    const targetStatus = selectedStatus.toLowerCase();
+    return tasks.filter((t) => {
+      const taskStatus = String(t.status || "").toLowerCase();
+      return taskStatus === targetStatus;
+    });
+  }, [tasks, selectedStatus]);
+
+  const displayedTotal = selectedStatus && selectedStatus !== "All" ? displayedTasks.length : totalItems;
 
   return (
     <div
@@ -476,7 +517,10 @@ export default function TaskPage() {
                 size="small"
                 label="Status"
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setPage(0);
+                }}
                 sx={{
                   minWidth: { xs: 110, sm: 130 },
                   flex: { xs: 1, sm: "initial" },
@@ -505,8 +549,6 @@ export default function TaskPage() {
               >
                 <MenuItem value="All">All Statuses</MenuItem>
                 <MenuItem value="Pending">Pending</MenuItem>
-                <MenuItem value="In Progress">In Progress</MenuItem>
-                <MenuItem value="Under Review">Under Review</MenuItem>
                 <MenuItem value="Completed">Completed</MenuItem>
               </TextField>
 
@@ -516,7 +558,10 @@ export default function TaskPage() {
                 size="small"
                 label="Priority"
                 value={selectedPriority}
-                onChange={(e) => setSelectedPriority(e.target.value)}
+                onChange={(e) => {
+                  setSelectedPriority(e.target.value);
+                  setPage(0);
+                }}
                 sx={{
                   minWidth: { xs: 105, sm: 120 },
                   flex: { xs: 1, sm: "initial" },
@@ -571,30 +616,6 @@ export default function TaskPage() {
                   <SettingsIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-
-              {/* Export Excel Button */}
-              {/* <Tooltip title="Export current tasks to Excel">
-                <Button
-                  onClick={() => exportTasksToExcel(tasks, `Tasks_Export_${new Date().toISOString().slice(0, 10)}.xlsx`)}
-                  variant="outlined"
-                  size="small"
-                  startIcon={<FileDownloadIcon />}
-                  sx={{
-                    borderRadius: "12px",
-                    textTransform: "none",
-                    fontWeight: 600,
-                    borderColor: isDark ? "#10b981" : "#059669",
-                    color: isDark ? "#34d399" : "#059669",
-                    backgroundColor: isDark ? "rgba(16, 185, 129, 0.1)" : "#ecfdf5",
-                    "&:hover": {
-                      borderColor: isDark ? "#34d399" : "#047857",
-                      backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : "#d1fae5",
-                    },
-                  }}
-                >
-                  Export Excel
-                </Button>
-              </Tooltip> */}
 
               {/* Import Excel Button */}
               {hasPermission("task", "add", currentSubModule) && (
@@ -655,31 +676,55 @@ export default function TaskPage() {
         </div>
 
         {/* Task Data Table */}
-        <TaskTable
-          loading={loading}
-          filteredTasks={tasks}
-          totalData={totalItems}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          columnVisibility={columnVisibility}
-          subModuleName={currentSubModule}
-          onPageChange={(e, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10));
-            setPage(0);
-          }}
-          onViewClick={(task) => {
-            setActiveTask(task);
-            setViewModalOpen(true);
-          }}
-          onEditClick={(task) => handleOpenEditModal(task)}
-          onDeleteClick={(task) => {
-            setActiveTask(task);
-            setDeleteModalOpen(true);
-          }}
-          onRestoreClick={handleRestoreTask}
-          isDeletedView={isDeletedView}
-        />
+        {isPtpView ? (
+          <PtpTaskTable
+            loading={loading}
+            filteredTasks={displayedTasks}
+            totalData={displayedTotal}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            onViewClick={(task) => {
+              setActiveTask(task);
+              setViewModalOpen(true);
+            }}
+            onEditClick={(task) => handleOpenEditModal(task)}
+            onDeleteClick={(task) => {
+              setActiveTask(task);
+              setDeleteModalOpen(true);
+            }}
+          />
+        ) : (
+          <TaskTable
+            loading={loading}
+            filteredTasks={displayedTasks}
+            totalData={displayedTotal}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            columnVisibility={columnVisibility}
+            subModuleName={currentSubModule}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            onViewClick={(task) => {
+              setActiveTask(task);
+              setViewModalOpen(true);
+            }}
+            onEditClick={(task) => handleOpenEditModal(task)}
+            onDeleteClick={(task) => {
+              setActiveTask(task);
+              setDeleteModalOpen(true);
+            }}
+            onRestoreClick={handleRestoreTask}
+            isDeletedView={isDeletedView}
+          />
+        )}
       </main>
 
       {/* View Task Modal */}

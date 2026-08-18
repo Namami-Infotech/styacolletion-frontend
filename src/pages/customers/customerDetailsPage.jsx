@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import Navbar from "../../components/common/Navbar";
 import EditCustomerModel from "../../components/dilogs/customer/EditCustomer.Model";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import { CustomerRoute } from "../../routes/customers/customer.route";
+import { TaskRoute } from "../../routes/tasks/task.route";
+import CircularProgress from "@mui/material/CircularProgress";
 
 // MUI Icons
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -50,52 +53,80 @@ export default function CustomerDetailsPage() {
 
   // Customer state
   const [customerData, setCustomerData] = useState({
-    name: getStringVal(passedCustomer?.name || (typeof passedCustomer === "string" ? passedCustomer : null), "REENA"),
-    phone: getStringVal(passedCustomer?.mobile || passedCustomer?.phone, "7818002298"),
-    owner: getStringVal(passedCustomer?.owner, "DHARMENDRA SINGH"),
-    loanStatus: getStringVal(passedCustomer?.loanStatus, "Write off"),
-    centerName: getStringVal(
-      passedCustomer?.centerName,
-      "NADEEM 3 TEHRA GWALIOR ROAD AGRATRF 009800980449TRF 05270527000205TRF 001400141672TRF 0098[TRF 0747:"
-    ),
-    totalDueAmt: getStringVal(passedCustomer?.totalDueAmt, "36558"),
-    centerCode: getStringVal(passedCustomer?.centerCode, "98001549"),
-    loanNo: getStringVal(passedCustomer?.loanNo, "0098JLG17267"),
-    spouseName: getStringVal(passedCustomer?.spouseName, "RAKESH SINGH"),
-    subStateName: getStringVal(passedCustomer?.subStateName, "MATHURA"),
-    branch: getStringVal(passedCustomer?.branch, "MADHU NAGAR"),
-    branchCode: getStringVal(passedCustomer?.branchCode, "98"),
-    stateName: getStringVal(passedCustomer?.stateName, "UP-WEST"),
-    preClosureAmt: getStringVal(passedCustomer?.preClosureAmt, "36558"),
+    name: getStringVal(passedCustomer?.name || (typeof passedCustomer === "string" ? passedCustomer : null), ""),
+    phone: getStringVal(passedCustomer?.mobile || passedCustomer?.phone, ""),
+    owner: getStringVal(passedCustomer?.owner, ""),
+    loanStatus: getStringVal(passedCustomer?.loanStatus, ""),
+    centerName: getStringVal(passedCustomer?.centerName, ""),
+    totalDueAmt: getStringVal(passedCustomer?.totalDueAmt, ""),
+    centerCode: getStringVal(passedCustomer?.centerCode, ""),
+    loanNo: getStringVal(passedCustomer?.loanNo, ""),
+    spouseName: getStringVal(passedCustomer?.spouseName, ""),
+    subStateName: getStringVal(passedCustomer?.subStateName, ""),
+    branch: getStringVal(passedCustomer?.branch, ""),
+    branchCode: getStringVal(passedCustomer?.branchCode, ""),
+    stateName: getStringVal(passedCustomer?.stateName, ""),
+    preClosureAmt: getStringVal(passedCustomer?.preClosureAmt, ""),
   });
 
-  // Customer tasks list
-  const customerTasks = [
-    {
-      id: getStringVal(passedTask?.id, "TASK-920004"),
-      task_id: getStringVal(passedTask?.task_id, "TASK-920004"),
-      type: getStringVal(passedTask?.taskType, "NPA collection"),
-      startedAt: "2026-07-27 11:24",
-      accuracy: "NA",
-      createdAt: "2026-07-27 11:24",
-      assignedTo: getStringVal(passedTask?.assignedTo || passedTask?.assigneeToEmployeeId, "DHARMENDRA SINGH"),
-      createdBy: getStringVal(passedTask?.createdBy, "DHARMENDRA SINGH"),
-      priority: getStringVal(passedTask?.priority, "Medium"),
-      status: getStringVal(passedTask?.status, "In Progress"),
-    },
-    {
-      id: "TASK-791407",
-      task_id: "TASK-791407",
-      type: "NPA collection",
-      startedAt: "2026-06-26 09:52",
-      accuracy: "NA",
-      createdAt: "2026-06-26 09:52",
-      assignedTo: "DHARMENDRA SINGH",
-      createdBy: "DHARMENDRA SINGH",
-      priority: "Medium",
-      status: "In Progress",
-    },
-  ];
+  // Dynamic Customer tasks state
+  const [customerTasks, setCustomerTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
+
+  useEffect(() => {
+    const custIdentifier = passedCustomer?.id || passedCustomer?.slug || customerId;
+    if (!passedCustomer && customerId) {
+      setLoadingCustomer(true);
+      CustomerRoute.getCustomerBySlug(customerId)
+        .then((res) => {
+          if (res?.success && res.data) {
+            const c = res.data;
+            setCustomerData({
+              name: getStringVal(c.name, ""),
+              phone: getStringVal(c.mobile || c.phone, ""),
+              owner: getStringVal(c.owner, ""),
+              loanStatus: getStringVal(c.loanStatus, ""),
+              centerName: getStringVal(c.centerName, ""),
+              totalDueAmt: getStringVal(c.totalDueAmt, ""),
+              centerCode: getStringVal(c.centerCode, ""),
+              loanNo: getStringVal(c.loanNo, ""),
+              spouseName: getStringVal(c.spouseName, ""),
+              subStateName: getStringVal(c.subStateName, ""),
+              branch: getStringVal(c.branch, ""),
+              branchCode: getStringVal(c.branchCode, ""),
+              stateName: getStringVal(c.stateName, ""),
+              preClosureAmt: getStringVal(c.preClosureAmt, ""),
+            });
+          }
+        })
+        .finally(() => setLoadingCustomer(false));
+    }
+
+    if (custIdentifier) {
+      setLoadingTasks(true);
+      TaskRoute.getAllTasks({ customerId: custIdentifier, limit: 100 })
+        .then((res) => {
+          if (res?.success && res.data) {
+            const list = Array.isArray(res.data) ? res.data : (res.data.tasks || []);
+            setCustomerTasks(list);
+          } else if (passedTask) {
+            setCustomerTasks([passedTask]);
+          } else {
+            setCustomerTasks([]);
+          }
+        })
+        .catch(() => {
+          if (passedTask) setCustomerTasks([passedTask]);
+          else setCustomerTasks([]);
+        })
+        .finally(() => {
+          setLoadingTasks(false);
+        });
+    } else if (passedTask) {
+      setCustomerTasks([passedTask]);
+    }
+  }, [customerId, passedCustomer]);
 
   return (
     <div
@@ -403,97 +434,127 @@ export default function CustomerDetailsPage() {
             {/* Tab Content Container */}
             <div className="flex-1 min-h-0 space-y-4">
               {activeTab === "tasks" ? (
-                /* Customer Tasks Cards List */
-                customerTasks.map((t) => (
+                loadingTasks ? (
+                  <div className="p-8 flex flex-col items-center justify-center gap-2 text-slate-500">
+                    <CircularProgress size={26} />
+                    <span className="text-xs font-semibold">Loading tasks...</span>
+                  </div>
+                ) : customerTasks.length === 0 ? (
                   <div
-                    key={t.id}
-                    className={`p-4 rounded-2xl border shadow-sm transition-all space-y-3 ${
-                      isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200"
+                    className={`p-8 rounded-2xl border text-center text-xs font-semibold ${
+                      isDark ? "bg-slate-900/90 border-slate-800 text-slate-400" : "bg-white border-slate-200 text-slate-600"
                     }`}
                   >
-                    {/* Card Header (Task ID Link + Status Indicator) */}
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
-                      <span
-                        onClick={() => navigate(`/tasks/details/${t.id}`, { state: { task: t } })}
-                        className="text-sm font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
-                      >
-                        {t.task_id}
-                      </span>
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        <span>Status -</span>
-                        <CircleIcon sx={{ fontSize: 10, color: "#eab308" }} />
-                        <span>{t.status}</span>
-                      </div>
-                    </div>
-
-                    {/* Task Details 2-Column Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-xs">
-                      {/* Left Side */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Type -
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {t.type}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Started -
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {t.startedAt}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Accuracy -
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {t.accuracy}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Created -
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {t.createdAt}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Right Side */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Assigned To -
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {t.assignedTo}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Created By -
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {t.createdBy}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-500 dark:text-slate-400">
-                            Priority -
-                          </span>
-                          <span className="font-semibold text-slate-800 dark:text-slate-200">
-                            {t.priority}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    No tasks found for this customer.
                   </div>
-                ))
+                ) : (
+                  /* Customer Tasks Cards List */
+                  customerTasks.map((t) => {
+                    const taskId = t.task_id || t.slug || t.id;
+                    const taskType = typeof t.taskType === "object" ? t.taskType?.name : (t.taskType || t.type || "Task");
+                    const rawStatus = String(t.status || "pending").toLowerCase();
+                    const isCompleted = rawStatus === "completed";
+                    const statusLabel = isCompleted ? "Completed" : "Pending";
+                    const statusColor = isCompleted ? "#22c55e" : "#eab308";
+                    const startedAt = t.startedAt || t.startDateTime || (t.createdAt ? new Date(t.createdAt).toLocaleString() : "NA");
+                    const accuracy = t.accuracy || t.taskAccuracy || "NA";
+                    const createdAt = t.createdAt ? new Date(t.createdAt).toLocaleString() : "NA";
+                    const assignedTo = typeof t.assignee === "object" ? t.assignee?.name : (t.assignedTo || t.assigneeToEmployeeId || t.assignee || "Unassigned");
+                    const createdBy = typeof t.creator === "object" ? t.creator?.name : (t.createdBy || t.creator || "Admin");
+                    const priority = t.priority || "Medium";
+
+                    return (
+                      <div
+                        key={t.id || taskId}
+                        className={`p-4 rounded-2xl border shadow-sm transition-all space-y-3 ${
+                          isDark ? "bg-slate-900/90 border-slate-800" : "bg-white border-slate-200"
+                        }`}
+                      >
+                        {/* Card Header (Task ID Link + Status Indicator) */}
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                          <span
+                            onClick={() => navigate(`/tasks/details/${t.slug || taskId}`, { state: { task: t } })}
+                            className="text-sm font-bold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+                          >
+                            {taskId}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            <span>Status -</span>
+                            <CircleIcon sx={{ fontSize: 10, color: statusColor }} />
+                            <span>{statusLabel}</span>
+                          </div>
+                        </div>
+
+                        {/* Task Details 2-Column Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-xs">
+                          {/* Left Side */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Type -
+                              </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {taskType}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Started -
+                              </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {startedAt}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Accuracy -
+                              </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {accuracy}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Created -
+                              </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {createdAt}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Right Side */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Assigned To -
+                              </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {assignedTo}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Created By -
+                              </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {createdBy}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                                Priority -
+                              </span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                {priority}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )
               ) : (
                 /* Other Tab Placeholder */
                 <div

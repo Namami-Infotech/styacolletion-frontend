@@ -257,16 +257,8 @@ export default function CreateEmployeePage() {
     punchOutGeoFence: [],
     entryAlertGeoFence: [],
     exitAlertGeoFence: [],
-
     // Additional Details (Advance)
     homeLocation: '',
-
-    // Other Details (Advance)
-    workingShift: '',
-    leaveProfile: '',
-    tracker: false,
-    trackerWebsite: false,
-    disableAutoPunchOut: false,
   });
 
   // Customer Filters (Advance)
@@ -331,7 +323,7 @@ export default function CreateEmployeePage() {
       entryAlertGeoFence: extractArray(emp.entryAlertGeoFence || emp.entryAlerts || emp.entry_alerts),
       exitAlertGeoFence: extractArray(emp.exitAlertGeoFence || emp.exitAlerts || emp.exit_alerts),
       homeLocation: extractPrimitive(emp.homeLocation, emp.work_location, emp.location),
-      workingShift: extractPrimitive(emp.workingShift, emp.work_shift, emp.workingShifts) || 'General Shift (9 AM - 6 PM)',
+      workingShift: extractPrimitive(emp.workingShift, emp.work_shift, emp.workingShifts) || 'General Shift (7 AM - 7 PM)',
       leaveProfile: extractPrimitive(emp.leaveProfile, emp.leave_profile, emp.leaveProfiles) || 'Standard Policy',
       thumbnail: emp.thumbnail || emp.image || prev.thumbnail,
       image: emp.image || emp.thumbnail || prev.image,
@@ -647,10 +639,11 @@ export default function CreateEmployeePage() {
     // Mobile combined input
     if (field.name === 'mobileCountryCode') {
       const opts = field.options && field.options.length > 0 ? field.options : allCountryCodeOptions;
+      const isMobileRequired = field.required || formFields.find((f) => f.name === 'mobile')?.required;
       return (
         <Grid size={{ xs: 12, md: 4 }} key="mobile_combined">
           <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>
-            Mobile{field.required && <span className="text-red-500 ml-0.5">*</span>}
+            Mobile{isMobileRequired && <span className="text-red-500 ml-0.5">*</span>}
           </Typography>
           <Box
             className="flex items-center w-full rounded-lg border transition-all overflow-hidden"
@@ -910,8 +903,8 @@ export default function CreateEmployeePage() {
       const opts = field.options || [];
       const rawVal = formData[field.name];
       const currentValues = Array.isArray(rawVal)
-        ? rawVal
-        : (rawVal ? [rawVal] : []);
+        ? rawVal.map((item) => (typeof item === 'object' && item !== null ? (item.value ?? item.id ?? item.name) : item))
+        : (rawVal ? [typeof rawVal === 'object' ? (rawVal.value ?? rawVal.id ?? rawVal.name) : rawVal] : []);
 
       const handleMultiChange = (event) => {
         const { target: { value } } = event;
@@ -941,7 +934,8 @@ export default function CreateEmployeePage() {
               }
               return (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((val) => {
+                  {selected.map((rawItem, sIdx) => {
+                    const val = typeof rawItem === 'object' && rawItem !== null ? (rawItem.value ?? rawItem.id ?? rawItem.name) : rawItem;
                     const matchedOpt = opts.find((o) => {
                       const v = typeof o === 'object' ? (o.value ?? o.id) : o;
                       const l = typeof o === 'object' ? (o.label ?? o.name) : o;
@@ -949,10 +943,10 @@ export default function CreateEmployeePage() {
                     });
                     const displayLabel = matchedOpt
                       ? (typeof matchedOpt === 'object' ? (matchedOpt.label ?? matchedOpt.name) : matchedOpt)
-                      : val;
+                      : (typeof rawItem === 'object' ? (rawItem.name ?? rawItem.label ?? val) : val);
                     return (
                       <Chip
-                        key={val}
+                        key={String(val) || sIdx}
                         label={displayLabel}
                         size="small"
                         sx={{
@@ -983,7 +977,10 @@ export default function CreateEmployeePage() {
             {opts.map((opt, optIdx) => {
               const optValue = typeof opt === 'object' ? (opt.value ?? opt.id ?? opt.name) : opt;
               const optLabel = typeof opt === 'object' ? (opt.label ?? opt.name) : opt;
-              const isChecked = currentValues.some((v) => String(v) === String(optValue) || String(v) === String(optLabel));
+              const isChecked = currentValues.some((v) => {
+                const itemVal = typeof v === 'object' && v !== null ? (v.value ?? v.id ?? v.name) : v;
+                return String(itemVal) === String(optValue) || String(itemVal) === String(optLabel);
+              });
               return (
                 <MenuItem key={typeof optValue === 'object' ? optIdx : optValue} value={optValue}>
                   <Checkbox checked={isChecked} size="small" />
@@ -1351,43 +1348,7 @@ export default function CreateEmployeePage() {
       );
     }
 
-    // password field
-    if (field.type === 'password' || field.name === 'password') {
-      return (
-        <Grid size={{ xs: 12, md: 4 }} key={field.name}>
-          <Typography variant="body2" className={`mb-1 font-semibold ${labelColor}`}>
-            {field.label}{field.required && <span className="text-red-500 ml-0.5">*</span>}
-          </Typography>
-          <TextField
-            fullWidth
-            size="small"
-            type={showPassword ? 'text' : 'password'}
-            name={field.name}
-            value={formData[field.name] || ''}
-            onChange={handleChange}
-            placeholder={field.placeholder || 'Enter Password'}
-            required={field.required}
-            slotProps={{
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={inputStyle}
-          />
-        </Grid>
-      );
-    }
+
 
     // default field renderer (text, date, time, number, email)
     return (
@@ -1429,8 +1390,6 @@ export default function CreateEmployeePage() {
       'Personal Details',
       'Geo Fence Restriction',
       'Additional Details',
-      'Other Details',
-      'Filters',
     ];
   }, [formFields]);
 
@@ -1521,10 +1480,7 @@ export default function CreateEmployeePage() {
               const isAdvanceSec = [
                 'Personal Details',
                 'Geo Fence Restriction',
-                'Additional Details',
-                'Other Details',
-                'Filters',
-                'Customer Filters',
+                'Additional Details'
               ].includes(secName) || (secFields.length > 0 && secFields.every((f) => f.dependsOnSwitch === 'enableAdvanceSettings'));
 
               if (isAdvanceSec && !enableAdvanceSettings) return null;

@@ -75,7 +75,6 @@ export default function Navbar({
     if (path.startsWith('/tasks/all')) return 'Task All';
     if (path.startsWith('/tasks/team')) return 'Task';
     if (path.startsWith('/tasks/task-customer')) return 'Task Customer';
-    if (path.startsWith('/tasks/task-on-boarding')) return 'Onboarding Task';
     if (path.startsWith('/tasks/deleted')) return 'Deleted Tasks';
     if (path.startsWith('/tasks')) return 'Team Task';
     if (path.startsWith('/customers')) return 'Customer';
@@ -349,7 +348,6 @@ export default function Navbar({
         taskAll: { label: 'All Tasks', path: '/tasks/all' },
         teamTask: { label: 'Team Tasks', path: '/tasks/team' },
         taskCustomer: { label: 'Task Customer', path: '/tasks/task-customer' },
-        onboardingTask: { label: 'Onboarding Task', path: '/tasks/task-on-boarding' },
         deletedTasks: { label: 'Deleted Tasks', path: '/tasks/deleted' },
       },
     },

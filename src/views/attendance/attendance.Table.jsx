@@ -246,6 +246,36 @@ export default function AttendanceTable({
           return <Chip size="small" {...getStatusChipProps(st)} />;
         },
       }),
+      columnHelper.accessor('completed_tasks_count', {
+        id: 'completed_tasks_count',
+        header: 'Tasks (Done / Total)',
+        cell: ({ row }) => {
+          const completed = Number(row.original.completedTaskToday ?? 0);
+          const total = Number(row.original.todaytotaltask ?? 0);
+          let badgeStyles = isDark
+            ? 'bg-rose-950/60 text-rose-300 border-rose-800'
+            : 'bg-rose-100 text-rose-800 border-rose-200';
+
+          if (completed >= 20) {
+            badgeStyles = isDark
+              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
+              : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+          } else if (completed >= 5) {
+            badgeStyles = isDark
+              ? 'bg-amber-950/60 text-amber-300 border-amber-800'
+              : 'bg-amber-100 text-amber-800 border-amber-200';
+          }
+
+          return (
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${badgeStyles}`}
+            >
+              <span>{completed} / {total}</span>
+              <span className="font-semibold">{total === 1 ? 'task' : 'tasks'}</span>
+            </span>
+          );
+        },
+      }),
       columnHelper.accessor('punchInOffice', {
         id: 'punchInOffice',
         header: 'Punch-In Office',

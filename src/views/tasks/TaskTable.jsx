@@ -96,17 +96,7 @@ export default function TaskTable({
               fontWeight: 600,
             },
           };
-        case "in progress":
-        case "in_progress":
-          return {
-            label: "In Progress",
-            style: {
-              backgroundColor: "rgba(59, 130, 246, 0.15)",
-              color: "#60a5fa",
-              border: "1px solid rgba(59, 130, 246, 0.3)",
-              fontWeight: 600,
-            },
-          };
+    
         case "under review":
         case "under_review":
           return {
@@ -151,17 +141,7 @@ export default function TaskTable({
               fontWeight: 700,
             },
           };
-        case "in progress":
-        case "in_progress":
-          return {
-            label: "In Progress",
-            style: {
-              backgroundColor: "#dbeafe",
-              color: "#1e40af",
-              border: "1px solid #93c5fd",
-              fontWeight: 700,
-            },
-          };
+      
         case "under review":
         case "under_review":
           return {
@@ -510,6 +490,31 @@ export default function TaskTable({
             {row.original.customerId?.phone ?? row.original.customerMobile ?? "null"}
           </span>
         ),
+      }),
+      columnHelper.accessor("ptpdate", {
+        id: "promiseToPay",
+        header: "Promise To Pay",
+        cell: ({ row }) => {
+          const ptpDateRaw = row.original.ptpdate || row.original.promiseToPay;
+          if (!ptpDateRaw) return <span className={`text-xs ${isDark ? "text-slate-500" : "text-slate-400"}`}>N/A</span>;
+          const d = new Date(ptpDateRaw);
+          const dateStr = !isNaN(d.getTime())
+            ? d.toLocaleString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })
+            : String(ptpDateRaw);
+
+          return (
+            <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? "text-indigo-300" : "text-indigo-700"}`}>
+              {dateStr}
+            </span>
+          );
+        },
       }),
       columnHelper.accessor("lastComment", {
         id: "lastComment",

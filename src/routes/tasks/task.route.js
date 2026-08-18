@@ -38,9 +38,36 @@ export const TaskRoute = {
             return errorData;
         }
     },
-    getAllTasks: async ({ page, limit, search, status, priority, taskType }) => {
+    getAllTasks: async ({ page, limit, search, status, priority, taskType, customerId, assigneeToEmployeeId } = {}) => {
         try {
             const result = await axios.get(`${baseURL}/api/v1/tasks/get-all`, {
+                withCredentials: true,
+                params: {
+                    page,
+                    limit,
+                    search,
+                    status,
+                    priority,
+                    taskType,
+                    customerId,
+                    assigneeToEmployeeId,
+                },
+            });
+            return result.data;
+        } catch (error) {
+            console.log(error);
+            const errorData = error.response?.data || {
+                statusCode: 500,
+                message: error.message || "Failed to fetch tasks",
+                success: false,
+            };
+            toast.error(errorData.message || "Failed to fetch tasks");
+            return errorData;
+        }
+    },
+    getPTPTask: async ({ page, limit, search, status, priority, taskType } = {}) => {
+        try {
+            const result = await axios.get(`${baseURL}/api/v1/tasks/ptp`, {
                 withCredentials: true,
                 params: {
                     page,
@@ -56,10 +83,10 @@ export const TaskRoute = {
             console.log(error);
             const errorData = error.response?.data || {
                 statusCode: 500,
-                message: error.message || "Failed to fetch tasks",
+                message: error.message || "Failed to fetch PTP tasks",
                 success: false,
             };
-            toast.error(errorData.message || "Failed to fetch tasks");
+            toast.error(errorData.message || "Failed to fetch PTP tasks");
             return errorData;
         }
     },
@@ -233,13 +260,17 @@ export const TaskRoute = {
             return errorData;
         }
     },
-    getTeamTask: async ({ page, limit } = {}) => {
+    getTeamTask: async ({ page, limit, search, status, priority, taskType } = {}) => {
         try {
             const result = await axios.get(`${baseURL}/api/v1/tasks/team/task`, {
                 withCredentials: true,
                 params: {
                     page,
                     limit,
+                    search,
+                    status,
+                    priority,
+                    taskType,
                 },
             });
             return result.data;

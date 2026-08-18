@@ -55,9 +55,9 @@ const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -67,6 +67,15 @@ const formatTimeHHMMSS = (isoString) => {
   const d = new Date(isoString);
   if (isNaN(d.getTime())) return '';
   return d.toTimeString().split(' ')[0];
+};
+
+const formatDistance = (distKm) => {
+  if (distKm == null || isNaN(Number(distKm))) return '—';
+  const val = Number(distKm);
+  if (val < 1) {
+    return `${(val * 1000).toFixed(0)} meters`;
+  }
+  return `${val.toFixed(2)} Km`;
 };
 
 const formatDurationBadge = (startIso, endIso) => {
@@ -518,11 +527,11 @@ function PlaybackView({ locationPoints, isDark, calendarDateLabel, totalDistance
       }
     } else {
       if (activeCasingRef.current) {
-        try { map.removeLayer(activeCasingRef.current); } catch (e) {}
+        try { map.removeLayer(activeCasingRef.current); } catch (e) { }
         activeCasingRef.current = null;
       }
       if (activePolylineRef.current) {
-        try { map.removeLayer(activePolylineRef.current); } catch (e) {}
+        try { map.removeLayer(activePolylineRef.current); } catch (e) { }
         activePolylineRef.current = null;
       }
     }
@@ -685,11 +694,10 @@ function PlaybackView({ locationPoints, isDark, calendarDateLabel, totalDistance
                   key={spd}
                   type="button"
                   onClick={() => setPlaybackSpeed(spd)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
-                    playbackSpeed === spd
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-colors ${playbackSpeed === spd
                       ? 'bg-sky-600 text-white shadow-xs'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
+                    }`}
                 >
                   {spd}x
                 </button>
@@ -811,11 +819,10 @@ function PlaybackView({ locationPoints, isDark, calendarDateLabel, totalDistance
               <span>⏰</span> Attendance Summary
             </span>
             {attendance?.status && (
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                attendance.status === 'CLOCKED_IN' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' :
-                attendance.status === 'PRESENT' || attendance.status === 'CLOCKED_OUT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' :
-                'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-              }`}>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${attendance.status === 'CLOCKED_IN' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' :
+                  attendance.status === 'PRESENT' || attendance.status === 'CLOCKED_OUT' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' :
+                    'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                }`}>
                 {attendance.status}
               </span>
             )}
@@ -899,8 +906,8 @@ function PlaybackView({ locationPoints, isDark, calendarDateLabel, totalDistance
                 📍
               </div>
               <div>
-                <div className="text-[11px] text-slate-500 font-medium">Km</div>
-                <div className="font-bold text-slate-900 dark:text-white">{totalDistanceKm} Km</div>
+                <div className="text-[11px] text-slate-500 font-medium">Distance</div>
+                <div className="font-bold text-slate-900 dark:text-white">{formatDistance(totalDistanceKm)}</div>
               </div>
             </div>
 
@@ -1237,7 +1244,7 @@ export default function EmployeeFieldVisitPage() {
     if (mapInstanceRef.current) {
       try {
         mapInstanceRef.current.remove();
-      } catch (e) {}
+      } catch (e) { }
       mapInstanceRef.current = null;
     }
 
@@ -1342,7 +1349,7 @@ export default function EmployeeFieldVisitPage() {
       if (mapInstanceRef.current) {
         try {
           mapInstanceRef.current.remove();
-        } catch (e) {}
+        } catch (e) { }
         mapInstanceRef.current = null;
       }
       liveLayersGroupRef.current = null;
@@ -1437,17 +1444,24 @@ export default function EmployeeFieldVisitPage() {
   }, [playbackIndex, locationPoints, leafletLoaded, passedEmployeeName]);
 
   const totalDistanceKm = useMemo(() => {
-    if (!locationPoints || locationPoints.length < 2) return '0.00';
+    if (!locationPoints || locationPoints.length < 2) return 0;
     let total = 0;
+    const DRIFT_THRESHOLD_KM = 0.03; // 30 meters
+    let lastValid = locationPoints[0];
+
     for (let i = 1; i < locationPoints.length; i++) {
-      total += calculateDistanceKm(
-        locationPoints[i - 1].lat,
-        locationPoints[i - 1].lng,
+      const dist = calculateDistanceKm(
+        lastValid.lat,
+        lastValid.lng,
         locationPoints[i].lat,
         locationPoints[i].lng
       );
+      if (dist >= DRIFT_THRESHOLD_KM) {
+        total += dist;
+        lastValid = locationPoints[i];
+      }
     }
-    return total.toFixed(2);
+    return total;
   }, [locationPoints]);
 
   const handleOpenCalendar = () => {
@@ -1621,7 +1635,7 @@ export default function EmployeeFieldVisitPage() {
             type: 'task',
             title: visit.taskCode || visit.purpose || 'Field Visit',
             assignee: passedEmployeeName,
-            taskType: visit.status || 'In Progress',
+            taskType: visit.status,
             timeRange: taskTimeRange,
             duration: taskDuration,
             address: visit.remark || (firstLoc ? `Lat: ${Number(firstLoc.latitude)?.toFixed(5)}, Lng: ${Number(firstLoc.longitude)?.toFixed(5)}` : 'Field visit logged'),
@@ -1737,11 +1751,10 @@ export default function EmployeeFieldVisitPage() {
                 key={t.label}
                 type="button"
                 onClick={() => setActiveTab(t.label)}
-                className={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                  isActive
+                className={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${isActive
                     ? 'border-sky-600 text-sky-600 dark:border-sky-400 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 font-bold'
                     : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
+                  }`}
               >
                 {t.icon && <span className={isActive ? 'text-sky-600 dark:text-sky-400' : 'text-sky-500/80 dark:text-sky-400/80'}>{t.icon}</span>}
                 <span>{t.label}</span>
@@ -1875,15 +1888,14 @@ export default function EmployeeFieldVisitPage() {
                               type="button"
                               disabled={isDisabled}
                               onClick={() => !isDisabled && handleSelectDay(item)}
-                              className={`w-7 h-7 mx-auto flex items-center justify-center text-xs transition-all ${
-                                isDisabled
+                              className={`w-7 h-7 mx-auto flex items-center justify-center text-xs transition-all ${isDisabled
                                   ? 'text-slate-300 dark:text-slate-700 opacity-40 cursor-not-allowed select-none'
                                   : isSelected
-                                  ? 'bg-blue-600 text-white font-bold rounded-xs border-2 border-slate-900 shadow-sm'
-                                  : !item.isCurrentMonth
-                                  ? 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-medium cursor-pointer'
-                                  : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-medium cursor-pointer'
-                              }`}
+                                    ? 'bg-blue-600 text-white font-bold rounded-xs border-2 border-slate-900 shadow-sm'
+                                    : !item.isCurrentMonth
+                                      ? 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-medium cursor-pointer'
+                                      : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded font-medium cursor-pointer'
+                                }`}
                             >
                               {item.day}
                             </button>
@@ -1913,7 +1925,7 @@ export default function EmployeeFieldVisitPage() {
 
                   <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-3">
                     <div>Completed <span className="font-bold text-slate-900 dark:text-white">8</span></div>
-                    <div>Distance <span className="font-bold text-sky-600 dark:text-sky-400">{totalDistanceKm}Km</span></div>
+                    <div>Distance <span className="font-bold text-sky-600 dark:text-sky-400">{formatDistance(totalDistanceKm)}</span></div>
                   </div>
                 </div>
               </div>
@@ -1946,11 +1958,10 @@ export default function EmployeeFieldVisitPage() {
                           }
                         }
                       }}
-                      className={`relative pl-6 p-2.5 rounded-xl transition-all cursor-pointer group ${
-                        isSelected
+                      className={`relative pl-6 p-2.5 rounded-xl transition-all cursor-pointer group ${isSelected
                           ? 'bg-sky-50 dark:bg-sky-950/70 border-2 border-sky-500 dark:border-sky-500 shadow-md scale-[1.01]'
                           : 'hover:bg-slate-100 dark:hover:bg-slate-800/60 border border-transparent'
-                      }`}
+                        }`}
                     >
                       {/* Vertical connecting line */}
                       <div className="absolute left-2.5 top-6 bottom-0 w-0.5 bg-slate-300 dark:bg-slate-700 group-last:hidden" />
@@ -1996,11 +2007,11 @@ export default function EmployeeFieldVisitPage() {
                           </div>
                         )}
 
-                        {evt.taskType && (
+                        {/* {evt.taskType && (
                           <div className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                             Type: <span className="text-slate-900 dark:text-slate-200">{evt.taskType}</span>
                           </div>
-                        )}
+                        )} */}
 
                         {evt.address && (
                           <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug flex items-start gap-1">
@@ -2031,13 +2042,12 @@ export default function EmployeeFieldVisitPage() {
             <div className="flex-1 flex flex-col relative bg-slate-200 dark:bg-slate-900">
               {/* Interactive Leaflet Map Rendering Route Polyline */}
               <div
-                className={`w-full relative transition-all duration-300 overflow-hidden ${
-                  mapHeightMode === 'compact'
+                className={`w-full relative transition-all duration-300 overflow-hidden ${mapHeightMode === 'compact'
                     ? 'h-[380px]'
                     : mapHeightMode === 'normal'
-                    ? 'h-[520px]'
-                    : 'flex-1 min-h-[600px]'
-                }`}
+                      ? 'h-[520px]'
+                      : 'flex-1 min-h-[600px]'
+                  }`}
               >
                 {/* Top Left Live Location Banner (matching user screenshot) */}
                 <div className="absolute top-3 left-3 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-md text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2 pointer-events-auto">

@@ -337,15 +337,7 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('licenses', {
-        id: 'licenses',
-        header: 'Licenses',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.license ?? row.original.licenses)}
-          </span>
-        ),
-      }),
+      
       columnHelper.accessor('locationAddress', {
         id: 'locationAddress',
         header: 'Location',
@@ -384,7 +376,7 @@ export default function EmployeeTable({
       }),
       columnHelper.accessor('employeeState', {
         id: 'employeeState',
-        header: 'State Name & Id',
+        header: 'State Name',
         cell: ({ row }) => {
           const st = row.original.state_id ?? row.original.employeeState;
           return (
@@ -396,7 +388,7 @@ export default function EmployeeTable({
       }),
       columnHelper.accessor('employeeRegion', {
         id: 'employeeRegion',
-        header: 'Region Name & Id',
+        header: 'Region Name ',
         cell: ({ row }) => {
           const reg = row.original.region_id ?? row.original.employeeRegion;
           return (
@@ -408,7 +400,7 @@ export default function EmployeeTable({
       }),
       columnHelper.accessor('employeeBranch', {
         id: 'employeeBranch',
-        header: 'Branch Name & Id',
+        header: 'Branch Name',
         cell: ({ row }) => {
           const br = row.original.branch_id ?? row.original.employeeBranch;
           return (
@@ -427,49 +419,13 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('leaveProfiles', {
-        id: 'leaveProfiles',
-        header: 'Leave Profiles',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.leaveProfiles)}
-          </span>
-        ),
-      }),
+     
       columnHelper.accessor('gender', {
         id: 'gender',
         header: 'Gender',
         cell: ({ row }) => (
           <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
             {formatCellText(row.original.gender)}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('reportingManager2', {
-        id: 'reportingManager2',
-        header: 'Reporting Manager 2',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.reportingManager2)}
-          </span>
-        ),
-      }),
-   
-      columnHelper.accessor('dateOfExit', {
-        id: 'dateOfExit',
-        header: 'Date of Exit',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.dateOfExit ? new Date(row.original.dateOfExit).toLocaleDateString() : 'null'}
-          </span>
-        ),
-      }),
-      columnHelper.accessor('dateOfRejoining', {
-        id: 'dateOfRejoining',
-        header: 'Date of Rejoining',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {row.original.dateOfRejoining ? new Date(row.original.dateOfRejoining).toLocaleDateString() : 'null'}
           </span>
         ),
       }),
@@ -482,15 +438,7 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('gpsStatus', {
-        id: 'gpsStatus',
-        header: 'GPS Status',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.gpsStatus)}
-          </span>
-        ),
-      }),
+
       columnHelper.accessor('createdBy', {
         id: 'createdBy',
         header: 'Created By',
@@ -500,15 +448,7 @@ export default function EmployeeTable({
           </span>
         ),
       }),
-      columnHelper.accessor('lastPunchIn', {
-        id: 'lastPunchIn',
-        header: 'Last Punch In',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-            {formatCellText(row.original.lastPunchIn)}
-          </span>
-        ),
-      }),
+     
       columnHelper.accessor('punchInGeoFence', {
         id: 'punchInGeoFence',
         header: 'Punch In Geo Fence',
@@ -528,32 +468,6 @@ export default function EmployeeTable({
         cell: ({ row }) => {
           const pOut = row.original.punchOut;
           const val = Array.isArray(pOut) && pOut.length > 0 ? pOut.map((p) => p.name).join(', ') : (row.original.punchOutGeoFence ?? 'null');
-          return (
-            <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-              {val}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor('entryAlertGeoFence', {
-        id: 'entryAlertGeoFence',
-        header: 'Entry Alert Geo Fence',
-        cell: ({ row }) => {
-          const eAlerts = row.original.entryAlerts;
-          const val = Array.isArray(eAlerts) && eAlerts.length > 0 ? eAlerts.map((p) => p.name).join(', ') : (row.original.entryAlertGeoFence ?? 'null');
-          return (
-            <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
-              {val}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor('exitAlertGeoFence', {
-        id: 'exitAlertGeoFence',
-        header: 'Exit Alert Geo Fence',
-        cell: ({ row }) => {
-          const exAlerts = row.original.exitAlerts;
-          const val = Array.isArray(exAlerts) && exAlerts.length > 0 ? exAlerts.map((p) => p.name).join(', ') : (row.original.exitAlertGeoFence ?? 'null');
           return (
             <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
               {val}

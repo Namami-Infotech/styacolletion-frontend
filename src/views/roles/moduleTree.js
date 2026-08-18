@@ -52,7 +52,6 @@ export const MODULE_TREE = [
       { key: 'taskAll', name: 'Task All', description: 'All company tasks and assignments', actions: ['add', 'edit', 'delete', 'allView', 'ownView'] },
       { key: 'teamTask', name: 'Team Task', description: 'Tasks delegated to team members', actions: ['delete', 'allView', 'ownView'] },
       { key: 'taskCustomer', name: 'Task Customer', description: 'Customer related tasks and support items', actions: ['delete', 'allView', 'ownView'] },
-      { key: 'onboardingTask', name: 'Onboarding Task', description: 'Onboarding workflows for users and clients', actions: ['edit', 'delete', 'allView', 'ownView'] },
       { key: 'deletedTasks', name: 'Deleted Tasks', description: 'Archived and deleted task records', actions: ['delete', 'allView', 'ownView'] },
     ],
   },

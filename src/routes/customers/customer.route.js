@@ -45,6 +45,22 @@ export const CustomerRoute = {
       return errorData;
     }
   },
+  getCustomerBySlug: async (slug) => {
+    try {
+      const result = await axios.get(`${baseURL}/api/v1/customers/get/${slug}`, {
+        withCredentials: true,
+      });
+      return result.data;
+    } catch (error) {
+      console.log(error);
+      const errorData = error.response?.data || {
+        statusCode: 500,
+        message: error.message || "Failed to fetch customer details",
+        success: false,
+      };
+      return errorData;
+    }
+  },
   updateCustomer: async (slug, data) => {
     try {
       const result = await axios.put(`${baseURL}/api/v1/customers/update/${slug}`, data, {

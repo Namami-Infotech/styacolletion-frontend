@@ -29,128 +29,6 @@ const getCurrentDateTimeLocal = () => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const DEFAULT_API_FIELDS = [
-  {
-    name: "houseImage",
-    label: "House Image",
-    type: "text",
-    placeholder: "Enter house image",
-    required: true,
-  },
-  {
-    name: "relation",
-    label: "Relation",
-    type: "select",
-    placeholder: "Select relation",
-    required: true,
-    options: [
-      { label: "Spouses", value: "spouses" },
-      { label: "Son", value: "son" },
-      { label: "Daughter", value: "daughter" },
-      { label: "Neighbour", value: "neighbour" },
-      { label: "Relative", value: "relative" },
-      { label: "Self", value: "self" },
-    ],
-  },
-  {
-    name: "clientPhone",
-    label: "Client Phone Number",
-    type: "number",
-    placeholder: "Enter client phone number",
-    required: true,
-  },
-  {
-    name: "collectPayment",
-    label: "Collect Payment",
-    type: "select",
-    placeholder: "Collect Payment",
-    required: true,
-    options: [
-      { label: "Yes Collect", value: "yes_collect" },
-      { label: "No", value: "no" },
-    ],
-  },
-  {
-    name: "reason",
-    label: "Reason",
-    type: "text",
-    placeholder: "Reason for Payment",
-    required: true,
-  },
-  {
-    name: "clientSegment",
-    label: "Client Segment",
-    type: "select",
-    placeholder: "Client Segment",
-    required: true,
-    options: [
-      { label: "Cold", value: "cold" },
-      { label: "Hot", value: "hot" },
-      { label: "Warm", value: "warm" },
-    ],
-  },
-  {
-    name: "ptpdate",
-    label: "PTP Date",
-    type: "datetime-local",
-    placeholder: "PTP Date",
-    required: true,
-  },
-  {
-    name: "paymentType",
-    label: "Payment Type",
-    type: "select",
-    required: true,
-    options: [
-      { label: "Cash", value: "cash" },
-      { label: "ONLINE", value: "online" },
-      { label: "Digital Mode", value: "digitalmode" },
-    ],
-  },
-  {
-    name: "paymentAmount",
-    label: "Payment Amount",
-    type: "number",
-    placeholder: "Enter payment amount",
-    required: true,
-  },
-  {
-    name: "remark",
-    label: "Remark",
-    type: "text",
-    placeholder: "Enter remark",
-    required: true,
-  },
-  {
-    name: "paymentProfImage",
-    label: "Payment Prof Image",
-    type: "text",
-    placeholder: "Enter payment prof image",
-    required: true,
-  },
-  {
-    name: "location",
-    label: "Location",
-    type: "text",
-    placeholder: "Enter location",
-    required: true,
-  },
-  {
-    name: "startDateTime",
-    label: "Start Date Time",
-    type: "datetime-local",
-    placeholder: "Enter start date time",
-    required: true,
-  },
-  {
-    name: "completeDateTime",
-    label: "Complete Date Time",
-    type: "datetime-local",
-    placeholder: "Enter complete date time",
-    required: true,
-  },
-];
-
 export default function CompleteBehalfEmployeeModal({
   open,
   onClose,
@@ -158,7 +36,7 @@ export default function CompleteBehalfEmployeeModal({
   isDark,
   onSuccess,
 }) {
-  const [fields, setFields] = useState(DEFAULT_API_FIELDS);
+  const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingFields, setUploadingFields] = useState({});
@@ -182,17 +60,12 @@ export default function CompleteBehalfEmployeeModal({
           ? response
           : [];
 
-      if (apiFields.length > 0) {
-        setFields(apiFields);
-        initFormData(apiFields);
-      } else {
-        setFields(DEFAULT_API_FIELDS);
-        initFormData(DEFAULT_API_FIELDS);
-      }
+      setFields(apiFields);
+      initFormData(apiFields);
     } catch (err) {
       console.error("Error fetching complete behalf fields:", err);
-      setFields(DEFAULT_API_FIELDS);
-      initFormData(DEFAULT_API_FIELDS);
+      setFields([]);
+      initFormData([]);
     } finally {
       setLoading(false);
     }
@@ -215,9 +88,6 @@ export default function CompleteBehalfEmployeeModal({
         "relation",
         "clientPhone",
         "collectPayment",
-        "startDateTime",
-        "completeDateTime",
-        "location",
       ].includes(fieldName)
     ) {
       return true;
@@ -253,8 +123,9 @@ export default function CompleteBehalfEmployeeModal({
           updated.paymentType = "";
           updated.paymentAmount = "";
           updated.paymentProfImage = "";
-        } else if (value === "yes_collect") {
+        } else if (value === "yes_collect" || value === "yes") {
           updated.reason = "";
+          updated.ptpdate = "";
         }
       }
       if (name === "paymentType") {
@@ -262,11 +133,6 @@ export default function CompleteBehalfEmployeeModal({
           updated.paymentProfImage = "";
         } else if (value === "online") {
           updated.paymentAmount = "";
-        }
-      }
-      if (name === "startDateTime") {
-        if (updated.completeDateTime && updated.completeDateTime < value) {
-          updated.completeDateTime = "";
         }
       }
       return updated;
@@ -287,12 +153,6 @@ export default function CompleteBehalfEmployeeModal({
         }
       }
     });
-
-    if (formData.startDateTime && formData.completeDateTime) {
-      if (new Date(formData.completeDateTime) < new Date(formData.startDateTime)) {
-        newErrors.completeDateTime = "Complete Date Time must be greater than or equal to Start Date Time";
-      }
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -461,14 +321,7 @@ export default function CompleteBehalfEmployeeModal({
 
     let minVal = undefined;
     if (field.type === "datetime-local") {
-      const nowStr = getCurrentDateTimeLocal();
-      if (field.name === "startDateTime") {
-        minVal = nowStr;
-      } else if (field.name === "completeDateTime") {
-        minVal = formData.startDateTime || nowStr;
-      } else {
-        minVal = nowStr;
-      }
+      minVal = getCurrentDateTimeLocal();
     }
 
     return (

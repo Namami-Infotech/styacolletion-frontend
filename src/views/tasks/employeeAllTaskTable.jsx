@@ -83,17 +83,6 @@ export default function TaskTable({
               fontWeight: 600,
             },
           };
-        case "in progress":
-        case "in_progress":
-          return {
-            label: "In Progress",
-            style: {
-              backgroundColor: "rgba(59, 130, 246, 0.15)",
-              color: "#60a5fa",
-              border: "1px solid rgba(59, 130, 246, 0.3)",
-              fontWeight: 600,
-            },
-          };
         case "under review":
         case "under_review":
           return {
@@ -135,17 +124,6 @@ export default function TaskTable({
               backgroundColor: "#dcfce7",
               color: "#14532d",
               border: "1px solid #86efac",
-              fontWeight: 700,
-            },
-          };
-        case "in progress":
-        case "in_progress":
-          return {
-            label: "In Progress",
-            style: {
-              backgroundColor: "#dbeafe",
-              color: "#1e40af",
-              border: "1px solid #93c5fd",
               fontWeight: 700,
             },
           };
