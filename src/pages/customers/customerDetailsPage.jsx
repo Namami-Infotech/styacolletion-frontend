@@ -340,14 +340,7 @@ export default function CustomerDetailsPage() {
                         </span>
                       </div>
 
-                      <div>
-                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
-                          Sub-State Name
-                        </span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          {customerData.subStateName}
-                        </span>
-                      </div>
+                      
 
                       <div>
                         <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">

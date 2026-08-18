@@ -368,20 +368,7 @@ export default function TaskDetails() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
-                        Sub-State Name
-                      </label>
-                      <div
-                        className={`px-3 py-2 rounded-lg text-xs font-semibold border ${isDark
-                            ? "bg-slate-800/60 border-slate-700/70 text-slate-200"
-                            : "bg-slate-100/90 border-slate-200 text-slate-800"
-                          }`}
-                      >
-                        {customerDetails.subStateName}
-                      </div>
-                    </div>
-
+                    
                     <div>
                       <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
                         Branch Code
@@ -1324,12 +1311,6 @@ export default function TaskDetails() {
                           SpouseName
                         </span>
                         <span className="font-semibold">{customerDetails.spouseName}</span>
-                      </div>
-                      <div>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                          Sub-State Name
-                        </span>
-                        <span className="font-semibold">{customerDetails.subStateName}</span>
                       </div>
                     </div>
                   </div>
