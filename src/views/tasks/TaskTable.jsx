@@ -438,7 +438,7 @@ export default function TaskTable({
         header: "Completed At",
         cell: ({ row }) => (
           <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.completedAt ? new Date(row.original.completedAt).toLocaleString() : "null"}
+            {row.original.completeDateTime ? new Date(row.original.completeDateTime).toLocaleString() : "null"}
           </span>
         ),
       }),

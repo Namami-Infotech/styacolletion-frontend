@@ -372,8 +372,8 @@ export default function TaskPage() {
         {/* Toolbar & Filter Bar with Header Title */}
         <div
           className={`p-3.5 sm:p-4 rounded-2xl border flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 sm:gap-4 flex-shrink-0 transition-all duration-200 ${isDark
-              ? "bg-slate-900/70 border-slate-800/80 backdrop-blur-xl shadow-xl"
-              : "bg-white border-slate-200 shadow-sm"
+            ? "bg-slate-900/70 border-slate-800/80 backdrop-blur-xl shadow-xl"
+            : "bg-white border-slate-200 shadow-sm"
             }`}
         >
           {/* Header Title Banner & Mobile Action Button */}

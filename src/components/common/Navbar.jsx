@@ -585,11 +585,10 @@ export default function Navbar({
     <>
       {/* Pinned Sticky Header */}
       <header
-        className={`sticky top-0 z-50 w-full px-3 sm:px-5 py-2 flex items-center justify-between transition-colors duration-200 border-b backdrop-blur-md ${
-          isDark
+        className={`sticky top-0 z-50 w-full px-3 sm:px-5 py-2 flex items-center justify-between transition-colors duration-200 border-b backdrop-blur-md ${isDark
             ? 'bg-slate-900/95 border-slate-800 text-white shadow-md'
             : 'bg-white/95 border-slate-200 text-slate-800 shadow-sm'
-        }`}
+          }`}
       >
         {/* Left side: Brand Logo & Hamburger Menu */}
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -637,15 +636,14 @@ export default function Navbar({
               <div key={item.label} className="relative flex-shrink-0">
                 <button
                   onClick={(e) => handleTabClick(e, item)}
-                  className={`flex items-center gap-0.5 px-2.5 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer select-none whitespace-nowrap rounded-md ${
-                    isActive
+                  className={`flex items-center gap-0.5 px-2.5 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer select-none whitespace-nowrap rounded-md ${isActive
                       ? isDark
                         ? 'text-blue-400 font-bold bg-blue-950/40'
                         : 'text-blue-600 font-bold bg-blue-50/80'
                       : isDark
-                      ? 'text-slate-300 hover:text-white hover:bg-slate-800/50'
-                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/60'
-                  }`}
+                        ? 'text-slate-300 hover:text-white hover:bg-slate-800/50'
+                        : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/60'
+                    }`}
                 >
                   <span>{displayLabel}</span>
                   {item.hasDropdown && (
@@ -657,8 +655,8 @@ export default function Navbar({
                             ? '#60a5fa'
                             : '#2563eb'
                           : isDark
-                          ? '#94a3b8'
-                          : '#64748b',
+                            ? '#94a3b8'
+                            : '#64748b',
                       }}
                     />
                   )}
@@ -666,9 +664,8 @@ export default function Navbar({
                 {/* Active Tab Blue Underline */}
                 {isActive && (
                   <div
-                    className={`absolute bottom-0 left-1 right-1 h-[2.5px] rounded-t-sm ${
-                      isDark ? 'bg-blue-400' : 'bg-blue-600'
-                    }`}
+                    className={`absolute bottom-0 left-1 right-1 h-[2.5px] rounded-t-sm ${isDark ? 'bg-blue-400' : 'bg-blue-600'
+                      }`}
                   />
                 )}
               </div>
@@ -814,15 +811,14 @@ export default function Navbar({
           {/* Disabled Punch In / Punched Out Attendance Status Badge */}
           <Tooltip title="Punch action is disabled">
             <div
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border select-none opacity-60 cursor-not-allowed ${
-                isPunchedIn
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border select-none opacity-60 cursor-not-allowed ${isPunchedIn
                   ? isDark
                     ? 'bg-emerald-950/50 border-emerald-800/80 text-emerald-300'
                     : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                   : isDark
                     ? 'bg-slate-800/80 border-slate-700 text-slate-300'
                     : 'bg-slate-100 border-slate-200 text-slate-700'
-              }`}
+                }`}
             >
               <div className="relative flex items-center justify-center shrink-0">
                 <FingerprintIcon
@@ -850,19 +846,18 @@ export default function Navbar({
             </div>
           </Tooltip>
           <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border select-none ${
-              isDark
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border select-none ${isDark
                 ? 'bg-blue-950/40 border-blue-800/80 text-blue-300'
                 : 'bg-blue-50 border-blue-200 text-blue-700'
-            }`}
+              }`}
           >
             <EngineeringIcon sx={{ fontSize: 18, color: isDark ? '#60a5fa' : '#2563eb' }} />
             <span className="text-xs font-bold whitespace-nowrap">
               {roleInfo?.name || 'Admin'}
             </span>
           </div>
-       
-          
+
+
           {/* User Initial Avatar Circle */}
           <Tooltip title={user?.name || 'User Profile'}>
             <button
@@ -1192,15 +1187,14 @@ export default function Navbar({
                       handleTabClick(e, item);
                     }
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                    isActive
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${isActive
                       ? isDark
                         ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
                         : 'bg-blue-50 text-blue-600 border border-blue-200'
                       : isDark
                         ? 'text-slate-300 hover:bg-slate-800/60'
                         : 'text-slate-700 hover:bg-slate-100'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     {item.icon ? (
@@ -1235,11 +1229,10 @@ export default function Navbar({
                               navigate(subItem.path);
                             }
                           }}
-                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                            isDark
+                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isDark
                               ? 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                          }`}
+                            }`}
                         >
                           {subItem.label}
                         </button>
