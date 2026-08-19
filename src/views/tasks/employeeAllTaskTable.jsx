@@ -387,14 +387,17 @@ export default function TaskTable({
           </span>
         ),
       }),
-      columnHelper.accessor("completedAt", {
-        id: "completedAt",
+      columnHelper.accessor("completeDateTime", {
+        id: "completeDateTime",
         header: "Completed",
-        cell: ({ row }) => (
-          <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
-            {row.original.completedAt ? new Date(row.original.completedAt).toLocaleString() : "null"}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const dateVal = row.original.completeDateTime || row.original.completedAt;
+          return (
+            <span className={`text-xs whitespace-nowrap ${isDark ? "text-slate-400" : "text-slate-700"}`}>
+              {dateVal ? new Date(dateVal).toLocaleString() : "null"}
+            </span>
+          );
+        },
       }),
       columnHelper.accessor("startDateTime", {
         id: "startDateTime",
