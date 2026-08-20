@@ -152,19 +152,19 @@ export default function DashboardPage() {
     return Array.isArray(stats?.chartData) ? stats.chartData : [];
   }, [stats]);
 
-  // Hovered Chart Point for Tooltip
-  const [hoveredPoint, setHoveredPoint] = useState({ date: '2026-07-04', val: 11501.71, x: 210, y: 55 });
+  // Hovered Chart Point for Tooltip (defaults to null)
+  const [hoveredPoint, setHoveredPoint] = useState(null);
 
   // Chart SVG Calculations
   const chartWidth = 1000;
   const chartHeight = 180;
   // Dynamic Y-axis max: round up to nearest nice number above actual max
   const maxVal = useMemo(() => {
-    if (!activeChartData.length) return 1;
-    const rawMax = Math.max(...activeChartData.map((d) => d.val), 1);
-    // Round up to nearest 1000 (or 10 for small datasets)
-    const magnitude = rawMax > 100 ? 1000 : rawMax > 10 ? 100 : 10;
-    return Math.ceil(rawMax / magnitude) * magnitude;
+    if (!activeChartData.length) return 10;
+    const rawMax = Math.max(...activeChartData.map((d) => d.val), 0);
+    if (rawMax <= 0) return 10;
+    const magnitude = rawMax > 1000 ? 1000 : rawMax > 100 ? 100 : rawMax > 10 ? 10 : 1;
+    return Math.ceil((rawMax * 1.15) / magnitude) * magnitude;
   }, [activeChartData]);
 
   const points = useMemo(() => {
@@ -395,19 +395,20 @@ export default function DashboardPage() {
 
                     {/* Interactive Points */}
                     {activeChartData.map((d, index) => {
-                      const cx = (index / (activeChartData.length - 1)) * chartWidth;
+                      const cx = activeChartData.length === 1 ? chartWidth / 2 : (index / (activeChartData.length - 1)) * chartWidth;
                       const cy = chartHeight - (d.val / maxVal) * chartHeight;
                       return (
                         <circle
                           key={d.date}
                           cx={cx}
                           cy={cy}
-                          r={hoveredPoint.date === d.date ? "5" : "3"}
+                          r={hoveredPoint?.date === d.date ? "5" : "3"}
                           fill="#ea580c"
                           stroke="#ffffff"
                           strokeWidth="1.5"
                           className="cursor-pointer transition-all hover:r-6"
                           onMouseEnter={() => setHoveredPoint({ date: d.date, val: d.val, x: cx, y: cy })}
+                          onMouseLeave={() => setHoveredPoint(null)}
                         />
                       );
                     })}
@@ -425,7 +426,7 @@ export default function DashboardPage() {
                     }}
                   >
                     <div className="font-semibold text-slate-300">{hoveredPoint.date}</div>
-                    <div className="text-amber-400 font-bold">Value: {hoveredPoint.val}</div>
+                    <div className="text-amber-400 font-bold">Distance: {hoveredPoint.val.toLocaleString()} Km</div>
                   </div>
                 )}
 

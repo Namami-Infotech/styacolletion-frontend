@@ -66,6 +66,7 @@ export const downloadTaskDemoExcel = async (formFields = []) => {
     "Description": "Follow up with customer regarding documentation",
     "Priority": "high",
     "Assignee Employee ID": sampleEmpId,
+    "PTP Date": "2026-08-25",
   };
 
   const sampleRow2 = {
@@ -74,6 +75,7 @@ export const downloadTaskDemoExcel = async (formFields = []) => {
     "Description": "Complete customer KYC verification and onboarding",
     "Priority": "medium",
     "Assignee Employee ID": sampleEmpId,
+    "PTP Date": "2026-08-28",
   };
 
   const ws = XLSX.utils.json_to_sheet([sampleRow1, sampleRow2]);
@@ -85,6 +87,7 @@ export const downloadTaskDemoExcel = async (formFields = []) => {
     { wch: 48 }, // Description
     { wch: 12 }, // Priority
     { wch: 22 }, // Assignee Employee ID
+    { wch: 16 }, // PTP Date
   ];
 
   const wb = XLSX.utils.book_new();
@@ -113,6 +116,7 @@ export const exportTasksToExcel = (tasks = [], filename = "Tasks_Export.xlsx") =
       "Description": t.description || "",
       "Priority": t.priority ? String(t.priority).toUpperCase() : "MEDIUM",
       "Status": t.status ? String(t.status).toUpperCase() : "PENDING",
+      "PTP Date": t.ptpdate ? new Date(t.ptpdate).toISOString().split("T")[0] : "",
       "Customer Name": cust?.name || "",
       "Customer ID": cust?.customer_id || cust?.id || "",
       "Customer Phone": cust?.phone || "",

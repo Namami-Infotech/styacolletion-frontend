@@ -250,6 +250,8 @@ export default function CreateEmployeePage() {
     label: '#6366f1',
     dateOfBirth: '',
     dateOfJoining: '',
+    salary: '',
+    per_month_salary: '',
     address: '',
 
     // Geo Fence Restriction (Advance)
@@ -317,6 +319,8 @@ export default function CreateEmployeePage() {
       label: emp.label || emp.label_color || prev.label || '#6366f1',
       dateOfBirth: formattedDob || '1995-01-01',
       dateOfJoining: formattedDoj || new Date().toISOString().split('T')[0],
+      salary: extractPrimitive(emp.salary, emp.per_month_salary) ?? '',
+      per_month_salary: extractPrimitive(emp.per_month_salary, emp.salary) ?? '',
       address: emp.address || emp.locationAddress || emp.location || prev.address,
       punchInGeoFence: extractArray(emp.punchInGeoFence || emp.punchIn || emp.punch_in),
       punchOutGeoFence: extractArray(emp.punchOutGeoFence || emp.punchOut || emp.punch_out),
@@ -551,6 +555,12 @@ export default function CreateEmployeePage() {
       license: formData.license || 'Full Access License',
       password: validPassword,
       work_shift: formData.workingShift,
+      salary: (formData.salary !== '' && formData.salary !== null && formData.salary !== undefined && !isNaN(Number(formData.salary)))
+        ? Number(formData.salary)
+        : ((formData.per_month_salary !== '' && formData.per_month_salary !== null && formData.per_month_salary !== undefined && !isNaN(Number(formData.per_month_salary))) ? Number(formData.per_month_salary) : 0),
+      per_month_salary: (formData.salary !== '' && formData.salary !== null && formData.salary !== undefined && !isNaN(Number(formData.salary)))
+        ? Number(formData.salary)
+        : ((formData.per_month_salary !== '' && formData.per_month_salary !== null && formData.per_month_salary !== undefined && !isNaN(Number(formData.per_month_salary))) ? Number(formData.per_month_salary) : 0),
       status: 'Active',
       work_location: formData.homeLocation,
       emp_type: 'Full Time',
@@ -1020,7 +1030,7 @@ export default function CreateEmployeePage() {
         ? (typeof matchingOpt === 'object' ? (matchingOpt.value ?? matchingOpt.id ?? matchingOpt.slug ?? matchingOpt.name) : matchingOpt)
         : (targetVal !== undefined && targetVal !== null ? targetVal : '');
 
-      const isHalfWidth = field.name === 'workingShift' || field.name === 'leaveProfile';
+      const isHalfWidth = field.name === 'leaveProfile';
       const gridColSize = isHalfWidth ? { xs: 12, md: 6 } : { xs: 12, md: 4 };
 
       return (

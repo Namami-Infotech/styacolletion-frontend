@@ -290,6 +290,19 @@ export default function EmployeeTable({
           </span>
         ),
       }),
+      columnHelper.accessor('salary', {
+        id: 'salary',
+        header: 'Salary',
+        cell: ({ row }) => {
+          const sal = row.original.per_month_salary ?? row.original.salary;
+          const displaySal = sal !== null && sal !== undefined && !isNaN(Number(sal)) ? `₹${Number(sal).toLocaleString('en-IN')}` : '-';
+          return (
+            <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+              {displaySal}
+            </span>
+          );
+        },
+      }),
       columnHelper.accessor('status', {
         id: 'status',
         header: 'Status',

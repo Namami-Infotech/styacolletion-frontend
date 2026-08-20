@@ -561,7 +561,7 @@ export default function Navbar({
     const activeIndex = navItems.findIndex((item) => {
       if (item.label === activeTab) return true;
       if (item.path === location.pathname) return true;
-      if (item.dropdownItems?.some((sub) => sub.label === activeTab || sub.path === location.pathname || (sub.path !== '/home' && location.pathname.startsWith(sub.path)))) return true;
+      if (item.dropdownItems?.some((sub) => sub.label === activeTab || sub.path === location.pathname)) return true;
       return false;
     });
 
@@ -621,10 +621,7 @@ export default function Navbar({
         >
           {primaryNavItems.map((item) => {
             const activeSubItem = item.dropdownItems?.find(
-              (sub) =>
-                sub.label === activeTab ||
-                sub.path === location.pathname ||
-                (sub.path !== '/home' && location.pathname.startsWith(sub.path))
+              (sub) => sub.label === activeTab || sub.path === location.pathname
             );
             const isActive =
               activeTab === item.label ||
@@ -739,7 +736,7 @@ export default function Navbar({
                           {item.label}
                         </div>
                         {item.dropdownItems.map((sub) => {
-                          const isSubActive = location.pathname === sub.path;
+                          const isSubActive = activeTab === sub.label || location.pathname === sub.path;
                           return (
                             <MenuItem
                               key={sub.label}
@@ -1074,9 +1071,7 @@ export default function Navbar({
           >
             {activeDropdownNav?.dropdownItems?.map((subItem) => {
               const isSubActive =
-                activeTab === subItem.label ||
-                location.pathname === subItem.path ||
-                (subItem.path !== '/home' && location.pathname.startsWith(subItem.path));
+                activeTab === subItem.label || location.pathname === subItem.path;
               return (
                 <MenuItem
                   key={subItem.label}

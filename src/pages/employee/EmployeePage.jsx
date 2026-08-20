@@ -59,9 +59,9 @@ export const ALL_EMPLOYEE_COLUMNS = [
   { id: "team", label: "Team" },
   { id: "gender", label: "Gender" },
   { id: "createdBy", label: "Created By" },
+  { id: "salary", label: "Salary" },
   { id: "punchInGeoFence", label: "Punch In Geo Fence" },
   { id: "punchOutGeoFence", label: "Punch Out Geo Fence" },
-  
 ];
 
 export default function EmployeePage() {

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -65,6 +66,21 @@ export default function CustomerTable({
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [loading, setLoading] = useState(false);
   const { hasPermission } = useAuth();
+  const navigate = useNavigate();
+
+  const handleCustomerView = (customer) => {
+    if (onViewClick) {
+      onViewClick(customer);
+    } else {
+      const custIdentifier = customer?.slug || customer?.id || customer?._id || customer?.customer_id;
+      if (custIdentifier) {
+        navigate(`/customers/details/${custIdentifier}`, {
+          state: { customer },
+        });
+      }
+    }
+  };
+
   // Server-side pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -148,7 +164,11 @@ export default function CustomerTable({
           const email = formatCellText(row.original.email);
           const img = typeof row.original.image === 'string' && row.original.image.startsWith('http') ? row.original.image : null;
           return (
-            <div className="flex items-center gap-3 min-w-[180px]">
+            <div
+              onClick={() => handleCustomerView(row.original)}
+              className="flex items-center gap-3 min-w-[180px] cursor-pointer group select-none"
+              title="Click to view customer details"
+            >
               <Avatar
                 src={img}
                 alt={name !== 'N/A' ? name : 'C'}
@@ -160,12 +180,22 @@ export default function CustomerTable({
                   fontWeight: 'bold',
                   fontSize: '14px',
                   border: isDark ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid #cbd5e1',
+                  transition: 'transform 0.15s ease',
+                  '&:hover': {
+                    transform: 'scale(1.06)',
+                  },
                 }}
               >
                 {(name !== 'N/A' ? name : 'C').charAt(0).toUpperCase()}
               </Avatar>
               <div>
-                <div className={`font-bold text-xs whitespace-nowrap ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <div
+                  className={`font-bold text-xs whitespace-nowrap group-hover:underline ${
+                    isDark
+                      ? 'text-blue-400 group-hover:text-blue-300'
+                      : 'text-blue-600 group-hover:text-blue-800'
+                  }`}
+                >
                   {name}
                 </div>
                 <div className={`text-[11px] font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
@@ -304,18 +334,20 @@ export default function CustomerTable({
         header: 'ACTIONS',
         cell: ({ row }) => (
           <div className="flex items-center justify-end gap-1 min-w-[110px]">
-           {/* {hasPermission("customer", "view") && <Tooltip title="View Details">
-              <IconButton
-                size="small"
-                onClick={() => onViewClick && onViewClick(row.original)}
-                sx={{
-                  color: isDark ? '#818cf8' : '#0f172a',
-                  '&:hover': { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : '#e2e8f0' },
-                }}
-              >
-                <VisibilityIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>} */}
+            {hasPermission("customer", "view") && (
+              <Tooltip title="View Details">
+                <IconButton
+                  size="small"
+                  onClick={() => handleCustomerView(row.original)}
+                  sx={{
+                    color: isDark ? '#818cf8' : '#0f172a',
+                    '&:hover': { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.15)' : '#e2e8f0' },
+                  }}
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
 
             {hasPermission("customer", "edit") && <Tooltip title="Edit Customer">
               <IconButton

@@ -341,7 +341,7 @@ export default function TaskTable({
         cell: ({ row }) => {
           const cust = row.original?.customerId;
           const custName = cust?.name ?? (typeof cust === "string" ? cust : null) ?? "null";
-          const customerId = cust?.id || cust?._id || (typeof cust === "string" ? cust : "details");
+          const customerId = cust?.slug || cust?.id || cust?._id || (typeof cust === "string" ? cust : "details");
           return (
             <span
               onClick={() =>

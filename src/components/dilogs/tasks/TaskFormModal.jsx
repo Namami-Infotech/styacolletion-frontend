@@ -136,7 +136,7 @@ export default function TaskFormModal({
         }
 
         let finalVal = val;
-        if (val && typeof val === "object") {
+        if (val && typeof val === "object" && !(val instanceof Date)) {
           finalVal =
             val.id !== undefined
               ? val.id
@@ -146,6 +146,23 @@ export default function TaskFormModal({
               ? val.emp_id
               : val;
         }
+
+        if (finalVal) {
+          if (f.type === "date") {
+            try {
+              finalVal = new Date(finalVal).toISOString().split("T")[0];
+            } catch (e) {
+              finalVal = String(finalVal).split("T")[0];
+            }
+          } else if (f.type === "datetime-local") {
+            try {
+              finalVal = new Date(finalVal).toISOString().slice(0, 16);
+            } catch (e) {
+              finalVal = String(finalVal).slice(0, 16);
+            }
+          }
+        }
+
         editForm[f.name] =
           finalVal !== undefined && finalVal !== null
             ? finalVal
