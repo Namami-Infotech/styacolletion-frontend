@@ -158,53 +158,49 @@ export default function CustomerTable({
     () => [
       columnHelper.accessor('name', {
         id: 'name',
-        header: 'Customer Name',
+        header: 'Member Name',
         cell: ({ row }) => {
           const name = formatCellText(row.original.name);
-          const email = formatCellText(row.original.email);
-          const img = typeof row.original.image === 'string' && row.original.image.startsWith('http') ? row.original.image : null;
           return (
             <div
               onClick={() => handleCustomerView(row.original)}
-              className="flex items-center gap-3 min-w-[180px] cursor-pointer group select-none"
+              className="flex items-center gap-2.5 min-w-[160px] cursor-pointer group select-none"
               title="Click to view customer details"
             >
               <Avatar
-                src={img}
-                alt={name !== 'N/A' ? name : 'C'}
+                alt={name !== 'N/A' ? name : 'M'}
                 sx={{
-                  width: 36,
-                  height: 36,
+                  width: 32,
+                  height: 32,
                   bgcolor: isDark ? '#3b82f6' : '#2563eb',
                   color: '#ffffff',
                   fontWeight: 'bold',
-                  fontSize: '14px',
-                  border: isDark ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid #cbd5e1',
-                  transition: 'transform 0.15s ease',
-                  '&:hover': {
-                    transform: 'scale(1.06)',
-                  },
+                  fontSize: '13px',
                 }}
               >
-                {(name !== 'N/A' ? name : 'C').charAt(0).toUpperCase()}
+                {(name !== 'N/A' ? name : 'M').charAt(0).toUpperCase()}
               </Avatar>
-              <div>
-                <div
-                  className={`font-bold text-xs whitespace-nowrap group-hover:underline ${
-                    isDark
-                      ? 'text-blue-400 group-hover:text-blue-300'
-                      : 'text-blue-600 group-hover:text-blue-800'
-                  }`}
-                >
-                  {name}
-                </div>
-                <div className={`text-[11px] font-semibold whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  {email}
-                </div>
+              <div
+                className={`font-bold text-xs whitespace-nowrap group-hover:underline ${
+                  isDark
+                    ? 'text-blue-400 group-hover:text-blue-300'
+                    : 'text-blue-600 group-hover:text-blue-800'
+                }`}
+              >
+                {name}
               </div>
             </div>
           );
         },
+      }),
+      columnHelper.accessor('member_no', {
+        id: 'member_no',
+        header: 'Member No.',
+        cell: ({ row }) => (
+          <span className={`text-xs font-mono font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.member_no||row.original.customer_id)}
+          </span>
+        ),
       }),
       columnHelper.accessor('customer_id', {
         id: 'customer_id',
@@ -223,29 +219,29 @@ export default function CustomerTable({
       }),
       columnHelper.accessor('phone', {
         id: 'phone',
-        header: 'Phone Number',
+        header: 'ContactNumber',
         cell: ({ row }) => (
           <span className={`text-xs font-mono font-bold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
             {formatCellText(row.original.phone)}
           </span>
         ),
       }),
+      columnHelper.accessor('spouseName', {
+        id: 'spouseName',
+        header: 'SpouseName',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.spouseName)}
+          </span>
+        ),
+      }),
       columnHelper.accessor('loanStatus', {
         id: 'loanStatus',
-        header: 'Loan Status',
+        header: 'Status',
         cell: ({ row }) => {
           const st = row.original.loanStatus;
           return <Chip size="small" {...getStatusChipProps(st)} />;
         },
-      }),
-      columnHelper.accessor('owner', {
-        id: 'owner',
-        header: 'Employee',
-        cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-            {formatCellText(row.original.owner?.name ?? row.original.owner)}
-          </span>
-        ),
       }),
       columnHelper.accessor('loanType', {
         id: 'loanType',
@@ -256,48 +252,228 @@ export default function CustomerTable({
           </span>
         ),
       }),
+      columnHelper.accessor('purpose', {
+        id: 'purpose',
+        header: 'Purpose',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.purpose)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('reschedule', {
+        id: 'reschedule',
+        header: 'Reschedule',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.reschedule)}
+          </span>
+        ),
+      }),
       columnHelper.accessor('loanNo', {
         id: 'loanNo',
-        header: 'Loan No',
+        header: 'Loan NO.',
         cell: ({ row }) => (
           <span className={`font-mono text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
             {formatCellText(row.original.loanNo)}
           </span>
         ),
       }),
+      columnHelper.accessor('loan_series', {
+        id: 'loan_series',
+        header: 'LOAN series',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.loan_series)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('oldLoanNo', {
+        id: 'oldLoanNo',
+        header: 'OldLoanNo',
+        cell: ({ row }) => (
+          <span className={`font-mono text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.oldLoanNo)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('cycle', {
+        id: 'cycle',
+        header: 'Cycle',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.cycle)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('loanDisbDate', {
+        id: 'loanDisbDate',
+        header: 'LoanDisbDate',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.loanDisbDate)}
+          </span>
+        ),
+      }),
       columnHelper.accessor('loanAmount', {
         id: 'loanAmount',
-        header: 'Loan Amount',
+        header: 'LoanAmount',
         cell: ({ row }) => (
           <span className={`text-xs font-bold font-mono whitespace-nowrap ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
-            {row.original.loanAmount ? `₹${row.original.loanAmount}` : 'N/A'}
+            {row.original.loanAmount !== null && row.original.loanAmount !== undefined && row.original.loanAmount !== '' ? `₹${row.original.loanAmount}` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('os_principal', {
+        id: 'os_principal',
+        header: 'O/S Prin',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.os_principal !== null && row.original.os_principal !== undefined && row.original.os_principal !== '' ? `₹${row.original.os_principal}` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('os_interest', {
+        id: 'os_interest',
+        header: 'O/S Int',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.os_interest !== null && row.original.os_interest !== undefined && row.original.os_interest !== '' ? `₹${row.original.os_interest}` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('par', {
+        id: 'par',
+        header: 'PAR',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.par)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('od_principal', {
+        id: 'od_principal',
+        header: 'ODPrin',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.od_principal !== null && row.original.od_principal !== undefined && row.original.od_principal !== '' ? `₹${row.original.od_principal}` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('od_interest', {
+        id: 'od_interest',
+        header: 'ODInt',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.od_interest !== null && row.original.od_interest !== undefined && row.original.od_interest !== '' ? `₹${row.original.od_interest}` : 'N/A'}
           </span>
         ),
       }),
       columnHelper.accessor('totalDueAmount', {
         id: 'totalDueAmount',
-        header: 'Total Due',
+        header: 'TotalDueAmt',
         cell: ({ row }) => (
           <span className={`text-xs font-bold font-mono whitespace-nowrap ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
-            {row.original.totalDueAmount ? `₹${row.original.totalDueAmount}` : 'N/A'}
+            {row.original.totalDueAmount !== null && row.original.totalDueAmount !== undefined && row.original.totalDueAmount !== '' ? `₹${row.original.totalDueAmount}` : 'N/A'}
           </span>
         ),
       }),
-      columnHelper.accessor('location', {
-        id: 'location',
-        header: 'Location',
+      columnHelper.accessor('total_principal_collectible', {
+        id: 'total_principal_collectible',
+        header: 'TotalPrinColl',
         cell: ({ row }) => (
-          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-            {formatCellText(row.original.location)}
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.total_principal_collectible !== null && row.original.total_principal_collectible !== undefined && row.original.total_principal_collectible !== '' ? `₹${row.original.total_principal_collectible}` : 'N/A'}
           </span>
         ),
       }),
-      columnHelper.accessor('district', {
-        id: 'district',
-        header: 'District',
+      columnHelper.accessor('total_interest_collectible', {
+        id: 'total_interest_collectible',
+        header: 'TotalIntColl',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.total_interest_collectible !== null && row.original.total_interest_collectible !== undefined && row.original.total_interest_collectible !== '' ? `₹${row.original.total_interest_collectible}` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('irrRate', {
+        id: 'irrRate',
+        header: 'IrrRate',
         cell: ({ row }) => (
           <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
-            {formatCellText(row.original.district)}
+            {row.original.irrRate ? `${row.original.irrRate}%` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('noOfInstallment', {
+        id: 'noOfInstallment',
+        header: 'NoOfInstallment',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.noOfInstallment)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('installmentAmount', {
+        id: 'installmentAmount',
+        header: 'InstallmentAmount',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.installmentAmount !== null && row.original.installmentAmount !== undefined && row.original.installmentAmount !== '' ? `₹${row.original.installmentAmount}` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('paidInstNo', {
+        id: 'paidInstNo',
+        header: 'PaidInstNo',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.paidInstNo)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('lastDueDate', {
+        id: 'lastDueDate',
+        header: 'LastDueDate',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.lastDueDate)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('lastPaidTrxDate', {
+        id: 'lastPaidTrxDate',
+        header: 'LastPaidTrxDate',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.lastPaidTrxDate)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('lastTrxAmount', {
+        id: 'lastTrxAmount',
+        header: 'LastTrxAmount',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold font-mono whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {row.original.lastTrxAmount !== null && row.original.lastTrxAmount !== undefined && row.original.lastTrxAmount !== '' ? `₹${row.original.lastTrxAmount}` : 'N/A'}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('maturityDate', {
+        id: 'maturityDate',
+        header: 'MaturityDate',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.maturityDate)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('dpd', {
+        id: 'dpd',
+        header: 'DPD',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.dpd)}
           </span>
         ),
       }),
@@ -310,12 +486,75 @@ export default function CustomerTable({
           </span>
         ),
       }),
+      columnHelper.accessor('branch_code', {
+        id: 'branch_code',
+        header: 'Branch Code',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.branch_code)}
+          </span>
+        ),
+      }),
       columnHelper.accessor('branch', {
         id: 'branch',
         header: 'Branch',
         cell: ({ row }) => (
           <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
             {formatCellText(row.original.branch)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('village_name', {
+        id: 'village_name',
+        header: 'Village Name',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.village_name)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('center', {
+        id: 'center',
+        header: 'Center Name',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.center)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('center_code', {
+        id: 'center_code',
+        header: 'Center Code',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.center_code)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('location', {
+        id: 'location',
+        header: 'Address',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.location)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('owner', {
+        id: 'owner',
+        header: 'Mapped Emp name',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.owner?.name ?? row.original.owner)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('remarks', {
+        id: 'remarks',
+        header: 'Remarks',
+        cell: ({ row }) => (
+          <span className={`text-xs font-semibold whitespace-nowrap ${isDark ? 'text-slate-300' : 'text-slate-800'}`}>
+            {formatCellText(row.original.remarks)}
           </span>
         ),
       }),

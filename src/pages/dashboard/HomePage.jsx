@@ -46,7 +46,6 @@ export default function HomePage() {
   const { user, logout } = useAuth();
   const { isDark } = useThemeMode();
 
-  const [selectedDashboard, setSelectedDashboard] = useState('Default');
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthString());
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -61,7 +60,7 @@ export default function HomePage() {
   // Fetch Home Dashboard stats from backend API for selected month
   const fetchHomeStats = async () => {
     setLoading(true);
-    const res = await DashboardRoute.getHomeStats({ dashboard: selectedDashboard, month: selectedMonth });
+    const res = await DashboardRoute.getHomeStats({ month: selectedMonth });
     if (res?.success && res?.data) {
       setHomeData(res.data);
     }
@@ -70,7 +69,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchHomeStats();
-  }, [selectedDashboard, selectedMonth, refreshKey]);
+  }, [selectedMonth, refreshKey]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -135,24 +134,6 @@ export default function HomePage() {
 
         {/* Right Controls */}
         <div className="flex items-center gap-2 text-xs">
-          {/* Select Dashboard Field */}
-          <div className="relative flex items-center">
-            <fieldset className={`border rounded-lg px-2.5 py-0.5 flex items-center gap-1.5 ${isDark ? 'border-slate-700 bg-slate-800/80' : 'border-slate-300 bg-white shadow-xs'}`}>
-              <legend className={`text-[9px] px-1 font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Select Dashboard</legend>
-              <select
-                value={selectedDashboard}
-                onChange={(e) => setSelectedDashboard(e.target.value)}
-                className={`text-xs bg-transparent outline-none cursor-pointer pr-1 font-bold ${isDark ? 'text-slate-100' : 'text-slate-800'}`}
-              >
-                {(homeData?.dashboards || ["Default", "Custom Dashboard 1", "Custom Dashboard 2"]).map((db) => (
-                  <option key={db} value={db} className={isDark ? 'bg-slate-800 text-slate-100' : 'bg-white text-slate-900'}>
-                    {db}
-                  </option>
-                ))}
-              </select>
-            </fieldset>
-          </div>
-
           {/* Fullscreen Toggle Button */}
           <button
             onClick={toggleFullscreen}
@@ -164,15 +145,16 @@ export default function HomePage() {
             {isFullscreen ? <FullscreenExitIcon sx={{ fontSize: 18 }} /> : <FullscreenIcon sx={{ fontSize: 18 }} />}
           </button>
 
-          {/* Refresh Button */}
+          {/* Refresh Data Button */}
           <button
             onClick={() => setRefreshKey((prev) => prev + 1)}
+            disabled={loading}
             className={`p-1.5 rounded-lg border flex items-center justify-center cursor-pointer transition-all ${
-              isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100 shadow-xs'
+              isDark ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 disabled:opacity-50' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-50 shadow-xs'
             }`}
             title="Refresh Data"
           >
-            <RefreshIcon sx={{ fontSize: 18 }} />
+            <RefreshIcon sx={{ fontSize: 18, animation: loading ? 'spin 1s linear infinite' : 'none' }} />
           </button>
         </div>
       </div>

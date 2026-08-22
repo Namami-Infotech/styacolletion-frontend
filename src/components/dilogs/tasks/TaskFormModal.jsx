@@ -156,7 +156,17 @@ export default function TaskFormModal({
             }
           } else if (f.type === "datetime-local") {
             try {
-              finalVal = new Date(finalVal).toISOString().slice(0, 16);
+              const d = new Date(finalVal);
+              if (!isNaN(d.getTime())) {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, "0");
+                const day = String(d.getDate()).padStart(2, "0");
+                const hours = String(d.getHours()).padStart(2, "0");
+                const minutes = String(d.getMinutes()).padStart(2, "0");
+                finalVal = `${year}-${month}-${day}T${hours}:${minutes}`;
+              } else {
+                finalVal = String(finalVal).slice(0, 16);
+              }
             } catch (e) {
               finalVal = String(finalVal).slice(0, 16);
             }

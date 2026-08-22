@@ -485,6 +485,16 @@ export default function PtpTaskTable({
     pageCount: Math.ceil((totalCount || 0) / (rowsPerPage || 10)),
   });
 
+  if (loading) {
+    return (
+      <TableSkeleton
+        columns={columns.length}
+        rows={rowsPerPage}
+        maxHeight={maxHeight}
+      />
+    );
+  }
+
   return (
     <div className={`flex flex-col flex-1 min-h-0 rounded-2xl border overflow-hidden transition-all duration-200 ${
       isDark ? 'bg-slate-900/80 border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'
@@ -535,9 +545,7 @@ export default function PtpTaskTable({
           </TableHead>
 
           <TableBody>
-            {loading ? (
-              <TableSkeleton columnsCount={columns.length} rowsCount={rowsPerPage} />
-            ) : table.getRowModel().rows.length === 0 ? (
+            {table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
                   <div className="flex flex-col items-center justify-center gap-2">

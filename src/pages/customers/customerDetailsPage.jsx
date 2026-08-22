@@ -135,9 +135,14 @@ export default function CustomerDetailsPage() {
     pincode: getStringVal(passedCustomer?.pincode, "-"),
     address: getStringVal(passedCustomer?.address || passedCustomer?.location, "-"),
     subStateName: getStringVal(passedCustomer?.subStateName || passedCustomer?.sub_state, "-"),
-    branch: getStringVal(passedCustomer?.branch, "-"),
-    branchCode: getStringVal(passedCustomer?.branchCode || passedCustomer?.branch_code, "-"),
     stateName: getStringVal(passedCustomer?.stateName || passedCustomer?.state, "-"),
+    villageName: getStringVal(passedCustomer?.village_name || passedCustomer?.villageName || passedCustomer?.village, "-"),
+    memberNo: getStringVal(passedCustomer?.member_no || passedCustomer?.memberNo, "-"),
+    purpose: getStringVal(passedCustomer?.purpose, "-"),
+    reschedule: getStringVal(passedCustomer?.reschedule, "-"),
+    loanSeries: getStringVal(passedCustomer?.loan_series || passedCustomer?.loanSeries, "-"),
+    lastTrxAmount: getStringVal(passedCustomer?.lastTrxAmount, "-"),
+    remarks: getStringVal(passedCustomer?.remarks, "-"),
     preClosureAmt: getStringVal(passedCustomer?.preClosureAmt, "-"),
   });
 
@@ -226,9 +231,14 @@ export default function CustomerDetailsPage() {
             pincode: getStringVal(c.pincode, "-"),
             address: getStringVal(c.location || c.address, "-"),
             subStateName: getStringVal(c.sub_state || c.subStateName, "-"),
-            branch: getStringVal(c.branch, "-"),
-            branchCode: getStringVal(c.branch_code || c.branchCode, "-"),
             stateName: getStringVal(c.state || c.stateName, "-"),
+            villageName: getStringVal(c.village_name || c.villageName || c.village, "-"),
+            memberNo: getStringVal(c.member_no || c.memberNo, "-"),
+            purpose: getStringVal(c.purpose, "-"),
+            reschedule: getStringVal(c.reschedule, "-"),
+            loanSeries: getStringVal(c.loan_series || c.loanSeries, "-"),
+            lastTrxAmount: getStringVal(c.lastTrxAmount, "-"),
+            remarks: getStringVal(c.remarks, "-"),
             preClosureAmt: getStringVal(c.preClosureAmt, "-"),
           });
         }
