@@ -662,30 +662,39 @@ export default function MyTeamTable({
           return {
             label: 'Active',
             style: {
-              backgroundColor: 'rgba(34, 197, 94, 0.15)',
+              backgroundColor: 'rgba(34, 197, 94, 0.12)',
               color: '#4ade80',
-              border: '1px solid rgba(34, 197, 94, 0.3)',
-              fontWeight: 600,
+              border: '1px solid rgba(34, 197, 94, 0.25)',
+              fontWeight: 700,
+              borderRadius: '9999px',
+              fontSize: '0.72rem',
+              height: '22px',
             },
           };
         case 'On Leave':
           return {
             label: 'On Leave',
             style: {
-              backgroundColor: 'rgba(234, 179, 8, 0.15)',
-              color: '#fde047',
-              border: '1px solid rgba(234, 179, 8, 0.3)',
-              fontWeight: 600,
+              backgroundColor: 'rgba(234, 179, 8, 0.12)',
+              color: '#facc15',
+              border: '1px solid rgba(234, 179, 8, 0.25)',
+              fontWeight: 700,
+              borderRadius: '9999px',
+              fontSize: '0.72rem',
+              height: '22px',
             },
           };
         default:
           return {
             label: 'Inactive',
             style: {
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              color: '#fca5a5',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              fontWeight: 600,
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              color: '#f87171',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              fontWeight: 700,
+              borderRadius: '9999px',
+              fontSize: '0.72rem',
+              height: '22px',
             },
           };
       }
@@ -695,30 +704,39 @@ export default function MyTeamTable({
           return {
             label: 'Active',
             style: {
-              backgroundColor: '#dcfce7',
-              color: '#14532d',
-              border: '1px solid #86efac',
+              backgroundColor: '#ecfdf5',
+              color: '#047857',
+              border: '1px solid #a7f3d0',
               fontWeight: 700,
+              borderRadius: '9999px',
+              fontSize: '0.72rem',
+              height: '22px',
             },
           };
         case 'On Leave':
           return {
             label: 'On Leave',
             style: {
-              backgroundColor: '#fef9c3',
-              color: '#713f12',
-              border: '1px solid #fde047',
+              backgroundColor: '#fefce8',
+              color: '#a16207',
+              border: '1px solid #fef08a',
               fontWeight: 700,
+              borderRadius: '9999px',
+              fontSize: '0.72rem',
+              height: '22px',
             },
           };
         default:
           return {
             label: 'Inactive',
             style: {
-              backgroundColor: '#fee2e2',
-              color: '#7f1d1d',
-              border: '1px solid #fca5a5',
+              backgroundColor: '#fef2f2',
+              color: '#b91c1c',
+              border: '1px solid #fecaca',
               fontWeight: 700,
+              borderRadius: '9999px',
+              fontSize: '0.72rem',
+              height: '22px',
             },
           };
       }
@@ -841,7 +859,7 @@ export default function MyTeamTable({
                 ...chipProps.style,
                 fontSize: '0.72rem',
                 height: '22px',
-                borderRadius: '6px',
+                borderRadius: '9999px',
               }}
             />
           );
@@ -941,16 +959,18 @@ export default function MyTeamTable({
   return (
     <Paper
       elevation={0}
-      className={`w-full flex-1 flex flex-col min-h-0 rounded-2xl border overflow-hidden transition-colors duration-200 ${
-        isDark ? 'bg-slate-900/80 border-slate-800/80' : 'bg-white border-slate-200 shadow-sm'
+      className={`w-full flex-1 flex flex-col min-h-0 rounded-2xl border overflow-hidden transition-all duration-200 ${
+        isDark
+          ? 'border-slate-800/80 bg-slate-900/70 shadow-2xl backdrop-blur-xl ring-1 ring-white/5'
+          : 'border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5'
       }`}
     >
       <TableContainer
-        className="flex-1 overflow-auto no-scrollbar"
-        style={{ maxHeight: maxHeight || 'calc(100vh - 220px)' }}
+        className="flex-1 overflow-auto custom-scrollbar"
+        sx={{ maxHeight: maxHeight ? `calc(${maxHeight} - 45px)` : 'calc(100vh - 220px)' }}
       >
-        <Table stickyHeader size="small">
-          <TableHead>
+        <Table stickyHeader size="small" sx={{ width: 'max-content', minWidth: '100%' }}>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 30 }}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -961,28 +981,29 @@ export default function MyTeamTable({
                       key={header.id}
                       onClick={isSortable ? header.column.getToggleSortingHandler() : undefined}
                       sx={{
-                        backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+                        backgroundColor: isDark ? '#090e1a !important' : '#f8fafc !important',
                         color: isDark ? '#94a3b8' : '#475569',
                         fontWeight: 700,
-                        fontSize: '0.75rem',
+                        fontSize: '0.72rem',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
-                        py: 1.5,
-                        px: 1.5,
-                        borderBottom: `1px solid ${isDark ? '#1e293b' : '#e2e8f0'}`,
+                        py: 1.4,
+                        px: 2,
+                        borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                         cursor: isSortable ? 'pointer' : 'default',
                         userSelect: 'none',
+                        transition: 'background-color 0.15s ease',
                         '&:hover': isSortable
-                          ? { backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }
+                          ? { backgroundColor: isDark ? '#0f172a !important' : '#f1f5f9 !important' }
                           : {},
                       }}
                     >
-                      <div className="flex items-center gap-1">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
                         {isSortable && (
                           <span className="inline-flex items-center">
-                            {sortDir === 'asc' && <ArrowUpwardIcon sx={{ fontSize: 14 }} />}
-                            {sortDir === 'desc' && <ArrowDownwardIcon sx={{ fontSize: 14 }} />}
+                            {sortDir === 'asc' && <ArrowUpwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />}
+                            {sortDir === 'desc' && <ArrowDownwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />}
                           </span>
                         )}
                       </div>
@@ -995,22 +1016,24 @@ export default function MyTeamTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Loading team data...</p>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-3 border-indigo-600 border-t-transparent" />
+                    <p className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Loading team data...</p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : currentPageRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                  <div className="flex flex-col items-center gap-2">
-                    <GroupsIcon className={isDark ? 'text-slate-600' : 'text-slate-400'} style={{ fontSize: 48 }} />
-                    <p className={`font-semibold text-base ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8, color: isDark ? '#94a3b8' : '#64748b' }}>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                      <GroupsIcon style={{ fontSize: 26 }} />
+                    </div>
+                    <p className={`font-bold text-sm ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                       No team members matching your criteria
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       Try adjusting your search query or status filters.
                     </p>
                   </div>
@@ -1022,13 +1045,22 @@ export default function MyTeamTable({
                   key={row.id}
                   sx={{
                     '&:hover': {
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(248, 250, 252, 0.9)',
                     },
                     transition: 'background-color 0.15s ease',
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} align={cell.column.id === 'actions' ? 'right' : 'left'} sx={{ px: 1.5, py: 1.5 }}>
+                    <TableCell
+                      key={cell.id}
+                      align={cell.column.id === 'actions' ? 'right' : 'left'}
+                      sx={{
+                        px: 2,
+                        py: 1.3,
+                        whiteSpace: 'nowrap',
+                        borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #f1f5f9',
+                      }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

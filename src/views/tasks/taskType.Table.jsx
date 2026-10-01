@@ -167,8 +167,10 @@ export default function TaskTypeTable({
   return (
     <Paper
       elevation={0}
-      className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
-        isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
+      className={`flex flex-col rounded-2xl border overflow-hidden w-full transition-all duration-200 ${
+        isDark
+          ? 'border-slate-800/80 bg-slate-900/70 shadow-2xl backdrop-blur-xl ring-1 ring-white/5'
+          : 'border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5'
       }`}
       sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 170px)' }}
     >
@@ -189,25 +191,30 @@ export default function TaskTypeTable({
                       align={isActionCol ? 'right' : 'left'}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                       sx={{
-                        backgroundColor: isDark ? '#0f172a !important' : '#f8fafc !important',
+                        backgroundColor: isDark ? '#090e1a !important' : '#f8fafc !important',
                         color: isDark ? '#94a3b8' : '#475569',
                         fontWeight: 700,
-                        fontSize: '0.75rem',
+                        fontSize: '0.72rem',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
-                        borderBottom: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                        borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                         cursor: canSort ? 'pointer' : 'default',
                         userSelect: 'none',
-                        py: 1.5,
+                        px: 2,
+                        py: 1.4,
+                        transition: 'background-color 0.15s ease',
+                        '&:hover': canSort ? {
+                          backgroundColor: isDark ? '#0f172a !important' : '#f1f5f9 !important',
+                        } : {},
                       }}
                     >
-                      <div className={`flex items-center gap-1 ${isActionCol ? 'justify-end' : 'justify-start'}`}>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      <div className={`flex items-center gap-1.5 ${isActionCol ? 'justify-end' : 'justify-start'}`}>
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
                         {canSort && (
                           <span className="ml-1">
                             {{
-                              asc: <ArrowUpwardIcon sx={{ fontSize: 14 }} />,
-                              desc: <ArrowDownwardIcon sx={{ fontSize: 14 }} />,
+                              asc: <ArrowUpwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />,
+                              desc: <ArrowDownwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />,
                             }[header.column.getIsSorted()] ?? null}
                           </span>
                         )}
@@ -225,7 +232,7 @@ export default function TaskTypeTable({
                 <TableCell
                   colSpan={columns.length}
                   align="center"
-                  sx={{ py: 8, color: isDark ? '#64748b' : '#94a3b8' }}
+                  sx={{ py: 8, color: isDark ? '#94a3b8' : '#64748b' }}
                 >
                   <p className="text-sm font-semibold">No Task Types found</p>
                 </TableCell>
@@ -234,15 +241,16 @@ export default function TaskTypeTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  hover
                   sx={{
                     '&:hover': {
-                      backgroundColor: isDark ? 'rgba(30, 41, 59, 0.5)' : '#f8fafc',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(248, 250, 252, 0.9)',
                     },
                     '& .MuiTableCell-root': {
-                      borderBottom: isDark ? '1px solid #1e293b' : '1px solid #f1f5f9',
-                      py: 1.5,
+                      borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #f1f5f9',
+                      px: 2,
+                      py: 1.3,
                     },
+                    transition: 'background-color 0.15s ease',
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {

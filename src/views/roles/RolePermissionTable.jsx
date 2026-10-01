@@ -56,12 +56,13 @@ const defaultGetStatusChipProps = (status, isDark = false) => {
     return {
       label: 'Active',
       style: {
-        backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7',
-        color: isDark ? '#4ade80' : '#14532d',
-        border: isDark ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid #86efac',
+        backgroundColor: isDark ? 'rgba(34, 197, 94, 0.12)' : '#ecfdf5',
+        color: isDark ? '#4ade80' : '#047857',
+        border: isDark ? '1px solid rgba(34, 197, 94, 0.25)' : '1px solid #a7f3d0',
         fontWeight: 700,
         borderRadius: '9999px',
-        fontSize: '0.75rem',
+        fontSize: '0.72rem',
+        height: '22px',
       },
     };
   }
@@ -69,12 +70,13 @@ const defaultGetStatusChipProps = (status, isDark = false) => {
   return {
     label: status ? String(status).charAt(0).toUpperCase() + String(status).slice(1) : 'Inactive',
     style: {
-      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2',
-      color: isDark ? '#f87171' : '#991b1b',
-      border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #fca5a5',
+      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2',
+      color: isDark ? '#f87171' : '#b91c1c',
+      border: isDark ? '1px solid rgba(239, 68, 68, 0.25)' : '1px solid #fecaca',
       fontWeight: 700,
       borderRadius: '9999px',
-      fontSize: '0.75rem',
+      fontSize: '0.72rem',
+      height: '22px',
     },
   };
 };
@@ -395,8 +397,10 @@ export default function RolePermissionTable({
   return (
     <>
       <Paper
-        className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
-          isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
+        className={`flex flex-col rounded-2xl border overflow-hidden w-full transition-all duration-200 ${
+          isDark
+            ? 'border-slate-800/80 bg-slate-900/70 shadow-2xl backdrop-blur-xl ring-1 ring-white/5'
+            : 'border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5'
         }`}
         sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 375px)' }}
       >
@@ -410,36 +414,47 @@ export default function RolePermissionTable({
               <TableRow
                 key={headerGroup.id}
                 sx={{
-                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.8)' : '#f8fafc',
                   '& th': {
-                    borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                    borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                     color: isDark ? '#94a3b8' : '#475569',
                     fontWeight: 700,
-                    fontSize: '0.75rem',
-                    padding: '12px 16px',
-                    backgroundColor: isDark ? '#0f172a !important' : '#f8fafc !important',
+                    fontSize: '0.72rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    px: 2,
+                    py: 1.4,
+                    backgroundColor: isDark ? '#090e1a !important' : '#f8fafc !important',
                   },
                 }}
               >
-                {headerGroup.headers.map((header) => (
-                  <TableCell
-                    key={header.id}
-                    onClick={header.column.getToggleSortingHandler()}
-                    sx={{
-                      cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                      userSelect: 'none',
-                    }}
-                  >
-                    <div className="flex items-center gap-1">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === 'asc' ? (
-                        <ArrowUpwardIcon sx={{ fontSize: 14 }} />
-                      ) : header.column.getIsSorted() === 'desc' ? (
-                        <ArrowDownwardIcon sx={{ fontSize: 14 }} />
-                      ) : null}
-                    </div>
-                  </TableCell>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+                  const isSorted = header.column.getIsSorted();
+
+                  return (
+                    <TableCell
+                      key={header.id}
+                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                      sx={{
+                        cursor: canSort ? 'pointer' : 'default',
+                        userSelect: 'none',
+                        transition: 'background-color 0.15s ease',
+                        '&:hover': canSort ? {
+                          backgroundColor: isDark ? '#0f172a !important' : '#f1f5f9 !important',
+                        } : {},
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                        {isSorted === 'asc' ? (
+                          <ArrowUpwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />
+                        ) : isSorted === 'desc' ? (
+                          <ArrowDownwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />
+                        ) : null}
+                      </div>
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHead>
@@ -447,9 +462,9 @@ export default function RolePermissionTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <div className="w-7 h-7 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                     <span className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       Loading roles...
                     </span>
@@ -458,13 +473,15 @@ export default function RolePermissionTable({
               </TableRow>
             ) : currentPageRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <SecurityIcon className="text-slate-400" sx={{ fontSize: 36 }} />
-                    <p className={`font-bold text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8, color: isDark ? '#94a3b8' : '#64748b' }}>
+                  <div className="flex flex-col items-center justify-center gap-2.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                      <SecurityIcon style={{ fontSize: 26 }} />
+                    </div>
+                    <p className={`font-bold text-sm ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                       No roles found
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       Click "Add New Role" to define new roles and permissions.
                     </p>
                   </div>
@@ -474,15 +491,16 @@ export default function RolePermissionTable({
               currentPageRows.map((row) => (
                 <TableRow
                   key={row.id}
-                  hover
                   sx={{
                     '&:hover': {
-                      backgroundColor: isDark ? 'rgba(30, 41, 59, 0.4)' : '#f8fafc',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(248, 250, 252, 0.9)',
                     },
                     '& td': {
-                      borderColor: isDark ? 'rgba(30, 41, 59, 0.6)' : '#f1f5f9',
-                      padding: '12px 16px',
+                      borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #f1f5f9',
+                      px: 2,
+                      py: 1.3,
                     },
+                    transition: 'background-color 0.15s ease',
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (

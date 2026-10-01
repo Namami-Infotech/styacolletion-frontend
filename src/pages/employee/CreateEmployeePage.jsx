@@ -994,7 +994,10 @@ export default function CreateEmployeePage() {
               return (
                 <MenuItem key={typeof optValue === 'object' ? optIdx : optValue} value={optValue}>
                   <Checkbox checked={isChecked} size="small" />
-                  <ListItemText primary={typeof optLabel === 'object' ? (optLabel.name || optLabel.label || String(optValue)) : optLabel} primaryTypographyProps={{ fontSize: '0.85rem' }} />
+                  <ListItemText
+                    primary={typeof optLabel === 'object' ? (optLabel.name || optLabel.label || String(optValue)) : optLabel}
+                    slotProps={{ primary: { fontSize: '0.85rem' } }}
+                  />
                 </MenuItem>
               );
             })}

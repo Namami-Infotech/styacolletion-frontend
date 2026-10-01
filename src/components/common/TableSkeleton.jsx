@@ -43,8 +43,8 @@ export default function TableSkeleton({
 
   return (
     <Box
-      className={`w-full h-full flex flex-col rounded-2xl border transition-colors duration-200 overflow-hidden ${
-        isDark ? 'bg-slate-900 border-slate-800/80 shadow-slate-950/20' : 'bg-white border-slate-200/80 shadow-sm'
+      className={`w-full h-full flex flex-col rounded-2xl border transition-all duration-200 overflow-hidden ${
+        isDark ? 'bg-slate-900/70 border-slate-800/80 shadow-xl backdrop-blur-xl' : 'bg-white border-slate-200/90 shadow-sm'
       }`}
     >
       <TableContainer className="overflow-auto w-full flex-1 min-h-0" sx={{ maxHeight: maxHeight || 'none' }}>
@@ -56,17 +56,17 @@ export default function TableSkeleton({
                   <TableCell
                     key={`skel-head-${colIdx}`}
                     sx={{
-                      py: 1.5,
+                      py: 1.4,
                       px: 2,
-                      backgroundColor: isDark ? '#0f172a !important' : '#f8fafc !important',
-                      borderBottom: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                      backgroundColor: isDark ? '#090e1a !important' : '#f8fafc !important',
+                      borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                     }}
                   >
                     <Skeleton
                       animation="wave"
                       variant="text"
                       width={colIdx === 0 ? '60%' : colIdx === columnCount - 1 ? '40%' : '75%'}
-                      height={20}
+                      height={18}
                       sx={skeletonSx}
                     />
                   </TableCell>

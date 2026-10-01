@@ -339,8 +339,10 @@ export default function ContactsTable({
 
   return (
     <Paper
-      className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${
-        isDark ? 'border-slate-800/80 bg-slate-900/70' : 'border-slate-200 bg-white'
+      className={`flex flex-col rounded-2xl border overflow-hidden w-full transition-all duration-200 ${
+        isDark
+          ? 'border-slate-800/80 bg-slate-900/70 shadow-2xl backdrop-blur-xl ring-1 ring-white/5'
+          : 'border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5'
       }`}
       sx={{ width: '100%', margin: 0, maxHeight: maxHeight || 'calc(100vh - 170px)' }}
     >
@@ -359,23 +361,31 @@ export default function ContactsTable({
                       key={header.id}
                       align={header.id === 'actions' ? 'right' : 'left'}
                       sx={{
-                        color: isDark ? '#94a3b8' : '#0f172a',
+                        color: isDark ? '#94a3b8' : '#475569',
                         fontWeight: 700,
-                        px: 1.5,
-                        py: 1.2,
-                        backgroundColor: isDark ? '#0f172a !important' : '#f1f5f9 !important',
+                        fontSize: '0.72rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        px: 2,
+                        py: 1.4,
+                        backgroundColor: isDark ? '#090e1a !important' : '#f8fafc !important',
+                        borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
                         cursor: canSort ? 'pointer' : 'default',
                         userSelect: 'none',
+                        transition: 'background-color 0.15s ease',
+                        '&:hover': canSort ? {
+                          backgroundColor: isDark ? '#0f172a !important' : '#f1f5f9 !important',
+                        } : {},
                       }}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                     >
-                      <div className={`flex items-center gap-1 ${header.id === 'actions' ? 'justify-end' : ''}`}>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      <div className={`flex items-center gap-1.5 ${header.id === 'actions' ? 'justify-end' : ''}`}>
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
                         {isSorted === 'asc' && (
-                          <ArrowUpwardIcon sx={{ fontSize: 14, color: isDark ? '#818cf8' : '#0f172a' }} />
+                          <ArrowUpwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />
                         )}
                         {isSorted === 'desc' && (
-                          <ArrowDownwardIcon sx={{ fontSize: 14, color: isDark ? '#818cf8' : '#0f172a' }} />
+                          <ArrowDownwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />
                         )}
                       </div>
                     </TableCell>
@@ -388,21 +398,26 @@ export default function ContactsTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                  <p className={`font-semibold text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                    Loading contacts...
-                  </p>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                    <p className={`font-semibold text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                      Loading contacts...
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : currentPageRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6, color: isDark ? '#94a3b8' : '#64748b' }}>
-                  <div className="flex flex-col items-center gap-2">
-                    <PeopleIcon className={isDark ? 'text-slate-600' : 'text-slate-400'} style={{ fontSize: 48 }} />
-                    <p className={`font-semibold text-base ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8, color: isDark ? '#94a3b8' : '#64748b' }}>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                      <PeopleIcon style={{ fontSize: 26 }} />
+                    </div>
+                    <p className={`font-bold text-sm ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                       No contacts found
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       Try adjusting your search query or filters.
                     </p>
                   </div>
@@ -414,13 +429,21 @@ export default function ContactsTable({
                   key={row.id}
                   sx={{
                     '&:hover': {
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(248, 250, 252, 0.9)',
                     },
                     transition: 'background-color 0.15s ease',
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} align={cell.column.id === 'actions' ? 'right' : 'left'} sx={{ px: 1.5, py: 1.2 }}>
+                    <TableCell
+                      key={cell.id}
+                      align={cell.column.id === 'actions' ? 'right' : 'left'}
+                      sx={{
+                        px: 2,
+                        py: 1.3,
+                        borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #f1f5f9',
+                      }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -432,7 +455,7 @@ export default function ContactsTable({
       </TableContainer>
 
       {/* Pagination Footer */}
-      <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200 bg-white'}`}>
+      <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200/80 bg-white'}`}>
         <TablePaginationComponent
           table={table}
           totalData={totalContacts}

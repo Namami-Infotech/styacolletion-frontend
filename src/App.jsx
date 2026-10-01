@@ -29,6 +29,9 @@ const BranchPage = lazy(() => import('./pages/location/branch.Page'));
 const TaskTypePage = lazy(() => import('./pages/tasks/taskTypePage'));
 const LoanNumberPage = lazy(() => import('./pages/loanNumberPage/LoanNumberPage'));
 const AdminPage = lazy(() => import('./pages/admin/AdminPage'));
+const LandingPage = lazy(() => import('./pages/landing/LandingPage'));
+const EmployeeOnboardingPage = lazy(() => import('./pages/onboarding/EmployeeOnboardingPage'));
+const AdminOnboardingListPage = lazy(() => import('./pages/onboarding/AdminOnboardingListPage'));
 
 // Listener to fetch permissions on every route/page change
 function RoutePermissionListener() {
@@ -94,12 +97,24 @@ function App() {
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route
+                path="/"
+                element={
+                  <PublicRoute>
+                    <LandingPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
                 path="/login"
                 element={
                   <PublicRoute>
                     <LoginPage />
                   </PublicRoute>
                 }
+              />
+              <Route
+                path="/onboarding"
+                element={<EmployeeOnboardingPage />}
               />
               <Route
                 path="/home"
@@ -146,6 +161,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <EmployeeFieldVisitPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/employees/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <AdminOnboardingListPage />
                   </ProtectedRoute>
                 }
               />
@@ -277,7 +300,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="*" element={<Navigate to="/home" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </Router>

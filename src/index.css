@@ -94,7 +94,7 @@ html .no-scrollbar,
 .dark .MuiMenu-paper {
   background-color: #0f172a !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6) !important;
   color: #f8fafc !important;
   padding: 4px 0 !important;
@@ -121,19 +121,31 @@ html .no-scrollbar,
 }
 
 .dark .MuiTableCell-root {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
   color: #e2e8f0 !important;
+  font-size: 0.8125rem !important;
+  padding: 12px 16px !important;
+  vertical-align: middle !important;
 }
 
 .dark .MuiTableCell-head {
   color: #94a3b8 !important;
   font-weight: 700 !important;
-  background-color: #0f172a !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  background-color: #090e1a !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 11px 16px !important;
+  white-space: nowrap !important;
+}
+
+.dark .MuiTableRow-root {
+  transition: background-color 0.15s ease-in-out !important;
 }
 
 .dark .MuiTableRow-root:hover {
-  background-color: rgba(255, 255, 255, 0.04) !important;
+  background-color: rgba(255, 255, 255, 0.035) !important;
 }
 
 .dark .MuiTablePagination-root {
@@ -141,14 +153,14 @@ html .no-scrollbar,
 }
 
 /* ==========================================================================
-   MUI Global Light Theme (Monochrome Black & White Aesthetic)
+   MUI Global Light Theme (Modern Clean SaaS Aesthetic)
    ========================================================================== */
 
 html:not(.dark) .MuiDialog-paper {
   background-color: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 16px !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
   color: #0f172a !important;
   background-image: none !important;
 }
@@ -156,15 +168,15 @@ html:not(.dark) .MuiDialog-paper {
 html:not(.dark) .MuiPopover-paper,
 html:not(.dark) .MuiMenu-paper {
   background-color: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 6px !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03) !important;
   color: #0f172a !important;
   padding: 4px 0 !important;
 }
 
 html:not(.dark) .MuiMenuItem-root {
-  color: #1e293b !important;
+  color: #334155 !important;
   background-color: #ffffff !important;
   font-size: 0.875rem !important;
   font-weight: 500 !important;
@@ -173,26 +185,38 @@ html:not(.dark) .MuiMenuItem-root {
 }
 
 html:not(.dark) .MuiMenuItem-root:hover {
-  background-color: #f1f5f9 !important;
-  color: #000000 !important;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
 }
 
 html:not(.dark) .MuiMenuItem-root.Mui-selected {
-  background-color: #e2e8f0 !important;
-  color: #000000 !important;
-  font-weight: 700 !important;
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
 }
 
 html:not(.dark) .MuiTableCell-root {
-  border-bottom: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  color: #1e293b !important;
+  font-size: 0.8125rem !important;
+  padding: 12px 16px !important;
+  vertical-align: middle !important;
 }
 
 html:not(.dark) .MuiTableCell-head {
-  color: #0f172a !important;
+  color: #475569 !important;
   font-weight: 700 !important;
-  background-color: #f1f5f9 !important;
-  border-bottom: 2px solid #cbd5e1 !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 11px 16px !important;
+  white-space: nowrap !important;
+}
+
+html:not(.dark) .MuiTableRow-root {
+  transition: background-color 0.15s ease-in-out !important;
 }
 
 html:not(.dark) .MuiTableRow-root:hover {
@@ -200,5 +224,129 @@ html:not(.dark) .MuiTableRow-root:hover {
 }
 
 html:not(.dark) .MuiTablePagination-root {
-  color: #334155 !important;
+  color: #475569 !important;
 }
+
+/* ==========================================================================
+   Modern Table Components & Utilities
+   ========================================================================== */
+
+/* Modern Card Container Shadow for Tables */
+.table-card {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+html:not(.dark) .table-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+.dark .table-card {
+  background-color: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+/* Status Pill Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.status-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+}
+
+/* Action button micro-interactions */
+.action-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.action-icon-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Google Places Autocomplete Dropdown (.pac-container)
+   ========================================================================== */
+.pac-container {
+  z-index: 99999 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #e2e8f0 !important;
+  font-family: inherit !important;
+  margin-top: 4px !important;
+  padding: 4px 0 !important;
+}
+
+.pac-item {
+  padding: 8px 12px !important;
+  font-size: 0.85rem !important;
+  cursor: pointer !important;
+  border-top: 1px solid #f1f5f9 !important;
+  line-height: 1.4 !important;
+}
+
+.pac-item:first-of-type {
+  border-top: none !important;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background-color: #f0f9ff !important;
+}
+
+.pac-item-query {
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
+}
+
+.pac-matched {
+  font-weight: 700 !important;
+  color: #2563eb !important;
+}
+
+/* Dark mode for Google Places Autocomplete */
+.dark .pac-container {
+  background-color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7) !important;
+}
+
+.dark .pac-item {
+  border-top-color: rgba(255, 255, 255, 0.06) !important;
+  color: #94a3b8 !important;
+}
+
+.dark .pac-item:hover,
+.dark .pac-item-selected {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .pac-item-query {
+  color: #f8fafc !important;
+}
+
+.dark .pac-matched {
+  color: #818cf8 !important;
+}
+

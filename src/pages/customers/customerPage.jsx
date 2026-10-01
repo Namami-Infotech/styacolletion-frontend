@@ -99,7 +99,7 @@ export default function CustomerPage() {
                 ),
               }}
               sx={{
-                minWidth: { xs: '100%', sm: 220 },
+                width: { xs: '100%', sm: 280, md: 320 },
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '12px',
                   backgroundColor: isDark ? 'rgba(15, 23, 42, 0.6)' : '#f8fafc',

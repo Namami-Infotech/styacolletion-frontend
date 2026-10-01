@@ -90,10 +90,13 @@ export default function TaskTable({
           return {
             label: "Completed",
             style: {
-              backgroundColor: "rgba(34, 197, 94, 0.15)",
+              backgroundColor: "rgba(34, 197, 94, 0.12)",
               color: "#4ade80",
-              border: "1px solid rgba(34, 197, 94, 0.3)",
-              fontWeight: 600,
+              border: "1px solid rgba(34, 197, 94, 0.25)",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
     
@@ -102,30 +105,39 @@ export default function TaskTable({
           return {
             label: "Under Review",
             style: {
-              backgroundColor: "rgba(234, 179, 8, 0.15)",
-              color: "#fde047",
-              border: "1px solid rgba(234, 179, 8, 0.3)",
-              fontWeight: 600,
+              backgroundColor: "rgba(234, 179, 8, 0.12)",
+              color: "#facc15",
+              border: "1px solid rgba(234, 179, 8, 0.25)",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         case "pending":
           return {
             label: "Pending",
             style: {
-              backgroundColor: "rgba(239, 68, 68, 0.15)",
-              color: "#fca5a5",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              fontWeight: 600,
+              backgroundColor: "rgba(239, 68, 68, 0.12)",
+              color: "#f87171",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         default:
           return {
             label: status ?? "null",
             style: {
-              backgroundColor: "rgba(148, 163, 184, 0.15)",
+              backgroundColor: "rgba(148, 163, 184, 0.12)",
               color: "#94a3b8",
-              border: "1px solid rgba(148, 163, 184, 0.3)",
-              fontWeight: 600,
+              border: "1px solid rgba(148, 163, 184, 0.25)",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
       }
@@ -135,10 +147,13 @@ export default function TaskTable({
           return {
             label: "Completed",
             style: {
-              backgroundColor: "#dcfce7",
-              color: "#14532d",
-              border: "1px solid #86efac",
+              backgroundColor: "#ecfdf5",
+              color: "#047857",
+              border: "1px solid #a7f3d0",
               fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
       
@@ -147,20 +162,26 @@ export default function TaskTable({
           return {
             label: "Under Review",
             style: {
-              backgroundColor: "#fef9c3",
-              color: "#713f12",
-              border: "1px solid #fde047",
+              backgroundColor: "#fefce8",
+              color: "#a16207",
+              border: "1px solid #fef08a",
               fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         case "pending":
           return {
             label: "Pending",
             style: {
-              backgroundColor: "#fee2e2",
-              color: "#7f1d1d",
-              border: "1px solid #fca5a5",
+              backgroundColor: "#fef2f2",
+              color: "#b91c1c",
+              border: "1px solid #fecaca",
               fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         default:
@@ -733,8 +754,11 @@ export default function TaskTable({
 
   return (
     <Paper
-      className={`flex flex-col rounded-2xl border shadow-xl overflow-hidden w-full transition-colors duration-200 ${isDark ? "border-slate-800/80 bg-slate-900/70" : "border-slate-200 bg-white"
-        }`}
+      className={`flex flex-col rounded-2xl border overflow-hidden w-full transition-all duration-200 ${
+        isDark
+          ? "border-slate-800/80 bg-slate-900/70 shadow-2xl backdrop-blur-xl ring-1 ring-white/5"
+          : "border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5"
+      }`}
       sx={{
         width: "100%",
         margin: 0,
@@ -756,24 +780,32 @@ export default function TaskTable({
                       key={header.id}
                       align={header.id === "actions" ? "right" : "left"}
                       sx={{
-                        color: isDark ? "#94a3b8" : "#0f172a",
+                        color: isDark ? "#94a3b8" : "#475569",
                         fontWeight: 700,
-                        px: 1,
-                        py: 1,
+                        fontSize: "0.72rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        px: 2,
+                        py: 1.4,
                         whiteSpace: "nowrap",
-                        backgroundColor: isDark ? "#0f172a !important" : "#f1f5f9 !important",
+                        backgroundColor: isDark ? "#090e1a !important" : "#f8fafc !important",
+                        borderBottom: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #e2e8f0",
                         cursor: canSort ? "pointer" : "default",
                         userSelect: "none",
+                        transition: "background-color 0.15s ease",
+                        "&:hover": canSort ? {
+                          backgroundColor: isDark ? "#0f172a !important" : "#f1f5f9 !important",
+                        } : {},
                       }}
                       onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
                     >
-                      <div className={`flex items-center gap-1 whitespace-nowrap ${header.id === "actions" ? "justify-end" : ""}`}>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      <div className={`flex items-center gap-1.5 whitespace-nowrap ${header.id === "actions" ? "justify-end" : ""}`}>
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
                         {isSorted === "asc" && (
-                          <ArrowUpwardIcon sx={{ fontSize: 14, color: isDark ? "#818cf8" : "#0f172a" }} />
+                          <ArrowUpwardIcon sx={{ fontSize: 13, color: "#6366f1" }} />
                         )}
                         {isSorted === "desc" && (
-                          <ArrowDownwardIcon sx={{ fontSize: 14, color: isDark ? "#818cf8" : "#0f172a" }} />
+                          <ArrowDownwardIcon sx={{ fontSize: 13, color: "#6366f1" }} />
                         )}
                       </div>
                     </TableCell>
@@ -786,13 +818,15 @@ export default function TaskTable({
           <TableBody>
             {currentPageRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6, color: isDark ? "#94a3b8" : "#64748b" }}>
-                  <div className="flex flex-col items-center gap-2">
-                    <AssignmentIcon className={isDark ? "text-slate-600" : "text-slate-400"} style={{ fontSize: 48 }} />
-                    <p className={`font-semibold text-base ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8, color: isDark ? "#94a3b8" : "#64748b" }}>
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
+                      <AssignmentIcon style={{ fontSize: 26 }} />
+                    </div>
+                    <p className={`font-bold text-sm ${isDark ? "text-slate-200" : "text-slate-800"}`}>
                       No tasks matching your criteria
                     </p>
-                    <p className={`text-xs ${isDark ? "text-slate-500" : "text-slate-500"}`}>
+                    <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                       Try adjusting your search or status/priority filters.
                     </p>
                   </div>
@@ -804,13 +838,22 @@ export default function TaskTable({
                   key={row.id}
                   sx={{
                     "&:hover": {
-                      backgroundColor: isDark ? "rgba(255, 255, 255, 0.03)" : "#f8fafc",
+                      backgroundColor: isDark ? "rgba(255, 255, 255, 0.035)" : "rgba(248, 250, 252, 0.9)",
                     },
                     transition: "background-color 0.15s ease",
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} align={cell.column.id === "actions" ? "right" : "left"} sx={{ px: 1, py: 1.6, whiteSpace: "nowrap" }}>
+                    <TableCell
+                      key={cell.id}
+                      align={cell.column.id === "actions" ? "right" : "left"}
+                      sx={{
+                        px: 2,
+                        py: 1.3,
+                        whiteSpace: "nowrap",
+                        borderBottom: isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid #f1f5f9",
+                      }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -822,7 +865,7 @@ export default function TaskTable({
       </TableContainer>
 
       {/* Fixed Footer TablePaginationComponent passing TanStack table instance */}
-      <div className={`flex-shrink-0 border-t ${isDark ? "border-slate-800/80 bg-slate-900/90" : "border-slate-200 bg-white"}`}>
+      <div className={`flex-shrink-0 border-t ${isDark ? "border-slate-800/80 bg-slate-900/90" : "border-slate-200/80 bg-white"}`}>
         <TablePaginationComponent
           table={table}
           totalData={totalCount}

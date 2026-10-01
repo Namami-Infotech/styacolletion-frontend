@@ -22,6 +22,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
 
 // Common Components
 import Navbar from '../../components/common/Navbar';
@@ -406,9 +407,32 @@ export default function EmployeePage() {
                 </IconButton>
               </Tooltip>
 
-              {/* Desktop Add Employee Button (Shown when screen >= xl) */}
-              {hasPermission('employee', 'add') && (
-                <div className="hidden xl:block flex-shrink-0">
+              {/* Desktop Onboarding & Add Employee Buttons */}
+              <div className="hidden xl:flex items-center gap-2 flex-shrink-0">
+                <Tooltip title="Review candidate self-onboardings">
+                  <Button
+                    onClick={() => navigate('/employees/onboarding')}
+                    variant="outlined"
+                    startIcon={<HowToRegIcon />}
+                    sx={{
+                      borderColor: isDark ? 'rgba(99, 102, 241, 0.4)' : '#cbd5e1',
+                      color: isDark ? '#a5b4fc' : '#4f46e5',
+                      backgroundColor: isDark ? 'rgba(99, 102, 241, 0.08)' : '#f8fafc',
+                      borderRadius: '12px',
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      padding: '8px 16px',
+                      '&:hover': {
+                        backgroundColor: isDark ? 'rgba(99, 102, 241, 0.18)' : '#eef2ff',
+                        borderColor: isDark ? '#818cf8' : '#6366f1',
+                      },
+                    }}
+                  >
+                    Review Onboardings
+                  </Button>
+                </Tooltip>
+
+                {hasPermission('employee', 'add') && (
                   <Button
                     onClick={() => navigate('/create-employee')}
                     variant="contained"
@@ -434,8 +458,8 @@ export default function EmployeePage() {
                   >
                     Add Employee
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>

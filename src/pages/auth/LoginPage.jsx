@@ -165,31 +165,6 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
-
-          {/* Social Login Footer */}
-          <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between gap-4">
-            <span className="text-xs font-semibold text-slate-500">
-              Or login with
-            </span>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => navigate("#")}
-                className="w-12 h-8.5 rounded-full bg-[#3b5998] hover:opacity-90 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
-                aria-label="Login with Facebook"
-              >
-                <FacebookIcon sx={{ fontSize: 18 }} />
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("#")}
-                className="w-12 h-8.5 rounded-full bg-[#00acee] hover:opacity-90 text-white flex items-center justify-center shadow-xs transition-transform active:scale-95 cursor-pointer"
-                aria-label="Login with Twitter"
-              >
-                <TwitterIcon sx={{ fontSize: 18 }} />
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer info */}

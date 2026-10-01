@@ -68,10 +68,13 @@ export default function PtpTaskTable({
           return {
             label: "Completed",
             style: {
-              backgroundColor: "rgba(34, 197, 94, 0.15)",
+              backgroundColor: "rgba(34, 197, 94, 0.12)",
               color: "#4ade80",
-              border: "1px solid rgba(34, 197, 94, 0.3)",
-              fontWeight: 600,
+              border: "1px solid rgba(34, 197, 94, 0.25)",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
      
@@ -79,20 +82,26 @@ export default function PtpTaskTable({
           return {
             label: "Pending",
             style: {
-              backgroundColor: "rgba(239, 68, 68, 0.15)",
-              color: "#fca5a5",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              fontWeight: 600,
+              backgroundColor: "rgba(239, 68, 68, 0.12)",
+              color: "#f87171",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         default:
           return {
             label: status ?? "null",
             style: {
-              backgroundColor: "rgba(148, 163, 184, 0.15)",
-              color: "#cbd5e1",
-              border: "1px solid rgba(148, 163, 184, 0.3)",
-              fontWeight: 600,
+              backgroundColor: "rgba(148, 163, 184, 0.12)",
+              color: "#94a3b8",
+              border: "1px solid rgba(148, 163, 184, 0.25)",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
       }
@@ -102,10 +111,13 @@ export default function PtpTaskTable({
           return {
             label: "Completed",
             style: {
-              backgroundColor: "#dcfce7",
-              color: "#15803d",
-              border: "1px solid #bbf7d0",
-              fontWeight: 600,
+              backgroundColor: "#ecfdf5",
+              color: "#047857",
+              border: "1px solid #a7f3d0",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
     
@@ -113,20 +125,26 @@ export default function PtpTaskTable({
           return {
             label: "Pending",
             style: {
-              backgroundColor: "#fee2e2",
+              backgroundColor: "#fef2f2",
               color: "#b91c1c",
-              border: "1px solid #fca5a5",
-              fontWeight: 600,
+              border: "1px solid #fecaca",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         default:
           return {
             label: status ?? "null",
             style: {
-              backgroundColor: "#f1f5f9",
-              color: "#475569",
-              border: "1px solid #cbd5e1",
-              fontWeight: 600,
+              backgroundColor: "#f8fafc",
+              color: "#64748b",
+              border: "1px solid #e2e8f0",
+              fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
       }
@@ -145,40 +163,52 @@ export default function PtpTaskTable({
           return {
             label: priority || "High",
             style: {
-              backgroundColor: "rgba(239, 68, 68, 0.2)",
+              backgroundColor: "rgba(239, 68, 68, 0.15)",
               color: "#f87171",
-              border: "1px solid rgba(239, 68, 68, 0.4)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
               fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         case "medium":
           return {
             label: "Medium",
             style: {
-              backgroundColor: "rgba(245, 158, 11, 0.2)",
-              color: "#fbbf24",
-              border: "1px solid rgba(245, 158, 11, 0.4)",
+              backgroundColor: "rgba(234, 179, 8, 0.15)",
+              color: "#facc15",
+              border: "1px solid rgba(234, 179, 8, 0.3)",
               fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         case "low":
           return {
             label: "Low",
             style: {
-              backgroundColor: "rgba(59, 130, 246, 0.2)",
-              color: "#60a5fa",
-              border: "1px solid rgba(59, 130, 246, 0.4)",
-              fontWeight: 700,
+              backgroundColor: "rgba(148, 163, 184, 0.12)",
+              color: "#cbd5e1",
+              border: "1px solid rgba(148, 163, 184, 0.25)",
+              fontWeight: 600,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         default:
           return {
             label: priority ?? "null",
             style: {
-              backgroundColor: "rgba(148, 163, 184, 0.2)",
+              backgroundColor: "rgba(148, 163, 184, 0.12)",
               color: "#94a3b8",
-              border: "1px solid rgba(148, 163, 184, 0.4)",
-              fontWeight: 700,
+              border: "1px solid rgba(148, 163, 184, 0.25)",
+              fontWeight: 600,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
       }
@@ -189,40 +219,52 @@ export default function PtpTaskTable({
           return {
             label: priority || "High",
             style: {
-              backgroundColor: "#fee2e2",
-              color: "#dc2626",
-              border: "1px solid #fca5a5",
+              backgroundColor: "#fef2f2",
+              color: "#b91c1c",
+              border: "1px solid #fecaca",
               fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         case "medium":
           return {
             label: "Medium",
             style: {
-              backgroundColor: "#fef3c7",
-              color: "#d97706",
-              border: "1px solid #fde68a",
+              backgroundColor: "#fefce8",
+              color: "#a16207",
+              border: "1px solid #fef08a",
               fontWeight: 700,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         case "low":
           return {
             label: "Low",
             style: {
-              backgroundColor: "#e0f2fe",
-              color: "#0369a1",
-              border: "1px solid #bae6fd",
-              fontWeight: 700,
+              backgroundColor: "#f8fafc",
+              color: "#475569",
+              border: "1px solid #e2e8f0",
+              fontWeight: 600,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
         default:
           return {
             label: priority ?? "null",
             style: {
-              backgroundColor: "#f1f5f9",
+              backgroundColor: "#f8fafc",
               color: "#64748b",
               border: "1px solid #e2e8f0",
-              fontWeight: 700,
+              fontWeight: 600,
+              borderRadius: "9999px",
+              fontSize: "0.72rem",
+              height: "22px",
             },
           };
       }
@@ -496,50 +538,65 @@ export default function PtpTaskTable({
   }
 
   return (
-    <div className={`flex flex-col flex-1 min-h-0 rounded-2xl border overflow-hidden transition-all duration-200 ${
-      isDark ? 'bg-slate-900/80 border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-sm'
-    }`}>
+    <Paper
+      elevation={0}
+      className={`flex flex-col flex-1 min-h-0 rounded-2xl border overflow-hidden transition-all duration-200 ${
+        isDark
+          ? 'border-slate-800/80 bg-slate-900/70 shadow-2xl backdrop-blur-xl ring-1 ring-white/5'
+          : 'border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/5'
+      }`}
+      sx={{
+        width: '100%',
+        margin: 0,
+        maxHeight: maxHeight || 'calc(100vh - 170px)',
+      }}
+    >
       <TableContainer
-        component={Paper}
-        elevation={0}
+        className="overflow-auto w-full min-h-0 custom-scrollbar"
         sx={{
-          maxHeight: maxHeight,
+          maxHeight: maxHeight ? `calc(${maxHeight} - 45px)` : 'calc(100vh - 220px)',
           backgroundColor: 'transparent',
-          overflowY: 'auto',
-          '&::-webkit-scrollbar': { width: '6px', height: '6px' },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-            borderRadius: '3px',
-          },
         }}
       >
-        <Table stickyHeader size="small">
-          <TableHead>
+        <Table stickyHeader size="small" sx={{ width: 'max-content', minWidth: '100%' }}>
+          <TableHead sx={{ position: 'sticky', top: 0, zIndex: 30 }}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableCell
-                    key={header.id}
-                    onClick={header.column.getToggleSortingHandler()}
-                    sx={{
-                      backgroundColor: isDark ? '#0f172a' : '#f8fafc',
-                      color: isDark ? '#94a3b8' : '#475569',
-                      fontWeight: 700,
-                      fontSize: '0.75rem',
-                      borderBottom: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
-                      cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                      userSelect: 'none',
-                      whiteSpace: 'nowrap',
-                      py: 1.2,
-                    }}
-                  >
-                    <div className="flex items-center gap-1">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === 'asc' && <ArrowUpwardIcon sx={{ fontSize: 14 }} />}
-                      {header.column.getIsSorted() === 'desc' && <ArrowDownwardIcon sx={{ fontSize: 14 }} />}
-                    </div>
-                  </TableCell>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+                  const isSorted = header.column.getIsSorted();
+
+                  return (
+                    <TableCell
+                      key={header.id}
+                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                      sx={{
+                        backgroundColor: isDark ? '#090e1a !important' : '#f8fafc !important',
+                        color: isDark ? '#94a3b8' : '#475569',
+                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #e2e8f0',
+                        cursor: canSort ? 'pointer' : 'default',
+                        userSelect: 'none',
+                        whiteSpace: 'nowrap',
+                        px: 2,
+                        py: 1.4,
+                        transition: 'background-color 0.15s ease',
+                        '&:hover': canSort ? {
+                          backgroundColor: isDark ? '#0f172a !important' : '#f1f5f9 !important',
+                        } : {},
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                        {isSorted === 'asc' && <ArrowUpwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />}
+                        {isSorted === 'desc' && <ArrowDownwardIcon sx={{ fontSize: 13, color: '#6366f1' }} />}
+                      </div>
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHead>
@@ -547,11 +604,16 @@ export default function PtpTaskTable({
           <TableBody>
             {table.getRowModel().rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <CalendarTodayIcon sx={{ fontSize: 40 }} className={isDark ? 'text-slate-700' : 'text-slate-300'} />
-                    <span className={`text-sm font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8, color: isDark ? '#94a3b8' : '#64748b' }}>
+                  <div className="flex flex-col items-center justify-center gap-2.5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                      <CalendarTodayIcon sx={{ fontSize: 24 }} />
+                    </div>
+                    <span className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                       No PTP tasks found
+                    </span>
+                    <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Try adjusting your search or filters.
                     </span>
                   </div>
                 </TableCell>
@@ -560,22 +622,21 @@ export default function PtpTaskTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  hover
                   sx={{
                     '&:hover': {
-                      backgroundColor: isDark ? 'rgba(30, 41, 59, 0.5) !important' : '#f8fafc !important',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(248, 250, 252, 0.9)',
                     },
-                    borderBottom: isDark ? '1px solid #1e293b' : '1px solid #f1f5f9',
+                    transition: 'background-color 0.15s ease',
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
                       sx={{
-                        py: 1.2,
-                        fontSize: '0.8125rem',
-                        color: isDark ? '#e2e8f0' : '#1e293b',
-                        borderBottom: 'none',
+                        px: 2,
+                        py: 1.3,
+                        whiteSpace: 'nowrap',
+                        borderBottom: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid #f1f5f9',
                       }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -589,15 +650,17 @@ export default function PtpTaskTable({
       </TableContainer>
 
       {/* Pagination component */}
-      <TablePaginationComponent
-        table={table}
-        totalData={totalCount}
-        page={page}
-        setPage={(newPage) => onPageChange && onPageChange(null, newPage)}
-        onPageChange={onPageChange}
-        onRowsPerPageChange={onRowsPerPageChange}
-        rowsPerPageOptions={[10, 20, 25, 50]}
-      />
-    </div>
+      <div className={`flex-shrink-0 border-t ${isDark ? 'border-slate-800/80 bg-slate-900/90' : 'border-slate-200/80 bg-white'}`}>
+        <TablePaginationComponent
+          table={table}
+          totalData={totalCount}
+          page={page}
+          setPage={(newPage) => onPageChange && onPageChange(null, newPage)}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+          rowsPerPageOptions={[10, 20, 25, 50]}
+        />
+      </div>
+    </Paper>
   );
 }

@@ -70,6 +70,7 @@ export default function Navbar({
   const getCurrentTab = () => {
     const path = location.pathname;
     if (path === '/dashboard') return 'Dashboard';
+    if (path.startsWith('/employees/onboarding')) return 'Onboarding Applications';
     if (path.startsWith('/employees/my-team')) return 'My Team';
     if (path.startsWith('/employees') || path.includes('employee')) return 'All Employee';
     if (path.startsWith('/tasks/all')) return 'Task All';
@@ -90,8 +91,13 @@ export default function Navbar({
     if (path.startsWith('/department-settings') || path.startsWith('/department')) return 'Department Settings';
     if (path.startsWith('/designation')) return 'Designation';
     if (path.startsWith('/task-types') || path.startsWith('/tasktype')) return 'Task Type';
-    if (path === '/home') return 'Home';
-    return 'Home';
+    if (path.startsWith('/loan-numbers') || path.startsWith('/loan-no')) return 'Loan Numbers';
+    if (path.startsWith('/contacts')) return 'Contacts';
+    if (path.startsWith('/admin')) return 'Admin Panel';
+    if (path.startsWith('/reports')) return 'Reports';
+    if (path.startsWith('/leaves') || path.startsWith('/leave')) return 'Leave Management';
+    if (path === '/home' || path === '/') return 'Home';
+    return '';
   };
   const [activeTab, setActiveTab] = useState(getCurrentTab());
 
@@ -358,6 +364,7 @@ export default function Navbar({
       subModules: {
         allEmployee: { label: 'All Employee', path: '/employees' },
         myTeam: { label: 'My Team', path: '/employees/my-team' },
+        onboarding: { label: 'Onboarding Applications', path: '/employees/onboarding' },
       },
     },
     location: {
@@ -623,10 +630,16 @@ export default function Navbar({
             const activeSubItem = item.dropdownItems?.find(
               (sub) => sub.label === activeTab || sub.path === location.pathname
             );
+            const isPathActive = Boolean(
+              item.path &&
+              (item.path === '/home'
+                ? location.pathname === '/home' || location.pathname === '/'
+                : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`))
+            );
             const isActive =
-              activeTab === item.label ||
+              (Boolean(activeTab) && activeTab === item.label) ||
               Boolean(activeSubItem) ||
-              (item.path !== '/home' && location.pathname.startsWith(item.path));
+              isPathActive;
             const displayLabel = activeSubItem ? activeSubItem.label : item.label;
 
             return (
@@ -763,7 +776,9 @@ export default function Navbar({
                             >
                               <ListItemText
                                 primary={sub.label}
-                                primaryTypographyProps={{ fontSize: '0.825rem', fontWeight: isSubActive ? 700 : 500 }}
+                                slotProps={{
+                                  primary: { fontSize: '0.825rem', fontWeight: isSubActive ? 700 : 500 },
+                                }}
                               />
                               {isSubActive && <CheckCircleIcon sx={{ fontSize: 14, ml: 1, color: isDark ? '#60a5fa' : '#2563eb' }} />}
                             </MenuItem>
@@ -797,7 +812,12 @@ export default function Navbar({
                         },
                       }}
                     >
-                      <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: '0.825rem', fontWeight: isActive ? 700 : 500 }} />
+                      <ListItemText
+                        primary={item.label}
+                        slotProps={{
+                          primary: { fontSize: '0.825rem', fontWeight: isActive ? 700 : 500 },
+                        }}
+                      />
                     </MenuItem>
                   );
                 })}
@@ -1107,10 +1127,12 @@ export default function Navbar({
                 >
                   <ListItemText
                     primary={subItem.label}
-                    primaryTypographyProps={{
-                      fontSize: '13px',
-                      fontWeight: isSubActive ? 700 : 500,
-                      color: 'inherit',
+                    slotProps={{
+                      primary: {
+                        fontSize: '13px',
+                        fontWeight: isSubActive ? 700 : 500,
+                        color: 'inherit',
+                      },
                     }}
                   />
                   {isSubActive && <CheckCircleIcon sx={{ fontSize: 14, ml: 1, color: isDark ? '#60a5fa' : '#2563eb' }} />}
