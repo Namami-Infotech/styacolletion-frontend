@@ -4,6 +4,26 @@ import { toast } from "react-toastify";
 const baseURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 export const OnboardingRoute = {
+  // Check candidate status (already onboarded, under review, rejected with reason)
+  checkStatus: async ({ mobile, email }) => {
+    try {
+      const response = await axios.post(
+        `${baseURL}/api/v1/onboarding/check-status`,
+        { mobile, email },
+        { withCredentials: true }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error checking candidate status:", error);
+      const errorData = error.response?.data || {
+        statusCode: error.response?.status || 500,
+        message: error.response?.data?.message || error.message || "Failed to check candidate status",
+        success: false,
+      };
+      return errorData;
+    }
+  },
+
   // Fetch dynamic form fields configured in DB
   getFields: async () => {
     try {
@@ -34,11 +54,15 @@ export const OnboardingRoute = {
     } catch (error) {
       console.error("Error sending OTP:", error);
       const errorData = error.response?.data || {
-        statusCode: 500,
-        message: error.message || "Failed to send OTP",
+        statusCode: error.response?.status || 500,
+        message: error.response?.data?.message || error.message || "Failed to send OTP",
+        errors: error.response?.data?.errors || [],
         success: false,
       };
-      toast.error(errorData.message || "Failed to send OTP");
+      // For 409 status/duplicate, the page opens a dedicated status modal instead of toast
+      if (errorData.statusCode !== 409) {
+        toast.error(errorData.message || "Failed to send OTP");
+      }
       return errorData;
     }
   },
@@ -78,11 +102,15 @@ export const OnboardingRoute = {
     } catch (error) {
       console.error("Error submitting onboarding:", error);
       const errorData = error.response?.data || {
-        statusCode: 500,
-        message: error.message || "Failed to submit onboarding application",
+        statusCode: error.response?.status || 500,
+        message: error.response?.data?.message || error.message || "Failed to submit onboarding application",
+        errors: error.response?.data?.errors || [],
         success: false,
       };
-      toast.error(errorData.message || "Submission failed");
+      // For 409 status/duplicate, the page opens a dedicated status modal instead of toast
+      if (errorData.statusCode !== 409) {
+        toast.error(errorData.message || "Submission failed");
+      }
       return errorData;
     }
   },

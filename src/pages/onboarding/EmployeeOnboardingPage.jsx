@@ -14,6 +14,9 @@ import {
   Grid,
   Tooltip,
   Autocomplete,
+  Dialog,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
@@ -34,6 +37,10 @@ import SecurityIcon from "@mui/icons-material/Security";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import DescriptionIcon from "@mui/icons-material/Description";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import CancelIcon from "@mui/icons-material/Cancel";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import LoginIcon from "@mui/icons-material/Login";
 import { toast } from "react-toastify";
 import { useThemeMode } from "../../contexts/ThemeContext";
 import { OnboardingRoute } from "../../routes/onboarding/onboarding.route";
@@ -94,6 +101,63 @@ export default function EmployeeOnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState(null);
 
+  // Status Modal State (Under Review, Rejected with reason, Already Onboarded)
+  const [statusModal, setStatusModal] = useState({
+    open: false,
+    type: "", // "pending" | "rejected" | "approved" | "already_employee"
+    title: "",
+    message: "",
+    onboardingId: null,
+    rejectionReason: null,
+    employeeName: null,
+    empId: null,
+  });
+
+  const handleOpenStatusModal = (res) => {
+    if (!res) return;
+    const meta = res.errors?.[0] || {};
+    const msg = res.message || "";
+    let type = meta.statusType;
+
+    if (!type) {
+      const lower = msg.toLowerCase();
+      if (lower.includes("under review") || lower.includes("pending")) {
+        type = "pending";
+      } else if (lower.includes("reject")) {
+        type = "rejected";
+      } else if (lower.includes("already") || lower.includes("approved")) {
+        type = "approved";
+      } else {
+        type = "info";
+      }
+    }
+
+    let title = "Application Status";
+    if (type === "pending") title = "Application Under Review";
+    else if (type === "rejected") title = "Application Rejected";
+    else if (type === "approved" || type === "already_employee") title = "Already Onboarded";
+
+    setStatusModal({
+      open: true,
+      type,
+      title,
+      message: msg,
+      onboardingId: meta.onboardingId || null,
+      rejectionReason: meta.rejectionReason || null,
+      employeeName: meta.employeeName || null,
+      empId: meta.empId || null,
+    });
+  };
+
+  // Validation Errors State
+  const [errors, setErrors] = useState({});
+
+  // Regular expression patterns for Indian identity & contact validation
+  const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const MOBILE_REGEX = /^[6-9]\d{9}$/;
+  const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  const AADHAAR_REGEX = /^\d{12}$/;
+
   // Load Form Fields on Mount
   useEffect(() => {
     loadFields();
@@ -120,13 +184,66 @@ export default function EmployeeOnboardingPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     if (name === "mobile") {
+      const cleanVal = value.replace(/\D/g, "").slice(0, 10);
       setIsPhoneVerified(false);
       setOtpSent(false);
       setDevOtpHint(null);
       setOtpCountdown(0);
       setOtpCode("");
+
+      let errorMsg = "";
+      if (cleanVal.length > 0 && !/^[6-9]/.test(cleanVal)) {
+        errorMsg = "Mobile number must start with 6, 7, 8, or 9";
+      } else if (cleanVal.length > 0 && cleanVal.length < 10) {
+        errorMsg = `${cleanVal.length}/10 digits entered`;
+      } else if (cleanVal.length === 10 && !MOBILE_REGEX.test(cleanVal)) {
+        errorMsg = "Please enter a valid 10-digit Indian mobile number";
+      }
+
+      setErrors((prev) => ({ ...prev, mobile: errorMsg }));
+      setFormData((prev) => ({ ...prev, mobile: cleanVal }));
+      return;
     }
+
+    if (name === "email") {
+      const trimmed = value.trim();
+      let errorMsg = "";
+      if (trimmed.length > 0 && !EMAIL_REGEX.test(trimmed)) {
+        errorMsg = "Please enter a valid email address (e.g. rahul@example.com)";
+      }
+      setErrors((prev) => ({ ...prev, email: errorMsg }));
+      setFormData((prev) => ({ ...prev, email: value }));
+      return;
+    }
+
+    if (name === "pan_number") {
+      const cleanPan = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+      let errorMsg = "";
+      if (cleanPan.length > 0 && cleanPan.length < 10) {
+        errorMsg = `${cleanPan.length}/10 chars entered (e.g. ABCDE1234F)`;
+      } else if (cleanPan.length === 10 && !PAN_REGEX.test(cleanPan)) {
+        errorMsg = "Invalid PAN format (Must be 5 letters, 4 numbers, 1 letter)";
+      }
+      setErrors((prev) => ({ ...prev, pan_number: errorMsg }));
+      setFormData((prev) => ({ ...prev, pan_number: cleanPan }));
+      return;
+    }
+
+    if (name === "aadhaar_number") {
+      const cleanAadhaar = value.replace(/\D/g, "").slice(0, 12);
+      let errorMsg = "";
+      if (cleanAadhaar.length > 0 && cleanAadhaar.length < 12) {
+        errorMsg = `${cleanAadhaar.length}/12 digits entered`;
+      } else if (cleanAadhaar.length === 12 && !AADHAAR_REGEX.test(cleanAadhaar)) {
+        errorMsg = "Aadhaar must be exactly 12 digits";
+      }
+      setErrors((prev) => ({ ...prev, aadhaar_number: errorMsg }));
+      setFormData((prev) => ({ ...prev, aadhaar_number: cleanAadhaar }));
+      return;
+    }
+
     if (name === "address") {
       const parsed = parseIndianAddress(value);
       setFormData((prev) => ({
@@ -138,6 +255,7 @@ export default function EmployeeOnboardingPage() {
       }));
       return;
     }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -148,10 +266,17 @@ export default function EmployeeOnboardingPage() {
   // OTP Actions
   const handleSendOtp = async () => {
     const mobile = formData.mobile?.trim();
-    if (!mobile || !/^[6-9]\d{9}$/.test(mobile)) {
-      toast.error("Please enter a valid 10-digit Indian mobile number");
+    if (!mobile) {
+      toast.error("Please enter your 10-digit mobile number");
+      setErrors((prev) => ({ ...prev, mobile: "Mobile number is required" }));
       return;
     }
+    if (!MOBILE_REGEX.test(mobile)) {
+      toast.error("Please enter a valid 10-digit Indian mobile number (starting with 6-9)");
+      setErrors((prev) => ({ ...prev, mobile: "Must be a valid 10-digit Indian mobile number" }));
+      return;
+    }
+    setErrors((prev) => ({ ...prev, mobile: "" }));
 
     setSendingOtp(true);
     const res = await OnboardingRoute.sendOtp(mobile);
@@ -169,6 +294,20 @@ export default function EmployeeOnboardingPage() {
       } else {
         toast.success(res?.message || `OTP sent to ${mobile}`);
       }
+    } else if (res?.statusCode === 409) {
+      handleOpenStatusModal(res);
+    } else if (res?.message) {
+      setErrors((prev) => ({ ...prev, mobile: res.message }));
+    }
+  };
+
+  const handleEmailBlur = async () => {
+    const email = formData.email?.trim();
+    if (!email || !EMAIL_REGEX.test(email)) return;
+
+    const res = await OnboardingRoute.checkStatus({ email });
+    if (res && res.success === false && res.statusCode === 409) {
+      handleOpenStatusModal(res);
     }
   };
 
@@ -271,6 +410,7 @@ export default function EmployeeOnboardingPage() {
       latitude: null,
       longitude: null,
     });
+    setErrors({});
     setPanPhoto(null);
     setPanPreview(null);
     setPanFileName("");
@@ -298,8 +438,15 @@ export default function EmployeeOnboardingPage() {
       return;
     }
 
-    if (!formData.mobile?.trim()) {
+    const cleanMobile = formData.mobile?.trim() || "";
+    if (!cleanMobile) {
+      setErrors((prev) => ({ ...prev, mobile: "Mobile number is required" }));
       toast.error("Please enter your mobile number");
+      return;
+    }
+    if (!MOBILE_REGEX.test(cleanMobile)) {
+      setErrors((prev) => ({ ...prev, mobile: "Must be a valid 10-digit Indian mobile number" }));
+      toast.error("Please enter a valid 10-digit Indian mobile number (starting with 6-9)");
       return;
     }
 
@@ -308,13 +455,27 @@ export default function EmployeeOnboardingPage() {
       return;
     }
 
-    if (!formData.email?.trim()) {
+    const cleanEmail = formData.email?.trim() || "";
+    if (!cleanEmail) {
+      setErrors((prev) => ({ ...prev, email: "Email address is required" }));
       toast.error("Please enter your email address");
       return;
     }
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      setErrors((prev) => ({ ...prev, email: "Please enter a valid email address" }));
+      toast.error("Please enter a valid email address (e.g. rahul@example.com)");
+      return;
+    }
 
-    if (!formData.pan_number?.trim()) {
+    const cleanPan = formData.pan_number?.trim().toUpperCase() || "";
+    if (!cleanPan) {
+      setErrors((prev) => ({ ...prev, pan_number: "PAN card number is required" }));
       toast.error("Please enter your PAN card number");
+      return;
+    }
+    if (!PAN_REGEX.test(cleanPan)) {
+      setErrors((prev) => ({ ...prev, pan_number: "Invalid PAN format (e.g. ABCDE1234F)" }));
+      toast.error("Please enter a valid 10-character PAN number (e.g. ABCDE1234F)");
       return;
     }
 
@@ -323,8 +484,15 @@ export default function EmployeeOnboardingPage() {
       return;
     }
 
-    if (!formData.aadhaar_number?.trim()) {
+    const cleanAadhaar = formData.aadhaar_number?.trim() || "";
+    if (!cleanAadhaar) {
+      setErrors((prev) => ({ ...prev, aadhaar_number: "Aadhaar number is required" }));
       toast.error("Please enter your 12-digit Aadhaar number");
+      return;
+    }
+    if (!AADHAAR_REGEX.test(cleanAadhaar)) {
+      setErrors((prev) => ({ ...prev, aadhaar_number: "Must be a valid 12-digit Aadhaar number" }));
+      toast.error("Please enter a valid 12-digit Aadhaar number");
       return;
     }
 
@@ -395,6 +563,8 @@ export default function EmployeeOnboardingPage() {
 
     if (res?.data) {
       setSubmittedData(res.data);
+    } else if (res?.statusCode === 409) {
+      handleOpenStatusModal(res);
     }
   };
 
@@ -671,12 +841,24 @@ export default function EmployeeOnboardingPage() {
                         placeholder="e.g. rahul@example.com"
                         value={formData.email}
                         onChange={handleInputChange}
+                        onBlur={handleEmailBlur}
+                        error={Boolean(errors.email)}
+                        helperText={errors.email}
+                        FormHelperTextProps={{
+                          sx: { fontSize: "0.68rem", mx: 0.5, mt: 0.3 },
+                        }}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
                               <EmailIcon fontSize="small" sx={{ color: isDark ? "#94a3b8" : "#64748b" }} />
                             </InputAdornment>
                           ),
+                          endAdornment:
+                            formData.email && EMAIL_REGEX.test(formData.email.trim()) ? (
+                              <InputAdornment position="end">
+                                <CheckCircleIcon sx={{ fontSize: 16 }} className="text-emerald-500" />
+                              </InputAdornment>
+                            ) : null,
                         }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
@@ -702,6 +884,21 @@ export default function EmployeeOnboardingPage() {
                             value={formData.mobile}
                             disabled={isPhoneVerified}
                             onChange={handleInputChange}
+                            error={Boolean(errors.mobile && !errors.mobile.includes("digits entered"))}
+                            helperText={errors.mobile}
+                            FormHelperTextProps={{
+                              sx: {
+                                fontSize: "0.68rem",
+                                mx: 0.5,
+                                mt: 0.3,
+                                color:
+                                  errors.mobile && !errors.mobile.includes("digits entered")
+                                    ? undefined
+                                    : isDark
+                                      ? "#94a3b8"
+                                      : "#64748b",
+                              },
+                            }}
                             InputProps={{
                               startAdornment: (
                                 <InputAdornment position="start">
@@ -709,6 +906,12 @@ export default function EmployeeOnboardingPage() {
                                   <span className="text-xs font-bold text-slate-500 ml-1">+91</span>
                                 </InputAdornment>
                               ),
+                              endAdornment:
+                                formData.mobile && MOBILE_REGEX.test(formData.mobile) ? (
+                                  <InputAdornment position="end">
+                                    <CheckCircleIcon sx={{ fontSize: 16 }} className="text-emerald-500" />
+                                  </InputAdornment>
+                                ) : null,
                             }}
                             sx={{
                               "& .MuiOutlinedInput-root": {
@@ -885,7 +1088,7 @@ export default function EmployeeOnboardingPage() {
 
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        PAN Card Number
+                        PAN Card Number <span className="text-red-500">*</span>
                       </label>
                       <TextField
                         fullWidth
@@ -893,17 +1096,36 @@ export default function EmployeeOnboardingPage() {
                         name="pan_number"
                         placeholder="ABCDE1234F"
                         value={formData.pan_number}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            pan_number: e.target.value.toUpperCase().slice(0, 10),
-                          }))
-                        }
+                        onChange={handleInputChange}
+                        error={Boolean(errors.pan_number && !errors.pan_number.includes("chars entered"))}
+                        helperText={errors.pan_number || "Format: 5 letters, 4 numbers, 1 letter (e.g. ABCDE1234F)"}
+                        FormHelperTextProps={{
+                          sx: {
+                            fontSize: "0.68rem",
+                            mx: 0.5,
+                            mt: 0.3,
+                            color:
+                              errors.pan_number && !errors.pan_number.includes("chars entered")
+                                ? undefined
+                                : isDark
+                                  ? "#94a3b8"
+                                  : "#64748b",
+                          },
+                        }}
+                        InputProps={{
+                          endAdornment:
+                            formData.pan_number && PAN_REGEX.test(formData.pan_number) ? (
+                              <InputAdornment position="end">
+                                <CheckCircleIcon sx={{ fontSize: 16 }} className="text-emerald-500" />
+                              </InputAdornment>
+                            ) : null,
+                        }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             borderRadius: "8px",
                             backgroundColor: isDark ? "rgba(15, 23, 42, 0.8)" : "#ffffff",
                             fontWeight: 700,
+                            letterSpacing: "1px",
                           },
                         }}
                       />
@@ -988,7 +1210,7 @@ export default function EmployeeOnboardingPage() {
 
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Aadhaar Card Number
+                        Aadhaar Card Number <span className="text-red-500">*</span>
                       </label>
                       <TextField
                         fullWidth
@@ -996,17 +1218,36 @@ export default function EmployeeOnboardingPage() {
                         name="aadhaar_number"
                         placeholder="12-digit Aadhaar"
                         value={formData.aadhaar_number}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            aadhaar_number: e.target.value.replace(/\D/g, "").slice(0, 12),
-                          }))
-                        }
+                        onChange={handleInputChange}
+                        error={Boolean(errors.aadhaar_number && !errors.aadhaar_number.includes("digits entered"))}
+                        helperText={errors.aadhaar_number || "Format: 12-digit UIDAI number"}
+                        FormHelperTextProps={{
+                          sx: {
+                            fontSize: "0.68rem",
+                            mx: 0.5,
+                            mt: 0.3,
+                            color:
+                              errors.aadhaar_number && !errors.aadhaar_number.includes("digits entered")
+                                ? undefined
+                                : isDark
+                                  ? "#94a3b8"
+                                  : "#64748b",
+                          },
+                        }}
+                        InputProps={{
+                          endAdornment:
+                            formData.aadhaar_number && AADHAAR_REGEX.test(formData.aadhaar_number) ? (
+                              <InputAdornment position="end">
+                                <CheckCircleIcon sx={{ fontSize: 16 }} className="text-emerald-500" />
+                              </InputAdornment>
+                            ) : null,
+                        }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             borderRadius: "8px",
                             backgroundColor: isDark ? "rgba(15, 23, 42, 0.8)" : "#ffffff",
                             fontWeight: 700,
+                            letterSpacing: "1px",
                           },
                         }}
                       />
@@ -1275,6 +1516,164 @@ export default function EmployeeOnboardingPage() {
           </form>
         )}
       </main>
+
+      {/* CANDIDATE STATUS MODAL (Under Review, Rejected with reason, Already Onboarded) */}
+      <Dialog
+        open={statusModal.open}
+        onClose={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "24px",
+            p: 1,
+            backgroundColor: isDark ? "#0f172a" : "#ffffff",
+            backgroundImage: "none",
+            border: isDark ? "1px solid #1e293b" : "1px solid #e2e8f0",
+            boxShadow: isDark
+              ? "0 25px 50px -12px rgba(0, 0, 0, 0.7)"
+              : "0 25px 50px -12px rgba(15, 23, 42, 0.25)",
+          },
+        }}
+      >
+        <DialogContent sx={{ textAlign: "center", pt: 3, pb: 1.5, px: 3 }}>
+          {/* Status Icon */}
+          <div className="flex justify-center mb-3">
+            {statusModal.type === "pending" && (
+              <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center ring-8 ring-amber-500/5">
+                <HourglassEmptyIcon sx={{ fontSize: 36 }} />
+              </div>
+            )}
+            {statusModal.type === "rejected" && (
+              <div className="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center ring-8 ring-rose-500/5">
+                <CancelIcon sx={{ fontSize: 36 }} />
+              </div>
+            )}
+            {(statusModal.type === "approved" || statusModal.type === "already_employee") && (
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center ring-8 ring-emerald-500/5">
+                <VerifiedUserIcon sx={{ fontSize: 36 }} />
+              </div>
+            )}
+            {statusModal.type !== "pending" &&
+              statusModal.type !== "rejected" &&
+              statusModal.type !== "approved" &&
+              statusModal.type !== "already_employee" && (
+                <div className="w-16 h-16 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center ring-8 ring-indigo-500/5">
+                  <WarningAmberIcon sx={{ fontSize: 36 }} />
+                </div>
+              )}
+          </div>
+
+          {/* Status Badge */}
+          <div className="mb-2">
+            {statusModal.type === "pending" && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                APPLICATION UNDER REVIEW
+              </span>
+            )}
+            {statusModal.type === "rejected" && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                APPLICATION REJECTED
+              </span>
+            )}
+            {(statusModal.type === "approved" || statusModal.type === "already_employee") && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                ALREADY ONBOARDED
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <Typography
+            variant="h6"
+            className="font-black text-slate-800 dark:text-slate-100 leading-tight mb-2.5"
+            sx={{ fontWeight: 800 }}
+          >
+            {statusModal.title}
+          </Typography>
+
+          {/* Detailed Message Box */}
+          <div
+            className={`p-3.5 rounded-xl border text-left text-xs space-y-2 mb-2.5 ${
+              statusModal.type === "pending"
+                ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40 text-amber-950 dark:text-amber-200"
+                : statusModal.type === "rejected"
+                ? "bg-rose-50/70 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40 text-rose-950 dark:text-rose-200"
+                : "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 text-emerald-950 dark:text-emerald-200"
+            }`}
+          >
+            <p className="font-semibold leading-relaxed">{statusModal.message}</p>
+
+            {statusModal.onboardingId && (
+              <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 dark:text-slate-400">Application ID:</span>
+                <span className="font-mono font-bold">{statusModal.onboardingId}</span>
+              </div>
+            )}
+
+            {statusModal.rejectionReason && (
+              <div className="pt-1.5 border-t border-rose-200/60 dark:border-rose-900/40 text-[11px]">
+                <span className="font-bold text-rose-600 dark:text-rose-400">Rejection Reason: </span>
+                <span className="font-medium">{statusModal.rejectionReason}</span>
+              </div>
+            )}
+          </div>
+
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
+            {statusModal.type === "pending"
+              ? "Your application is being processed by HR. You will be notified once reviewed."
+              : statusModal.type === "rejected"
+              ? "If you need clarification, please contact the HR department or administrator."
+              : "Please login with your official employee credentials."}
+          </p>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+          {(statusModal.type === "approved" || statusModal.type === "already_employee") && (
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<LoginIcon />}
+              onClick={() => navigate("/login")}
+              sx={{
+                borderRadius: "12px",
+                py: 1,
+                fontWeight: 700,
+                textTransform: "none",
+                fontSize: "0.82rem",
+                backgroundColor: "#4f46e5",
+                "&:hover": { backgroundColor: "#4338ca" },
+              }}
+            >
+              Go to Login
+            </Button>
+          )}
+
+          <Button
+            variant={
+              statusModal.type === "approved" || statusModal.type === "already_employee"
+                ? "outlined"
+                : "contained"
+            }
+            fullWidth
+            onClick={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+            sx={{
+              borderRadius: "12px",
+              py: 1,
+              fontWeight: 700,
+              textTransform: "none",
+              fontSize: "0.82rem",
+              ...(statusModal.type === "pending"
+                ? { backgroundColor: "#d97706", "&:hover": { backgroundColor: "#b45309" } }
+                : statusModal.type === "rejected"
+                ? { backgroundColor: "#e11d48", "&:hover": { backgroundColor: "#be123c" } }
+                : {}),
+            }}
+          >
+            Understood
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
