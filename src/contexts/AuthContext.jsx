@@ -100,14 +100,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (user && !fetchedRef.current) {
+    if (user && Cookies.get('accessToken') && !fetchedRef.current) {
       fetchPermissions();
     }
   }, [user, fetchPermissions]);
 
   // Smart background auto-sync when tab regains focus or becomes visible (with 60s cooldown protection)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !Cookies.get('accessToken')) return;
 
     const handleFocusSync = () => {
       fetchPermissions(true);

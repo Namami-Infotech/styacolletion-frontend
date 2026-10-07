@@ -82,7 +82,8 @@ axios.interceptors.response.use(
         isRefreshing = false;
         Cookies.remove('accessToken', { path: '/' });
         Cookies.remove('user_session', { path: '/' });
-        if (window.location.pathname !== '/login') {
+        const publicPaths = ['/', '/login', '/onboarding'];
+        if (!publicPaths.includes(window.location.pathname)) {
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);
