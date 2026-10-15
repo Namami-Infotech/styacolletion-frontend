@@ -26,113 +26,175 @@ import { toast } from "react-toastify";
 /**
  * Utility to generate and download Demo Excel Template matching Customer fields
  */
-export const downloadCustomerDemoExcel = () => {
-  const sampleRow1 = {
-    "State": "Delhi",
-    "Branch Code": "BR001",
-    "Branch": "Delhi Central",
-    "Village Name": "Connaught Place",
-    "Center Name": "CP Center",
-    "Center Code": "CNT01",
-    "Member No.": "MEM-1001",
-    "Member Name": "Rahul Sharma",
-    "Status": "Open",
-    "Purpose": "Business Expansion",
-    "Loan Type": "IL",
-    "Reschedule": "No",
-    "Loan NO.": "LN-1001",
-    "LOAN series": "SER-2024",
-    "OldLoanNo": "OLD-LN-801",
-    "Cycle": 1,
-    "LoanDisbDate": "2024-01-15",
-    "LoanAmount": 50000,
-    "O/S Prin": 40000,
-    "O/S Int": 2000,
-    "PAR": 0,
-    "ODPrin": 0,
-    "ODInt": 0,
-    "TotalDueAmt": 12000,
-    "TotalPrinColl": 5000,
-    "TotalIntColl": 1000,
-    "IrrRate": 12.5,
-    "NoOfInstallment": 12,
-    "LastDueDate": "2024-12-15",
-    "LastPaidTrxDate": "2024-11-10",
-    "LastTrxAmount": 5000,
-    "DPD": 0,
-    "PaidInstNo": "10",
-    "LoanStatus": "Open",
-    "SpouseName": "Anita Sharma",
-    "Address": "Connaught Place, New Delhi",
-    "ContactNumber": "9876543210",
-    "InstallmentAmount": 5000,
-    "MaturityDate": "2025-01-15",
-    "Mapped Emp name": "EMP101",
-    "Remarks": "Regular paying customer",
-  };
+export const downloadCustomerDemoExcel = async () => {
+  try {
+    let dbFields = [];
+    try {
+      const res = await CustomerRoute.getCustomerField();
+      if (res?.success && Array.isArray(res.data?.fields)) {
+        dbFields = res.data.fields;
+      }
+    } catch (err) {
+      console.warn("Failed to fetch customer fields for demo template:", err);
+    }
 
-  const sampleRow2 = {
-    "State": "Karnataka",
-    "Branch Code": "BR002",
-    "Branch": "Bengaluru Main",
-    "Village Name": "Indiranagar",
-    "Center Name": "MG Center",
-    "Center Code": "CNT02",
-    "Member No.": "MEM-1002",
-    "Member Name": "Priya Patel",
-    "Status": "Closed",
-    "Purpose": "Working Capital",
-    "Loan Type": "GL",
-    "Reschedule": "No",
-    "Loan NO.": "LN-1002",
-    "LOAN series": "SER-2023",
-    "OldLoanNo": "OLD-LN-802",
-    "Cycle": 2,
-    "LoanDisbDate": "2023-06-10",
-    "LoanAmount": 100000,
-    "O/S Prin": 0,
-    "O/S Int": 0,
-    "PAR": 0,
-    "ODPrin": 0,
-    "ODInt": 0,
-    "TotalDueAmt": 0,
-    "TotalPrinColl": 0,
-    "TotalIntColl": 0,
-    "IrrRate": 14.0,
-    "NoOfInstallment": 24,
-    "LastDueDate": "2024-06-10",
-    "LastPaidTrxDate": "2024-06-05",
-    "LastTrxAmount": 5000,
-    "DPD": 0,
-    "PaidInstNo": "24",
-    "LoanStatus": "Closed",
-    "SpouseName": "Rohan Patel",
-    "Address": "MG Road, Bengaluru",
-    "ContactNumber": "9812345678",
-    "InstallmentAmount": 5000,
-    "MaturityDate": "2024-06-10",
-    "Mapped Emp name": "EMP102",
-    "Remarks": "Loan completed on time",
-  };
+    const sampleRow1 = {
+      "State": "Delhi",
+      "District": "Central Delhi",
+      "Branch Code": "BR001",
+      "Branch": "Delhi Central",
+      "Village Name": "Connaught Place",
+      "Center Name": "CP Center",
+      "Center Code": "CNT01",
+      "Area Type": "Urban",
+      "Member No.": "MEM-1001",
+      "Member Name": "Rahul Sharma",
+      "Gender": "Male",
+      "Religion": "Hindu",
+      "Caste": "General",
+      "Status": "Open",
+      "Purpose": "Business Expansion",
+      "Loan Type": "IL",
+      "Reschedule": "No",
+      "Loan NO.": "LN-1001",
+      "LOAN series": "SER-2024",
+      "OldLoanNo": "OLD-LN-801",
+      "Cycle": 1,
+      "LoanDisbDate": "2024-01-15",
+      "LoanAmount": 50000,
+      "O/S Prin": 40000,
+      "O/S Int": 2000,
+      "PAR": 0,
+      "ODPrin": 0,
+      "ODInt": 0,
+      "TotalDueAmt": 12000,
+      "TotalPrinColl": 5000,
+      "TotalIntColl": 1000,
+      "IrrRate": 12.5,
+      "NoOfInstallment": 12,
+      "LastDueDate": "2024-12-15",
+      "LastPaidTrxDate": "2024-11-10",
+      "LastTrxAmount": 5000,
+      "DPD": 0,
+      "PaidInstNo": "10",
+      "LoanStatus": "Open",
+      "SpouseName": "Anita Sharma",
+      "Address": "Connaught Place, New Delhi",
+      "ContactNumber": "9876543210",
+      "Client Phone 1": "9876543211",
+      "Client Phone 2": "9876543212",
+      "Mobile Phone History 1": "9876543213",
+      "Mobile Phone History 2": "9876543214",
+      "Mobile Phone History 3": "",
+      "Mobile Phone History 4": "",
+      "Co-Applicant Mobile No": "9876543215",
+      "Co-Applicant Phone 1": "9876543216",
+      "Co-Applicant Phone 2": "",
+      "InstallmentAmount": 5000,
+      "MaturityDate": "2025-01-15",
+      "Mapped Emp name": "EMP101",
+      "QT By": "10912 - DHARMENDRA GIRI",
+      "CA By": "10912 - DHARMENDRA GIRI",
+      "Remarks": "Regular paying customer",
+    };
 
-  const rows = [sampleRow1, sampleRow2];
-  const ws = XLSX.utils.json_to_sheet(rows);
+    const sampleRow2 = {
+      "State": "Karnataka",
+      "District": "Bengaluru Urban",
+      "Branch Code": "BR002",
+      "Branch": "Bengaluru Main",
+      "Village Name": "Indiranagar",
+      "Center Name": "MG Center",
+      "Center Code": "CNT02",
+      "Area Type": "Urban",
+      "Member No.": "MEM-1002",
+      "Member Name": "Priya Patel",
+      "Gender": "Female",
+      "Religion": "Hindu",
+      "Caste": "OBC",
+      "Status": "Closed",
+      "Purpose": "Working Capital",
+      "Loan Type": "GL",
+      "Reschedule": "No",
+      "Loan NO.": "LN-1002",
+      "LOAN series": "SER-2023",
+      "OldLoanNo": "OLD-LN-802",
+      "Cycle": 2,
+      "LoanDisbDate": "2023-06-10",
+      "LoanAmount": 100000,
+      "O/S Prin": 0,
+      "O/S Int": 0,
+      "PAR": 0,
+      "ODPrin": 0,
+      "ODInt": 0,
+      "TotalDueAmt": 0,
+      "TotalPrinColl": 0,
+      "TotalIntColl": 0,
+      "IrrRate": 14.0,
+      "NoOfInstallment": 24,
+      "LastDueDate": "2024-06-10",
+      "LastPaidTrxDate": "2024-06-05",
+      "LastTrxAmount": 5000,
+      "DPD": 0,
+      "PaidInstNo": "24",
+      "LoanStatus": "Closed",
+      "SpouseName": "Rohan Patel",
+      "Address": "MG Road, Bengaluru",
+      "ContactNumber": "9812345678",
+      "Client Phone 1": "9812345679",
+      "Client Phone 2": "",
+      "Mobile Phone History 1": "9812345680",
+      "Mobile Phone History 2": "",
+      "Mobile Phone History 3": "",
+      "Mobile Phone History 4": "",
+      "Co-Applicant Mobile No": "9812345681",
+      "Co-Applicant Phone 1": "",
+      "Co-Applicant Phone 2": "",
+      "InstallmentAmount": 5000,
+      "MaturityDate": "2024-06-10",
+      "Mapped Emp name": "EMP102",
+      "QT By": "10912 - DHARMENDRA GIRI",
+      "CA By": "10912 - DHARMENDRA GIRI",
+      "Remarks": "Loan completed on time",
+    };
 
-  // Auto-calculate column widths for clean Excel presentation
-  const colWidths = Object.keys(rows[0]).map((key) => {
-    let maxLen = key.length;
-    rows.forEach((row) => {
-      const val = row[key] !== undefined && row[key] !== null ? String(row[key]) : "";
-      if (val.length > maxLen) maxLen = val.length;
+    // Dynamically append any extra fields configured in the database
+    if (dbFields.length > 0) {
+      dbFields.forEach((field) => {
+        const header = field.label || field.name;
+        const exists = Object.keys(sampleRow1).some(
+          (k) => k.toLowerCase() === header.toLowerCase() || k.toLowerCase() === (field.name || "").toLowerCase()
+        );
+        if (!exists) {
+          sampleRow1[header] = field.placeholder || (field.type === "number" ? 0 : "");
+          sampleRow2[header] = "";
+        }
+      });
+    }
+
+    const rows = [sampleRow1, sampleRow2];
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    // Auto-calculate column widths for clean Excel presentation
+    const colWidths = Object.keys(rows[0]).map((key) => {
+      let maxLen = key.length;
+      rows.forEach((row) => {
+        const val = row[key] !== undefined && row[key] !== null ? String(row[key]) : "";
+        if (val.length > maxLen) maxLen = val.length;
+      });
+      return { wch: Math.min(Math.max(maxLen + 3, 14), 45) };
     });
-    return { wch: Math.min(Math.max(maxLen + 3, 14), 45) };
-  });
 
-  ws["!cols"] = colWidths;
+    ws["!cols"] = colWidths;
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Customer_Import_Template");
-  XLSX.writeFile(wb, "Customer_Import_Demo.xlsx");
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Customer_Import_Template");
+    XLSX.writeFile(wb, "Customer_Import_Demo.xlsx");
+    toast.success("Customer demo format downloaded successfully!");
+  } catch (err) {
+    console.error("Error generating demo Excel:", err);
+    toast.error("Failed to generate demo Excel format.");
+  }
 };
 
 /**
@@ -155,16 +217,31 @@ export const exportCustomersToExcel = async (providedCustomers = [], filename = 
 
     const exportRows = dataToExport.map((c, idx) => {
       const ownerObj = c.owner || c.ownerDetails;
+      const getVal = (f, ...aliases) => {
+        if (c[f] !== undefined && c[f] !== null && c[f] !== "") return c[f];
+        if (c.custom_data && c.custom_data[f] !== undefined && c.custom_data[f] !== null && c.custom_data[f] !== "") return c.custom_data[f];
+        for (const a of aliases) {
+          if (c[a] !== undefined && c[a] !== null && c[a] !== "") return c[a];
+          if (c.custom_data && c.custom_data[a] !== undefined && c.custom_data[a] !== null && c.custom_data[a] !== "") return c.custom_data[a];
+        }
+        return "";
+      };
+
       return {
         "S.No": idx + 1,
         "State": c.state || "",
+        "District": getVal("district"),
         "Branch Code": c.branch_code || "",
         "Branch": c.branch || "",
         "Village Name": c.village_name || "",
         "Center Name": c.center || "",
         "Center Code": c.center_code || "",
+        "Area Type": getVal("areaType", "area_type"),
         "Member No.": c.member_no || c.customer_id || "",
         "Member Name": c.name || "",
+        "Gender": getVal("gender"),
+        "Religion": getVal("religion"),
+        "Caste": getVal("caste"),
         "Status": c.loanStatus || "Open",
         "Purpose": c.purpose || "",
         "Loan Type": c.loanType || "",
@@ -194,9 +271,20 @@ export const exportCustomersToExcel = async (providedCustomers = [], filename = 
         "SpouseName": c.spouseName || "",
         "Address": c.location || "",
         "ContactNumber": c.phone || "",
+        "Client Phone 1": getVal("clientPhone1", "client_phone_1"),
+        "Client Phone 2": getVal("clientPhone2", "client_phone_2"),
+        "Mobile Phone History 1": getVal("mobilePhoneHistory1", "mobile_phone_history_1"),
+        "Mobile Phone History 2": getVal("mobilePhoneHistory2", "mobile_phone_history_2"),
+        "Mobile Phone History 3": getVal("mobilePhoneHistory3", "mobile_phone_history_3"),
+        "Mobile Phone History 4": getVal("mobilePhoneHistory4", "mobile_phone_history_4"),
+        "Co-Applicant Mobile No": getVal("coApplicantMobileNo", "co_applicant_mobile_no"),
+        "Co-Applicant Phone 1": getVal("coApplicantPhone1", "co_applicant_phone_1"),
+        "Co-Applicant Phone 2": getVal("coApplicantPhone2", "co_applicant_phone_2"),
         "InstallmentAmount": c.installmentAmount ? `₹${c.installmentAmount}` : "₹0",
         "MaturityDate": c.maturityDate || "",
         "Mapped Emp name": ownerObj?.name ? `${ownerObj.name} (${ownerObj.identity || ownerObj.emp_id || ""})` : (c.owner || "N/A"),
+        "QT By": getVal("qtBy", "qt_by"),
+        "CA By": getVal("caBy", "ca_by"),
         "Remarks": c.remarks || "",
       };
     });
